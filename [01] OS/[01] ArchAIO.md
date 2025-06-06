@@ -1221,64 +1221,53 @@ For older AMD GPUs (Pre-Vega architecture like Polaris - RX 4xx/5xx series) to w
     ```
     Save and exit. A reboot is required for this to take effect system-wide.
 
-### 7.3. Overclocking AMD GPUs with `amdgpu-clocks` (Minimal CLI tool)
+### 7.3. Overclocking AMD GPUs with corectrl (Minimal GUI tool)
 
 **WARNING: Overclocking can lead to instability or damage your hardware if not done carefully. Proceed at your own risk.**
 
 1.  **Installation:**
-
     ```bash
-    git clone https://github.com/sibradzic/amdgpu-clocks ~/repos/amdgpu-clocks # Clone to your preferred dir
-    cd ~/repos/amdgpu-clocks
-    sudo cp amdgpu-clocks /usr/local/bin/
-    sudo cp amdgpu-clocks.service /etc/systemd/system/
-    sudo systemctl enable --now amdgpu-clocks.service
+    sudo pacman -S --needed corectrl
     ```
 
-2.  **Configure Custom States:**
+2.  **Enable Autostart & Permissions:**
+    Replace `your_username` with your actual Linux username.
 
-    - Find your GPU's PCI address:
-      ```bash
-      lspci | grep -i vga
-      ```
-      Look for something like `0000:26:00.0`.
-    - Create/edit the config file, replacing `26:00.0` with your GPU's bus ID:
-      ```bash
-      sudo vim /etc/default/amdgpu-custom-state.pci-0000:26:00.0
-      ```
-    - Add your custom states. **The following is an EXAMPLE. You MUST find stable values for YOUR card.**
+    *   **Autostart:**
+        ```bash
+        cp /usr/share/applications/org.corectrl.corectrl.desktop ~/.config/autostart/
+        ```
 
-      ```ini
-      # Example for an RX 570/580. Values are illustrative.
-      # Set custom GPU Core Clock (SCLK) states 6 & 7:
-      OD_SCLK:
-      # State: Clock (MHz)   Voltage (mV)
-      #6:       1300MHz        1050mV
-      #7:       1400MHz        1090mV
+    *   **Polkit Rule (for passwordless operation):**
+        Create and edit `/etc/polkit-1/rules.d/90-corectrl.rules`:
+        ```bash
+        sudo mkdir -p /etc/polkit-1/rules.d/
+        sudo vim /etc/polkit-1/rules.d/90-corectrl.rules
+        ```
+        Paste (and replace `your_username`):
+        ```javascript
+        polkit.addRule(function(action, subject) {
+            if ((action.id == "org.corectrl.helper.init" ||
+                 action.id == "org.corectrl.helperkiller.init" ||
+                 action.id == "org.corectrl.helper.apply" ||
+                 action.id == "org.corectrl.helper.fanmode") &&
+                subject.local == true &&
+                subject.active == true &&
+                (subject.isInGroup("wheel") || subject.user == "your_username")) {
+                    return polkit.Result.YES;
+            }
+        });
+        ```
 
-      # Set custom GPU Memory Clock (MCLK) states 1 & 2:
-      OD_MCLK:
-      # State: Clock (MHz)   Voltage (mV)
-      #1:       1750MHz        750mV
-      #2:       1900MHz        900mV # Stock for many RX 500 series is 1750MHz, 2000MHz for some
+3.  **Set Kernel Parameter:**
+    Ensure `amdgpu.ppfeaturemask=0xffffffff` is added to your bootloader's kernel command line.
+    *   *See "Kernel Parameters for Gaming" section for how to do this (e.g., edit GRUB/systemd-boot config, then `sudo mkinitcpio -P` or `sudo dracut --regenerate-all --force`).*
 
-      # Force specific SCLK states (e.g., only use states 5, 6, 7):
-      # FORCE_SCLK: 5 6 7
-
-      # Force a fixed memory state (e.g., always use state 2):
-      # FORCE_MCLK: 2
-
-      # Force power limit (in microWatts), e.g., 187W = 187000000
-      # FORCE_POWER_CAP: 187000000
-
-      # To enable FORCE_SCLK & FORCE_MCLK, performance level must be manual:
-      FORCE_PERF_LEVEL: manual
-      ```
-
-    - Start with small increments and test stability thoroughly. You can view current clocks/voltages with `cat /sys/class/drm/card0/device/pp_od_clk_voltage` (replace `card0` if needed).
-
-3.  **Ensure `amdgpu.ppfeaturemask=0xffffffff` kernel parameter is set** (see "Kernel Parameters for Gaming").
-4.  Reboot. Then check service status: `systemctl status amdgpu-clocks.service`.
+4.  **Reboot:**
+    ```bash
+    reboot
+    ```
+    After reboot, CoreCtrl should autostart and allow full control.
 
 ### 7.4. Optional Personal Firmware (User-Specific)
 
