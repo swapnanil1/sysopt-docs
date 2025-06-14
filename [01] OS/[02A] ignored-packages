@@ -1,4 +1,4 @@
-Package: snapd*
+Package: snap*
 Pin: release *
 Pin-Priority: -1
 
