@@ -1079,7 +1079,7 @@ For potentially higher performance, but requires more effort.
   Add:
 
   ```
-  vm.max_map_count = 16777216
+  vm.max_map_count = 262144
   ```
 
   Apply immediately: `sudo sysctl --system` or reboot.
@@ -1125,7 +1125,7 @@ Ananicy manages process priorities. `cachyos-ananicy-rules` provides game/app-sp
 1.  **Once CachyOS repos are added, install:**
 
     ```bash
-    paru -S --needed ananicy-cpp cachyos-ananicy-rules-git power-profiles-daemon cpupower upower cachyos-settings-git
+    sudo pacman -S --needed ananicy-cpp cachyos-ananicy-rules-git power-profiles-daemon cpupower upower cachyos-settings-git python-gobject
     ```
 
     (Using `-git` versions for rules and settings as they are often more up-to-date from CachyOS).
