@@ -8,7 +8,6 @@ This guide walks you through a manual, minimal installation of Ubuntu using comm
 | **Installation Method** | `debootstrap` and `arch-install-scripts` |
 | **Filesystem** | BTRFS with `@` and `@home` subvolumes |
 | **Firmware** | UEFI |
-
 ### Prerequisites
 
 *   **Ubuntu Desktop Live ISO:** Download the latest version and create a bootable USB drive.
@@ -222,7 +221,7 @@ curl -sS 'https://raw.githubusercontent.com/swapnanil1/sysopt-docs/refs/heads/ma
 
 ### 6.5. Install Core System & Graphical Environment
 
-This is the main software installation. We'll install a kernel, bootloader, networking, audio, a full Sway graphical environment, and common applications.
+This is the main software installation. We'll install a kernel, bootloader, networking, audio, a full KDE graphical environment, and common applications.
 
 1.  **Pre-accept Microsoft fonts license** to prevent the installation from pausing:
     ```bash
@@ -230,73 +229,30 @@ This is the main software installation. We'll install a kernel, bootloader, netw
     ```
 2.  **Run the main installation command.** We use `--no-install-recommends` for a minimal setup.
     ```bash
+    sudo dpkg --add-architecture i386
     apt install -y --no-install-recommends \
-    \
     # --- CORE SYSTEM & BOOT ---
     linux-image-generic \
     linux-headers-generic \
     linux-firmware \
     grub-efi-amd64 \
+    btrfs-progs \
     \
-    # --- NETWORKING & CONNECTIVITY ---
-    network-manager \
-    wpasupplicant \
-    bluez \
-    bluez-tools \
-    \
-    # --- MODERN AUDIO STACK ---
-    pipewire-audio \
-    pavucontrol \
-    \
-    # --- GRAPHICAL FOUNDATION & LOGIN MANAGER ---
-    xorg \
-    xwayland \
-    lightdm \
-    lightdm-gtk-greeter \
-    \
-    # --- SWAY & WAYLAND ENVIRONMENT ---
-    sway \
-    swaylock \
-    swayidle \
-    xdg-desktop-portal-wlr \
-    xdg-desktop-portal-gtk \
-    xdg-user-dirs \
-    wl-clipboard \
-    lxsession \
-    waybar \
-    wofi \
-    dunst \
-    python3-i3ipc \
-    power-profiles-daemon \
-    brightnessctl \
-    ddcutil \
-    grim \
-    slurp \
-    \
-    # --- FONTS, CODECS & THEMES ---
-    ubuntu-restricted-extras \
-    fonts-noto-color-emoji \
-    fonts-font-awesome \
-    lxappearance \
+    # --- KDE DESKTOP ENVIRONMENT ---
+    kde-standard \
+    sddm-theme-breeze \
     \
     # --- CORE APPLICATIONS & UTILITIES ---
+    wpasupplicant \
     fish \
     alacritty \
-    eza \
-    thunar \
-    thunar-volman \
-    thunar-archive-plugin \
-    ristretto \
-    mousepad \
-    mpv \
     htop \
-    fastfetch \
-    ufw \
     timeshift \
+    cronie \
+    software-properties-gtk \
     \
     # --- BUILD TOOLS & SYSTEM LIBRARIES ---
     build-essential \
-    dkms \
     git \
     curl \
     wget \
