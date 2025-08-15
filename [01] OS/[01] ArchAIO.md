@@ -744,10 +744,14 @@ For new or repurposed drives. **WARNING: `mkfs` will erase all data on the speci
 
     - **User's provided BTRFS example (for NVMe):**
       ```
-      # /dev/nvme0n1    /mnt/abcdefgh    btrfs   rw,noatime,ssd,discard=async,compress=zstd:3,space_cache=v2 0 0
-      # /dev/nvme0n1    /mnt/zxcvedfd    btrfs   rw,noatime,nodatasum,nodatacow,ssd,discard=async,space_cache=v2,subvolid=256,subvol=/@ 0 0
-      # /dev/nvme0n1pX /mnt/abcdefgh     btrfs   rw,noatime,ssd,discard=async,compress=zstd:3,space_cache=v2,autodefrag 0 0
-      # UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx /mnt/MyDataDrive ext4 defaults,noatime,user,auto,exec,data=writeback,barrier=0,nobh,errors=remount-ro,x-gvfs-show 0 0
+      # Using All BTRFS Features
+      # /dev/nvme0n1    /mnt/abcdefgh    btrfs   rw,noatime,ssd,discard=async,compress=zstd:3,space_cache=v2,autodefrag,commit=120      0 0
+      
+      # Using No BTRFS Features
+      # /dev/nvme0n1    /mnt/zxcvedfd    btrfs   rw,noatime,nodatasum,nodatacow,compress=no,ssd,discard=async,space_cache=v2,subvol=@   0 0
+      
+      # Using EXT4 But Maximizing Performance Ideal For HDD 
+      # UUID=XXXXXXX    /mnt/MyDataDrive ext4 rw,suid,dev,exec,auto,user,async,noatime,data=writeback,barrier=0,nobh,errors=remount-ro,x-gvfs-show 0 0
       ```
       **Note on user's examples:**
       - `discard=async`: Good for SSDs if fstrim.timer is not used.
