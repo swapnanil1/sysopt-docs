@@ -1,793 +1,488 @@
-# Arch Linux Configuration Guide
+# Arch Linux Performance & Setup Guide
 
-Welcome to the Arch Linux Configuration Guide! This comprehensive guide is divided into multiple sections to help you set up and optimize your Arch Linux environment.
+This guide provides a comprehensive walkthrough for configuring a fresh Arch Linux installation. It is structured to follow a logical progression, from initial system setup to advanced performance tuning for daily use and gaming.
 
-**Note:** Throughout this guide, replace `<your_username>` with your actual username. When you see `sudo vim <file>`, you can use any text editor you prefer (e.g., `sudo nano <file>`).
-
-## Table of Contents (Conceptual for future multi-file structure)
-
-1.  [Core System Setup](#core-system-setup)
-2.  [Shell Configuration & AUR Helper](#shell-configuration--aur-helper)
-3.  [Hardware Drivers & Setup](#hardware-drivers--setup)
-4.  [Desktop Environment & Essential Applications](#desktop-environment--essential-applications)
-5.  [System Optimization & Tuning](#system-optimization--tuning)
-6.  [Linux Gaming Setup](#linux-gaming-setup)
-7.  [Advanced & Specific Use Cases](#advanced--specific-use-cases)
-8.  [System Backup with Timeshift](#system-backup-with-timeshift)
+**Note:**
+*   Replace `<your_username>` with your actual username where applicable.
+*   The guide uses `sudo vim <file>`, but you can use any terminal-based editor like `nano`.
 
 ---
 
-## 1. Core System Setup
+### **Table of Contents**
 
-This section covers the absolute essentials to get your Arch Linux system functional and optimized.
+1.  [First Steps: Core System Setup](#1-first-steps-core-system-setup)
+2.  [Essential Packages & Services](#2-essential-packages--services)
+3.  [Shell & AUR Helper Configuration](#3-shell--aur-helper-configuration)
+4.  [Hardware & Drivers](#4-hardware--drivers)
+5.  [Desktop Environment & Applications](#5-desktop-environment--applications)
+6.  [Storage: Mounting Additional Drives](#6-storage-mounting-additional-drives)
+7.  [System Optimization & Tuning](#7-system-optimization--tuning)
+8.  [Linux Gaming Setup](#8-linux-gaming-setup)
+9.  [System Backup with Timeshift](#9-system-backup-with-timeshift)
+10. [Advanced & Specific Use Cases](#10-advanced--specific-use-cases)
+
+---
+
+## 1. First Steps: Core System Setup
+
+These are the immediate priorities after a base Arch Linux installation.
 
 ### 1.1. Connect to the Internet
 
-If you are using a desktop environment, it likely has built-in Wi-Fi management tools. Alternatively, connect via Ethernet. For command-line management:
-
-- **NetworkManager (Recommended for most users):**
-
-  ```bash
-  sudo pacman -S --needed networkmanager
-  sudo systemctl enable --now NetworkManager.service
-  # To connect via CLI (use 'nmcli device wifi list' to see available networks)
-  # nmcli device wifi connect "YourSSID" password "YourPassword"
-  ```
-
-  NetworkManager also provides `nmtui` (a text user interface).
-
-- **iwd (iNet Wireless Daemon - lightweight alternative):**
-  ```bash
-  sudo pacman -S --needed iwd
-  sudo systemctl enable --now iwd.service
-  # To connect via CLI (use 'iwctl device list', 'iwctl station <device> scan', 'iwctl station <device> get-networks', 'iwctl station <device> connect "YourSSID"')
-  # Example:
-  # iwctl station wlan0 connect "YourSSID" --passphrase "YourPassword"
-  ```
-
-For more tools that might be useful with NetworkManager (e.g., VPN support):
+If you are using a wired connection, it should work automatically. For Wi-Fi, `NetworkManager` is the standard choice.
 
 ```bash
-sudo pacman -S --needed networkmanager-openvpn networkmanager-pptp networkmanager-vpnc bind
+sudo pacman -S --needed networkmanager
+sudo systemctl enable --now NetworkManager.service
 ```
 
-### 1.2. Optimize Arch Linux Mirrors
-
-Faster mirrors mean faster package downloads.
+To connect to a Wi-Fi network from the command line, you can use `nmtui` for a simple interface or `nmcli`:
 
 ```bash
+# List available Wi-Fi networks
+nmcli device wifi list
+# Connect to a network
+nmcli device wifi connect "Your_SSID" password "Your_Password"
+```
+
+### 1.2. Optimize Pacman Mirrors
+
+Using faster, up-to-date mirrors will significantly speed up package downloads.
+
+```bash
+# Install reflector
 sudo pacman -S --needed reflector
-sudo reflector --verbose --latest 8 --download-timeout 16 --country 'India,Bangladesh' --sort rate --protocol https,http --save /etc/pacman.d/mirrorlist
+
+# Backup the original mirrorlist
+sudo cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+
+# Generate a new mirrorlist with the fastest mirrors in your region
+# Change 'India,Singapore' to your country and nearby ones.
+sudo reflector --verbose --latest 10 --country 'India,Singapore' --sort rate --protocol https --save /etc/pacman.d/mirrorlist
 ```
 
-**Note:** You can change `'India,Bangladesh'` to your country or nearby countries for best results. Run this command periodically to keep your mirrorlist fresh.
+After updating your mirrors, perform a full system upgrade to ensure everything is current.
 
-### 1.3. Faster & Secure Internet using DNS
+```bash
+sudo pacman -Syu
+```
 
-Configure `systemd-resolved` for faster DNS lookups, DNS-over-TLS, and caching.
+### 1.3. Automate Package Cache Cleanup
 
-1.  **Edit the configuration file:**
+Prevent your package cache from consuming excessive disk space by automatically cleaning it after transactions.
 
-    ```bash
-    sudo vim /etc/systemd/resolved.conf
-    ```
+First, install the necessary tool:
+```bash
+sudo pacman -S --needed pacman-contrib
+```
 
-2.  **Paste or uncomment and modify the following lines:**
+Next, create a pacman hook to trigger the cleanup:
 
-    ```ini
-    [Resolve]
-    DNS=9.9.9.9#quad9
-    FallbackDNS=149.112.112.112#quad9
-    #DNS=1.1.1.1#cloudflare
-    #FallbackDNS=1.0.0.1#cloudflare
-    #DNS=8.8.8.8#google
-    #FallbackDNS=8.8.4.4#google
-    DNSOverTLS=yes # if using dot/doh on the network/router level can consider switching it to no.
-    DNSStubListener=yes
-    DNSSEC=no # Change to 'yes' for increased security (may slightly impact speed)
-    ReadEtcHosts=yes
-    MulticastDNS=no
-    LLMNR=no
-    Cache=yes
-    #CacheSize=10000 # Uncomment and adjust if needed, default is usually fine
-    ```
+```bash
+sudo mkdir -p /etc/pacman.d/hooks
+sudo vim /etc/pacman.d/hooks/clean_package_cache.hook```
 
-3.  **Enable and start the service:**
+Paste the following content. This configuration keeps the two most recent versions of each package.
 
-    ```bash
-    sudo systemctl enable --now systemd-resolved.service
-    ```
+```ini
+[Trigger]
+Operation = Upgrade
+Operation = Install
+Operation = Remove
+Type = Package
+Target = *
 
-4.  **Ensure NetworkManager (if used) uses systemd-resolved:**
-    Create or edit `/etc/NetworkManager/conf.d/dns.conf`:
+[Action]
+Description = Cleaning pacman cache (keeping last 2 versions)...
+When = PostTransaction
+Exec = /usr/bin/paccache -rk2
+```
 
-    ```bash
-    sudo mkdir -p /etc/NetworkManager/conf.d/
-    sudo vim /etc/NetworkManager/conf.d/dns.conf
-    ```
+## 2. Essential Packages & Services
 
-    Add:
+Install core utilities and enable foundational system services.
 
-    ```ini
-    [main]
-    dns=systemd-resolved
-    ```
+### 2.1. Core System Components
 
-    Then restart NetworkManager: `sudo systemctl restart NetworkManager`.
-    Alternatively, ensure `/etc/resolv.conf` is a symlink to `systemd-resolved`'s stub resolver:
+```bash
+sudo pacman -S --needed dkms dbus ufw git wget cronie openssh htop smartmontools xdg-user-dirs
+```
 
-    ```bash
-    sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
-    ```
+### 2.2. Common System Services
 
-5.  **Flush DNS cache (if needed):**
+Enable services for task scheduling, firewall, time synchronization, and hardware events.
 
-    ```bash
-    sudo resolvectl flush-caches
-    ```
+```bash
+sudo systemctl enable cronie.service
+sudo systemctl enable ufw.service
+sudo systemctl enable systemd-timesyncd.service
+sudo systemctl enable acpid.service
+sudo systemctl enable avahi-daemon.service
+```
 
-6.  **Check Secure DNS status (optional):**
-    ```bash
-    dig +short txt qnamemintest.internet.nl
-    ```
-    (You might need to install `bind` tools for `dig`: `sudo pacman -S --needed bind`)
+For SSDs, enable the TRIM timer to maintain drive performance:
+```bash
+sudo systemctl enable fstrim.timer
+```
 
-### 1.4. Automatic Package Cache Cleanup
+### 2.3. Basic Firewall Configuration (UFW)
 
-Prevent your package cache from growing indefinitely.
+Set up a simple and effective firewall policy.
 
-1.  **Install `pacman-contrib` for the `paccache` utility:**
+```bash
+# Deny all incoming traffic and allow all outgoing traffic
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
 
-    ```bash
-    sudo pacman -S --needed pacman-contrib
-    ```
+# Enable the firewall
+sudo ufw enable
+```**Important**: If you need to access this machine via SSH, you must explicitly allow it:
+```bash
+sudo ufw allow ssh
+```
 
-2.  **Create the hooks directory:**
+### 2.4. Filesystem and Archive Utilities
 
-    ```bash
-    sudo mkdir -p /etc/pacman.d/hooks
-    ```
+Install tools for managing various filesystems and archive formats.
 
-3.  **Create the hook file:**
+```bash
+# Filesystem support
+sudo pacman -S --needed nfs-utils cifs-utils ntfs-3g exfat-utils gvfs udisks2
 
-    ```bash
-    sudo vim /etc/pacman.d/hooks/clean_package_cache.hook
-    ```
+# Archive format support
+sudo pacman -S --needed p7zip unrar unzip xz rsync zip
+```
 
-4.  **Paste the following content:**
+### 2.5. Multimedia Codecs
 
-    ```ini
-    [Trigger]
-    Operation = Upgrade
-    Operation = Install
-    Operation = Remove
-    Type = Package
-    Target = *
-
-    [Action]
-    Description = Cleaning pacman cache (keeping last 2 versions)...
-    When = PostTransaction
-    Exec = /usr/bin/paccache -rk2
-    ```
-
-    This hook will keep the current and one previous version of each package in the cache.
-
-### 1.5. Essential System Packages & Services
-
-Install core components and general utilities.
-
-- **Core System Components:**
-
-  ```bash
-  sudo pacman -S --needed dkms dbus ufw timeshift
-  ```
-
-  (_`timeshift` is for backups, covered later_)
-
-- **General Utilities and Tools:**
-
-  ```bash
-  sudo pacman -S --needed jshon expac git wget acpid avahi net-tools xdg-user-dirs cronie vim openssh htop smartmontools xdg-utils
-  ```
-
-  (_`iwd` was mentioned for internet, include here if you opted for it over NetworkManager_)
-
-- **Enable Common System Services:**
-
-  ```bash
-  sudo systemctl enable cronie.service
-  sudo systemctl enable ufw.service # Firewall
-  sudo systemctl enable acpid.service
-  sudo systemctl enable avahi-daemon.service
-  sudo systemctl enable systemd-timesyncd.service # Time synchronization
-  # Optional: Enable fstrim.timer for SSDs if not using 'discard=async' in fstab
-  # sudo systemctl enable fstrim.timer
-  ```
-
-- **Set Basic Firewall Defaults (UFW):**
-  ```bash
-  sudo ufw enable
-  sudo ufw default deny incoming
-  sudo ufw default allow outgoing
-  # sudo ufw status verbose # To check status
-  ```
-  **Important:** If you SSH into this machine, remember to allow SSH: `sudo ufw allow ssh` or `sudo ufw allow 22/tcp`.
-
-### 1.6. Archive and File System Utilities
-
-- **Compression Utilities:**
-
-  ```bash
-  sudo pacman -S --needed p7zip unrar unzip unace xz rsync zip unarj lrzip lha cpio arj
-  ```
-
-- **File System Utilities:**
-  ```bash
-  sudo pacman -S --needed nfs-utils cifs-utils ntfs-3g exfat-utils gvfs udisks2
-  ```
-  (_`gvfs` and `udisks2` are particularly useful for desktop environments for auto-mounting drives._)
-
-### 1.7. Multimedia Codecs
-
-For broad multimedia playback support:
+Install a comprehensive set of codecs for broad multimedia playback support.
 
 ```bash
 sudo pacman -S --needed gst-libav gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gstreamer-vaapi x265 x264 lame
 ```
 
----
+## 3. Shell & AUR Helper Configuration
 
-## 2. Shell Configuration & AUR Helper
+Customize your shell and gain access to the Arch User Repository (AUR).
 
-Customize your shell and enable access to the Arch User Repository (AUR).
+### 3.1. Install an AUR Helper (`paru`)
 
-### 2.1. Switch to Other Shells (Example: Fish)
-
-If you prefer a shell other than Bash:
+The AUR contains thousands of community-maintained packages. An AUR helper like `paru` automates the process of building and installing them.
 
 ```bash
-# Example: Fish (Friendly Interactive Shell)
-sudo pacman -S --needed fish ttf-jetbrains-mono-nerd # Nerd Font for nice glyphs
-sudo chsh -s /usr/bin/fish <your_username>
-# You will need to reboot or log out and log back in for the change to take effect.
-# reboot
-```
-
-### 2.2. Install `paru` (AUR Helper)
-
-`paru` allows you to easily install packages from the AUR.
-
-```bash
-# Ensure base-devel and git are installed (usually are, but good check)
+# Ensure required build tools are installed
 sudo pacman -S --needed base-devel git
 
 # Clone and build paru
-mkdir -p ~/repos # Or any other directory you prefer for building packages
-cd ~/repos
 git clone https://aur.archlinux.org/paru-bin.git
 cd paru-bin
 makepkg -si
-# '-s' installs dependencies, '-i' installs the package after building
-# '-c' can be added (makepkg -sic) to clean up build files afterwards
-
-cd ~ # Go back to home directory
+cd .. && rm -rf paru-bin
 ```
 
-**Tips for `paru`:**
-Edit `/etc/paru.conf` (e.g., `sudo vim /etc/paru.conf`):
+### 3.2. Customize Your Shell
 
-1.  Uncomment `SkipReview` to skip reviewing PKGBUILDs for every installation (like `yay`). Use with caution.
-2.  Uncomment `CleanAfter` to remove untracked files (build dependencies) after installation.
+You can enhance your shell with aliases for common commands.
 
-### 2.3. Configure Shell Aliases (`.bashrc`, `.zshrc`, `config.fish`)
-
-Add useful aliases to your shell's configuration file.
-
-- For **Bash** (`~/.bashrc`):
-- For **Zsh** (`~/.zshrc`):
-- For **Fish** (`~/.config/fish/config.fish`):
-
-Example aliases (syntax might vary slightly between shells, Fish uses `alias ls "eza -al --color=always --group-directories-first"`):
-
+**Example for Bash (`~/.bashrc`) or Zsh (`~/.zshrc`):**
 ```bash
-# In .bashrc or .zshrc
-alias ls='eza -al --color=always --group-directories-first' # If eza is installed (see Terminal Setup)
+# Replace ls with a modern alternative like eza
+alias ls='eza -al --color=always --group-directories-first'
 alias la='eza -a --color=always --group-directories-first'
-alias ll='eza -l --color=always --group-directories-first'
+
+# Pacman and Paru shortcuts
+alias update='sudo pacman -Syu && paru -Sua'
 alias pi='sudo pacman -S'
-alias paru='paru --skipreview --removemake' # Example custom paru alias
-alias pr='sudo pacman -R'
-alias prs='sudo pacman -Rns' # Note: original had prr, Rns is more common
-alias vim='nvim' # If Neovim is installed
-alias update='sudo pacman -Syu && paru -Sua --skipreview --removemake'
+alias prs='sudo pacman -Rns'
+
+# Use Neovim instead of Vim
+alias vim='nvim'
 ```
+After editing, reload your shell's configuration with `source ~/.bashrc` or simply open a new terminal.
 
-After editing, source the file (e.g., `source ~/.bashrc`) or open a new terminal.
+## 4. Hardware & Drivers
 
----
+Configure audio, graphics, and other hardware.
 
-## 3. Hardware Drivers & Setup
+### 4.1. Sound System (PipeWire)
 
-Ensure your hardware components are working correctly.
-
-### 3.1. Sound System Setup (PipeWire)
-
-PipeWire is the modern standard for audio and video handling on Linux.
-
-1.  **Install PipeWire and related packages:**
-
-    ```bash
-    sudo pacman -S --needed alsa-utils pipewire pipewire-pulse pipewire-jack wireplumber realtime-privileges
-    ```
-
-2.  **Improve PipeWire performance (mitigates glitches/cut-outs):**
-    Add your user to the `realtime` group:
-
-    ```bash
-    sudo gpasswd -a <your_username> realtime
-    ```
-
-    A reboot or logout/login is required for this group change to take effect.
-
-3.  **Sound Control Utilities:**
-
-    - For Qt-based Desktops (e.g., KDE Plasma, LXQt):
-      ```bash
-      sudo pacman -S --needed pavucontrol-qt
-      ```
-    - For GTK-based Desktops (e.g., GNOME, XFCE, Cinnamon):
-      ```bash
-      sudo pacman -S --needed pavucontrol
-      ```
-
-4.  **Manage Audio Output Streams with Helvum (Optional):**
-    Helvum is a graphical patchbay for PipeWire, useful for complex audio routing. Like two sound devices having same audio stream
-    ```bash
-    sudo pacman -S --needed helvum
-    ```
-
-### 3.2. Fonts Installation (Optional)
-
-Essential for application compatibility and a pleasant visual experience.
+PipeWire is the modern standard for audio on Linux.
 
 ```bash
-sudo pacman -S --needed ttf-dejavu ttf-liberation noto-fonts ttf-caladea \
-ttf-carlito ttf-opensans otf-overpass ttf-roboto tex-gyre-fonts ttf-ubuntu-font-family \
-ttf-linux-libertine freetype2 terminus-font ttf-bitstream-vera ttf-droid ttf-fira-mono \
-ttf-fira-sans ttf-freefont ttf-inconsolata libertinus-font \
-adobe-source-sans-fonts adobe-source-serif-fonts adobe-source-code-pro-fonts \
-cantarell-fonts opendesktop-fonts
-# ttf-jetbrains-mono-nerd was installed with Fish, good for terminals
+sudo pacman -S --needed alsa-utils pipewire pipewire-pulse pipewire-jack wireplumber realtime-privileges
 ```
 
-Consider `noto-fonts-cjk` for East Asian languages and `noto-fonts-emoji` for emoji support.
+For improved audio performance and lower latency, add your user to the `realtime` group.
+```bash
+sudo gpasswd -a <your_username> realtime
+```
+You will need to log out and log back in for this change to take effect.
 
-### 3.3. Input Device Drivers (Xorg i3, cinnamon)
+For graphical audio control, install `pavucontrol` (GTK) or `pavucontrol-qt` (Qt).
+```bash
+# For GTK-based desktops (GNOME, XFCE)
+sudo pacman -S --needed pavucontrol
 
-Install necessary drivers for mice, touchpads, etc., primarily for Xorg sessions. Wayland often handles this differently.
+# For Qt-based desktops (KDE Plasma)
+sudo pacman -S --needed pavucontrol-qt
+```
 
-- **Common Input Drivers:**
+### 4.2. Graphics Drivers
 
-  ```bash
-  sudo pacman -S --needed xf86-input-libinput # Modern general-purpose driver
-  # xf86-input-synaptics # For older Synaptics touchpads, libinput is usually preferred
-  # xf86-input-evdev # Generic event-based driver, often a fallback
-  ```
+Install the appropriate drivers for your graphics card.
 
-- **Additional Driver for Virtual Machines:**
-  ```bash
-  # Required if Arch Linux is installed inside a virtual machine (e.g., VirtualBox, VMware)
-  sudo pacman -S --needed xf86-input-vmmouse
-  ```
+**For AMD (Mesa):**
+```bash
+sudo pacman -S --needed mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon vulkan-icd-loader lib32-vulkan-icd-loader
+```
 
-### 3.4. Wi-Fi Connection Setup (Especially for Laptops)
+**For NVIDIA:**
+```bash
+# For modern GPUs
+sudo pacman -S --needed nvidia-dkms nvidia-utils lib32-nvidia-utils nvidia-settings
 
-If NetworkManager or `iwd` (from Core Setup) isn't managing Wi-Fi, or for more manual control:
+# For CUDA/OpenCL support
+sudo pacman -S --needed opencl-nvidia cuda
+```
+**Note**: The `nvidia-dkms` package is generally preferred as it rebuilds automatically for new kernels. Consult the Arch Wiki for drivers for older cards.
+
+### 4.3. Bluetooth Support
 
 ```bash
-sudo pacman -S --needed wireless_tools wpa_supplicant ifplugd dialog
+sudo pacman -S --needed bluez bluez-utils
+sudo systemctl enable --now bluetooth.service
 ```
 
-These are often pulled in as dependencies by NetworkManager or `iwd` but can be installed explicitly.
+## 5. Desktop Environment & Applications
 
-### 3.5. Bluetooth Support
+Set up your graphical interface and install essential software.
 
-Enable Bluetooth functionality.
+### 5.1. Fonts
 
-1.  **Install Bluetooth packages:**
+A good set of fonts is essential for proper rendering in applications and on the web.
 
+```bash
+sudo pacman -S --needed ttf-dejavu ttf-liberation noto-fonts ttf-jetbrains-mono-nerd adobe-source-code-pro-fonts
+```
+For emoji and East Asian language support, also install `noto-fonts-emoji` and `noto-fonts-cjk`.
+
+### 5.2. Desktop Environment
+
+Choose **one** desktop environment. Here are a few popular options.
+
+#### KDE Plasma 6 (Minimal & Modular)
+
+This approach installs a lightweight but functional Plasma desktop, allowing you to add components as needed.
+
+1.  **Core Desktop:**
     ```bash
-    sudo pacman -S --needed bluez bluez-utils
+    sudo pacman -S --needed plasma-desktop sddm konsole dolphin breeze-gtk kde-gtk-config powerdevil plasma-nm plasma-pa xdg-desktop-portal-kde
     ```
-
-2.  **Enable the Bluetooth service:**
+    1.  **Enable the Display Manager:**
     ```bash
-    sudo systemctl enable --now bluetooth.service
+    sudo systemctl enable sddm.service
     ```
-    You might need a graphical Bluetooth manager depending on your desktop environment (e.g., `blueman` or DE-integrated tools).
+2.  **Essential Utilities (Recommended):**
+    ```bash
+    sudo pacman -S --needed spectacle ark kinfocenter plasma-systemmonitor
+    ```
+After installing, **reboot** to log into your new Plasma session.
 
----
-
-## 4. Desktop Environment & Essential Applications
-
-Set up your graphical environment and install common applications.
-
-### 4.1. Terminal, Text Editor, and Development Tools
-
-- **Alacritty (Fast Terminal Emulator) & Essential CLI Tools:**
-
-  ```bash
-  sudo pacman -S --needed alacritty eza fd ripgrep # eza is a modern ls replacement
-  ```
-
-- **Set Alacritty Theme (Optional):**
-
-  ```bash
-  mkdir -p ~/.config/alacritty/themes
-  git clone https://github.com/alacritty/alacritty-theme ~/.config/alacritty/themes
-  ```
-
-  You'll need to edit `~/.config/alacritty/alacritty.yml` to use a theme. Refer to Alacritty documentation.
-
-- **Neovim (Text Editor) & LazyVim (Preconfigured Setup):**
-
-  ```bash
-  sudo pacman -S --needed neovim python-pynvim nodejs npm # nodejs/npm for some LSP/plugins
-  ```
-
-  **To set up LazyVim:**
-
-  1.  Backup existing Neovim configuration (if any):
-      ```bash
-      mv ~/.config/nvim{,.bak}
-      mv ~/.local/share/nvim{,.bak}
-      mv ~/.local/state/nvim{,.bak}
-      mv ~/.cache/nvim{,.bak}
-      ```
-  2.  Clone LazyVim starter:
-      ```bash
-      git clone https://github.com/LazyVim/starter ~/.config/nvim
-      rm -rf ~/.config/nvim/.git # Remove starter's git history
-      ```
-  3.  Run Neovim to initialize:
-      ```bash
-      nvim
-      ```
-
-- **Code - OSS (VSCode open-source build with Microsoft Marketplace):**
-  ```bash
-  paru -S --needed code code-features code-marketplace
-  ```
-
-### 4.2. Web Browsers
-
-Choose your preferred browser(s). `paru` can install from official repos or AUR.
+#### GNOME
 
 ```bash
-# Example: Firefox (Official Repo), Brave (AUR), Zen Browser (AUR)
-paru -S --needed firefox brave-bin zen-browser-bin
+sudo pacman -S --needed gnome gdm
+sudo systemctl enable gdm.service
 ```
+After installing, **reboot** to log into GNOME.
 
-### 4.3. Other Common Applications
+#### Cinnamon
 
 ```bash
-paru -S --needed vesktop # Discord client
+sudo pacman -S --needed cinnamon lightdm lightdm-gtk-greeter
+sudo systemctl enable lightdm.service
+```
+After installing, **reboot** to log into Cinnamon.
+
+### 5.3. Essential Applications
+
+Install a web browser, text editor, and other key applications.
+
+```bash
+# Terminal Emulator (Alacritty is a fast, GPU-accelerated option)
+sudo pacman -S --needed alacritty eza fd ripgrep
+
+# Web Browsers
+paru -S --needed firefox brave-bin
+
+# Text Editors / IDEs
+sudo pacman -S --needed neovim
+paru -S --needed code # Open-source build of VSCode
+
+# Common Applications
 paru -S --needed telegram-desktop keepassxc mpv qbittorrent bleachbit onlyoffice-bin
 ```
 
-Okay, I understand! You want a more granular approach to installing KDE Plasma, starting with a genuinely minimal but functional desktop, and then adding optional components based on use-case (laptop features, Flatpak support, etc.). This is a great way to avoid bloat and tailor the installation.
+## 6. Storage: Mounting Additional Drives
 
-Here's the revised section for KDE Plasma 6, incorporating your suggestions and a more structured approach:
+This section covers formatting a new drive and setting it to auto-mount at boot.
 
----
+**Warning:** The following steps will erase all data on the target partition. Double-check your device names (`/dev/sdXn`).
 
-### 4.4. Desktop Environments (Optional)
+1.  **Identify Your Drive:**
+    Use `lsblk -f` to list all block devices and their partitions. Identify the target partition (e.g., `/dev/sdb1`).
 
-Install a desktop environment if you haven't already. Choose **one**.
-
-- **KDE Plasma 6:**
-
-  KDE Plasma is a feature-rich and highly customizable desktop environment. You can start with a minimal setup and add components as needed.
-
-  1.  **Minimal Core KDE Plasma Desktop:**
-      This command installs the essential components for a functional Plasma desktop, including the desktop shell, login manager, a terminal, file manager, network and audio management, power management, and basic theming.
-
-      ```bash
-      sudo pacman -S --needed plasma-desktop sddm konsole dolphin \
-      breeze-gtk kde-gtk-config kscreen kwallet-pam plasma-nm plasma-pa \
-      powerdevil sddm-kcm xdg-desktop-portal-kde \
-      ocean-sound-theme plasma-workspace-wallpapers spectacle plasma-systemmonitor
-      ```
-
-      - `plasma-desktop`: Core desktop environment.
-      - `sddm`: Recommended display manager for Plasma.
-      - `konsole`: Default terminal emulator.
-      - `dolphin`: Default file manager.
-      - `breeze-gtk`, `kde-gtk-config`: For GTK application theming consistency.
-      - `kscreen`: Display configuration.
-      - `kwallet-pam`: KWallet PAM integration for automatic unlocking.
-      - `plasma-nm`: NetworkManager applet.
-      - `plasma-pa`: PipeWire/PulseAudio volume applet.
-      - `powerdevil`: Power management services.
-      - `sddm-kcm`: SDDM configuration module in System Settings.
-      - `xdg-desktop-portal-kde`: Essential for integration with sandboxed apps (like Flatpaks).
-      - `ocean-sound-theme`, `plasma-workspace-wallpapers`: Basic sounds and wallpapers.
-      - `spectacle`: Screenshot utility.
-      - `plasma-systemmonitor`: System activity monitor.
-
-      After installation, enable the display manager:
-
-      ```bash
-      sudo systemctl enable sddm.service
-      ```
-
-      You'll need to **reboot** for the changes to take effect and to log into your new Plasma session.
-
-  2.  **Optional Desktop Enhancements & Utilities:**
-      These packages add more common Plasma applications and features.
-
-      ```bash
-      sudo pacman -S --needed ark # Archiving tool
-      sudo pacman -S --needed kwrite # Simple text editor (or 'kate' for more features)
-      sudo pacman -S --needed kdeplasma-addons # Various widgets and addons (e.g., weather, dictionary)
-      sudo pacman -S --needed kinfocenter # System information center
-      sudo pacman -S --needed plasma-browser-integration # Better browser integration
-      sudo pacman -S --needed plasma-disks # Disk health monitoring and management applet
-      sudo pacman -S --needed plasma-firewall # GUI for UFW or firewalld
-      sudo pacman -S --needed plasma-vault # Encrypted vaults
-      sudo pacman -S --needed drkonqi # Crash report assistant
-      # sudo pacman -S --needed plasma-welcome # Welcome screen for new users
-      # sudo pacman -S --needed ksshaskpass # GUI for SSH key passphrases
-      # sudo pacman -S --needed print-manager # For managing printers
-      ```
-
-  3.  **For Flatpak Users:**
-      If you plan to use Flatpaks, install `flatpak` itself and integration tools for Plasma. `discover` is Plasma's software center, which can manage Flatpaks.
-
-      ```bash
-      sudo pacman -S --needed flatpak discover flatpak-kcm
-      ```
-
-      - `flatpak`: The Flatpak runtime.
-      - `discover`: Plasma's software center (can handle Flatpaks, packages from repos).
-      - `flatpak-kcm`: System Settings module to manage Flatpak permissions.
-
-  4.  **For Laptop Users (Additional Hardware Support):**
-      These packages are useful for laptop-specific hardware.
-
-      ```bash
-      sudo pacman -S --needed bluedevil # Bluetooth integration for Plasma
-      # sudo pacman -S --needed plasma-thunderbolt # Thunderbolt device management
-      # sudo pacman -S --needed wacomtablet # KCM for Wacom tablet configuration (libwacom is a dependency)
-      ```
-
-  5.  **Optional: Theming for GRUB Bootloader & Plymouth Splash Screen:**
-      If you use GRUB as your bootloader and Plymouth for a graphical boot splash, you can install Breeze themes for them. (Note: If using `systemd-boot`, so this might not apply to your setup but is useful for a general guide).
-
-      ```bash
-      # Ensure plymouth is installed if you intend to use it: sudo pacman -S --needed plymouth
-      # Then install themes:
-      # sudo pacman -S --needed breeze-grub breeze-plymouth plymouth-kcm
-      ```
-
-      You would then need to configure GRUB and Plymouth accordingly (e.g., adding `plymouth` to `HOOKS` in `mkinitcpio.conf` and regenerating initramfs, and setting theme in GRUB config).
-
-  6.  **Optional: Post-install KDE apps and themes:**
-
-      ```bash
-      sudo pacman -S --needed packagekit-qt6 okular kate gwenview spectacle kalk kwalletmanager kdeconnect sshfs plasma-systemmonitor kfind kolourpaint kdevelop kamoso krita kdenlive mediainfo
-      sudo pacman -S --needed materia-kde materia-gtk-theme capitaine-cursors fcitx5-breeze kvantum
-      ```
-
-This breakdown should give users a clear path to a minimal Plasma setup and then allow them to easily add the specific functionality they require.
-
-- **GNOME:**
-
-  ```bash
-  sudo pacman -S --needed gnome gdm
-  sudo systemctl enable gdm.service # Login manager
-  # reboot
-  ```
-
-  **GNOME apps, extensions, and themes:**
-
-  ```bash
-  sudo pacman -S --needed gnome-text-editor gnome-tweaks gnome-calculator gnome-calendar gnome-photos gnome-sound-recorder gnome-weather gnome-system-monitor gparted gnome-disk-utility
-  sudo pacman -S --needed gnome-shell-extensions # Provides a base set
-  # For more extensions like appindicator, arc-menu, dash-to-panel, install gnome-shell-extension-manager and browse online
-  # paru -S gnome-shell-extension-appindicator gnome-shell-extension-arc-menu-git gnome-shell-extension-dash-to-panel-git
-  sudo pacman -S --needed arc-gtk-theme arc-icon-theme papirus-icon-theme # arc-solid-gtk-theme is part of arc-gtk-theme
-  ```
-
-- **Cinnamon:**
-  ```bash
-  sudo pacman -S --needed cinnamon lightdm lightdm-gtk-greeter # Or another login manager like gdm/sddm
-  sudo systemctl enable lightdm.service
-  # reboot
-  ```
-  **Cinnamon apps & themes:**
-  ```bash
-  # Using paru as some might be AUR packages or have AUR alternatives
-  paru -S --needed xed xreader galculator gnome-screenshot gparted webkit2gtk gnome-terminal file-roller celluloid drawing gufw warpinator mint-themes mint-y-icons
-  paru -S --needed nemo-audio-tab nemo-emblems nemo-fileroller nemo-image-converter nemo-pastebin nemo-preview nemo-python nemo-seahorse nemo-share gvfs-mtp
-  paru -S --needed pix xviewer webapp-manager mint-backgrounds
-  ```
-
----
-
-## 5. System Optimization & Tuning
-
-Fine-tune your system for better performance and usability.
-
-### 5.1. Optional: Remap Keys on Keyboard
-
-- **Method 1 (CLI): Keyd**
-  Lightweight and powerful.
-
-  1.  Install:
-      ```bash
-      sudo pacman -S --needed keyd
-      sudo systemctl enable --now keyd.service
-      ```
-  2.  Edit config file (`sudo vim /etc/keyd/default.conf`). Example:
-
-      ```ini
-      [ids]
-      * # Apply to all keyboards
-
-      [main]
-      # Example: Swap Left Alt and Left Meta (Super/Windows key)
-      leftmeta = leftalt
-      leftalt = leftmeta
-      # Example: Disable F9 key
-      # f9 = noop
-      ```
-
-  3.  **Important `keyd` commands:**
-      - `sudo keyd monitor`: Test key presses and identify key names.
-      - `sudo keyd reload`: Apply changes without rebooting.
-      - `sudo journalctl -eu keyd -f`: View logs for troubleshooting.
-
-- **Method 2 (GUI): Input Remapper**
-  User-friendly graphical interface.
-  ```bash
-  paru -S --needed input-remapper-git
-  sudo systemctl enable --now input-remapper.service
-  # sudo systemctl restart input-remapper # If already enabled and you made changes
-  ```
-  Launch `input-remapper-gtk` from your application menu to configure.
-
-### 5.2. Format and Grant Permissions to Additional Hard Drives
-
-For new or repurposed drives. **WARNING: `mkfs` will erase all data on the specified partition.**
-
-1.  **Install filesystem tools (if not already present):**
+2.  **Format the Partition:**
+    This example formats the drive to `ext4`.
     ```bash
-    sudo pacman -S --needed e2fsprogs # For ext4
-    # sudo pacman -S --needed btrfs-progs # For BTRFS
-    # sudo pacman -S --needed xfsprogs # For XFS
-    ```
-2.  **Identify the drive/partition:**
-    ```bash
-    lsblk -f
-    ```
-    Look for your target device, e.g., `/dev/sda1`, `/dev/sdb`, etc.
-3.  **Format the partition (Example: ext4 on `/dev/sda1`):**
-    ```bash
-    # sudo mkfs.ext4 /dev/sda1
-    ```
-    Replace `/dev/sda1` with your actual partition.
-4.  **Label the partition (Optional but recommended):**
-
-    ```bash
-    # sudo e2label /dev/sda1 MyDataDrive
+    sudo mkfs.ext4 /dev/sdb1
     ```
 
-5.  **Create a mount point:**
-
+3.  **Create a Mount Point:**
+    This is the directory where the drive's contents will be accessible.
     ```bash
-    sudo mkdir /mnt/MyDataDrive
+    sudo mkdir /mnt/MyData
     ```
 
-6.  **Mount the drive temporarily:**
-
+4.  **Change Ownership:**
+    Mount the drive temporarily to change its permissions, giving your user read and write access.
     ```bash
-    # sudo mount /dev/sda1 /mnt/MyDataDrive
+    sudo mount /dev/sdb1 /mnt/MyData
+    sudo chown -R <your_username>:<your_username> /mnt/MyData
+    sudo umount /mnt/MyData
     ```
 
-7.  **Change ownership to your user:**
+### **5. Configure Auto-Mounting (`fstab`)**
 
+To make a drive mount automatically on boot, you need to add it to `/etc/fstab`. This file acts as a map for your system's storage devices.
+
+**Warning:** An incorrect `fstab` entry can prevent your system from booting. Always double-check your syntax and back up the file before saving changes.
+
+1.  **Get the Partition's `UUID`:**
+    First, find the persistent `UUID` of your partition. Using the `UUID` is safer than using device names like `/dev/sdb1`, which can change.
     ```bash
-    sudo chown -R <your_username>:<your_username> /mnt/MyDataDrive
+    sudo blkid /dev/sdb1
     ```
+    Copy the `UUID` value from the output.
 
-8.  **Hide lost+found system folder:**
-
+2.  **Backup and Edit `fstab`:**
     ```bash
-    echo "lost+found" > .hidden
-    ```
-
-9.  **For permanent mounting, add an entry to `/etc/fstab`.** (See next section)
-
-### 5.3. Improve Read/Write Speeds & Auto-Mount (Edit `/etc/fstab`)
-
-**WARNING: Incorrectly editing `/etc/fstab` can render your system unbootable. Proceed with extreme caution. Backup your `/etc/fstab` before editing: `sudo cp /etc/fstab /etc/fstab.bak`**
-
-1.  **Get the UUID of your partition:**
-    ```bash
-    lsblk -f
-    # Or more specifically for a device:
-    # sudo blkid /dev/sda1
-    ```
-2.  **Edit `/etc/fstab`:**
-    ```bash
+    sudo cp /etc/fstab /etc/fstab.bak
     sudo vim /etc/fstab
     ```
-3.  **Add a line for your drive. Examples:**
 
-    - **For an ext4 drive (common):**
+3.  **Add the Mount Entry:**
+    Append a new line to the end of the file using one of the presets below. Remember to replace `<your_uuid>` with the actual UUID you copied and adjust the mount point (e.g., `/mnt/MyData`).
 
-      ```
-      simple
-      # UUID=<your_partition_uuid> /mnt/MyDataDrive ext4 defaults,noatime,rw,user,exec,auto 0 2
-      performance
-      # UUID=<your_partition_uuid> /mnt/MyDataDrive ext4 defaults,noatime,user,auto,exec,data=writeback,barrier=0,nobh,errors=remount-ro 0 0
-      ```
+    ---
 
-      Replace `<your_partition_uuid>` with the actual UUID and `/mnt/MyDataDrive` with your mount point.
+    #### **Preset 1: `ext4` Filesystem**
 
-      - `noatime`: Disables writing file access times, can improve performance.
-      - `user`: Allows any user to mount/unmount.
-      - `exec`: Allows execution of binaries.
-      - `auto`: Mounts automatically at boot.
-      - The `0 2` at the end are for dump and fsck order.
+    ##### **A) Balanced (Recommended for most users)**
+    This preset offers excellent performance while retaining important data safety features. It is ideal for drives storing important personal data or for a daily-driver system.
 
-    - **User's provided BTRFS example (for NVMe):**
-      ```
-      # Using All BTRFS Features
-      # /dev/nvme0n1    /mnt/abcdefgh    btrfs   rw,noatime,ssd,discard=async,compress=zstd:3,space_cache=v2,autodefrag,commit=120      0 0
-      
-      # Using No BTRFS Features
-      # /dev/nvme0n1    /mnt/zxcvedfd    btrfs   rw,noatime,nodatasum,nodatacow,compress=no,ssd,discard=async,space_cache=v2,subvol=@   0 0
-      
-      # Using EXT4 But Maximizing Performance Ideal For HDD 
-      # UUID=XXXXXXX    /mnt/MyDataDrive ext4 rw,suid,dev,exec,auto,user,async,noatime,data=writeback,barrier=0,nobh,errors=remount-ro,x-gvfs-show 0 0
-      ```
-      **Note on user's examples:**
-      - `discard=async`: Good for SSDs if fstrim.timer is not used.
-      - `compress=zstd:3`: BTRFS compression.
-      - `nodatasum,nodatacow`: These disable data checksumming and copy-on-write for specific subvolumes/paths, which can increase performance for certain workloads (like virtual machine images or database files) but reduce data integrity features. Use with understanding.
-      - `x-gvfs-show`: Makes the mount visible in file managers like Nautilus.
+    ```fstab
+    # <file system>    <mount point>    <type>  <options>                                         <dump> <pass>
+    UUID=<your_uuid>   /mnt/MyData      ext4    defaults,noatime,rw,user,auto                     0      2
+    ```
 
-4.  **Test `fstab` changes without rebooting:**
-    First unmount the drive if it's currently mounted: `sudo umount /mnt/MyDataDrive`
-    Then try to mount all entries in `fstab`: `sudo mount -a`
-    If there are errors, revert your `fstab` changes from the backup.
+    ##### **B) Maximum Performance (Ideal for scratch disks, gaming libraries)**
+    This configuration prioritizes raw speed by disabling journaling features that ensure data consistency. Use this for data that is easily replaceable, like a Steam library or temporary build files. **Do not use this for your root filesystem or for storing critical data.**
 
-### 5.4. Enable Active Noise Suppression for Headset Mic
+    ```fstab
+    # <file system>    <mount point>    <type>  <options>                                                               <dump> <pass>
+    UUID=<your_uuid>   /mnt/MyGames     ext4    rw,noatime,user,auto,data=writeback,barrier=0,nobh,errors=remount-ro    0      0
+    ```
+    ---
 
-Uses `rnnoise` to filter out background noise from your microphone input.
+    #### **Preset 2: `BTRFS` Filesystem (for SSDs/NVMe)**
 
-1.  **Install the LADSPA plugin:**
+    ##### **A) Balanced (Recommended for data integrity and speed)**
+    This is the modern, recommended approach for BTRFS. It leverages key features like compression and efficient SSD handling without compromising on BTRFS's core data protection capabilities.
 
+    ```fstab
+    # <file system>    <mount point>       <type>  <options>                                                                 <dump> <pass>
+    UUID=<your_uuid>   /mnt/MyBtrfsDrive   btrfs   rw,noatime,ssd,discard=async,compress=zstd:3,space_cache=v2,autodefrag   0      0
+    ```
+
+    ##### **B) Maximum Performance (For VMs, databases, non-critical files)**
+    This preset disables Copy-on-Write (`cow`) and data checksumming, which significantly boosts performance for specific workloads like virtual machine images or database files. This comes at the cost of BTRFS's self-healing and data integrity features. **Use this only on specific subvolumes intended for this purpose.**
+
+    ```fstab
+    # <file system>    <mount point>      <type>  <options>                                                                   <dump> <pass>
+    UUID=<your_uuid>   /mnt/BtrfsVMs      btrfs   rw,noatime,ssd,discard=async,nodatasum,nodatacow,space_cache=v2              0      0
+    ```
+    ---
+
+    **Explanation of Key Options:**
+
+    *   **`defaults`**: A standard set of options (`rw`, `suid`, `dev`, `exec`, `auto`, `nouser`, `async`).
+    *   **`noatime`**: A crucial performance tweak that disables writing file access timestamps.
+    *   **`discard=async`**: Enables continuous TRIM for SSDs, which helps maintain performance over time.
+    *   **`compress=zstd:3`**: (BTRFS) Enables transparent compression with the `zstd` algorithm at level 3, offering a great balance between speed and compression ratio.
+    *   **`space_cache=v2`**: (BTRFS) A more robust and performant way for BTRFS to manage its free space cache.
+    *   **`autodefrag`**: (BTRFS) Helps reduce fragmentation for desktop workloads, though it can be disabled for servers with large files.
+    *   **`data=writeback`**: (ext4 Performance) Only metadata is journaled, not the data itself. Faster, but can lead to data corruption in a crash.
+    *   **`barrier=0`**: (ext4 Performance) Disables write barriers, offering a speed boost at the risk of filesystem corruption during a power failure.
+    *   **`nodatacow`**: (BTRFS Performance) Disables Copy-on-Write. This also disables checksumming and compression for any files affected. **Changes are not retroactive.**
+    *   **`nodatasum`**: (BTRFS Performance) Disables the creation of data checksums, removing a layer of integrity checking.
+
+6.  **Test and Mount:**
+    To test your `fstab` entry without rebooting, run:
+    ```bash
+    sudo mount -a
+    ```    If no errors appear, your drive is now mounted. If you see errors, restore your backup (`sudo mv /etc/fstab.bak /etc/fstab`) and troubleshoot the entry.
+
+## 7. System Optimization & Tuning
+
+Fine-tune your system for better performance and responsiveness.
+
+### 7.1. Enhanced DNS with `systemd-resolved`
+
+Use DNS-over-TLS for improved privacy and speed.
+
+1.  **Configure `resolved.conf`:**
+    ```bash
+    sudo vim /etc/systemd/resolved.conf
+    ```
+    Uncomment and modify the `[Resolve]` section. Below is an example using Quad9's DNS servers.
+
+    ```ini
+    [Resolve]
+    DNS=9.9.9.9
+    FallbackDNS=1.1.1.1
+    DNSOverTLS=yes
+    DNSSEC=no
+    Cache=yes
+    ```
+2.  **Enable the Service:**
+    ```bash
+    sudo systemctl enable --now systemd-resolved.service
+    ```
+3.  **Link `resolv.conf`:**
+    Ensure the system uses `systemd-resolved` for DNS lookups by creating a symbolic link.
+    ```bash
+    sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+    ```
+4.  **Restart NetworkManager:**
+    ```bash
+    sudo systemctl restart NetworkManager
+    ```
+
+### 7.2. Microphone Noise Suppression
+
+This filter uses RNNoise to remove background noise from your microphone input, which is excellent for calls and recording.
+
+1.  **Install the Plugin:**
     ```bash
     sudo pacman -S --needed noise-suppression-for-voice
     ```
-
-2.  **Create PipeWire configuration directory if it doesn't exist:**
-
+2.  **Create a PipeWire Filter Configuration:**
     ```bash
     mkdir -p ~/.config/pipewire/pipewire.conf.d/
-    ```
-
-3.  **Create a filter configuration file:**
-
-    ```bash
     vim ~/.config/pipewire/pipewire.conf.d/99-input-denoising.conf
     ```
-
-4.  **Paste the following content:**
-
+3.  **Paste the following:**
     ```lua
     context.modules = [
         {   name = libpipewire-module-filter-chain
@@ -801,21 +496,16 @@ Uses `rnnoise` to filter out background noise from your microphone input.
                             name = rnnoise
                             plugin = /usr/lib/ladspa/librnnoise_ladspa.so
                             label = noise_suppressor_mono
-                            control = {
-                                # Adjust these values as needed
-                                "VAD Threshold (%)" = 50.0
-                                "VAD Grace Period (ms)" = 200
-                                "Retroactive VAD Grace (ms)" = 0
-                            }
+                            control = { "VAD Threshold (%)" = 50.0 }
                         }
                     ]
                 }
                 capture.props = {
                     node.name = "capture.rnnoise_source"
                     node.passive = true
-                    audio.rate = 48000 # Match your microphone's typical sample rate
+                    audio.rate = 48000
                 }
-                playback.props = { # This creates the virtual source
+                playback.props = {
                     node.name = "rnnoise_source"
                     media.class = Audio/Source
                     audio.rate = 48000
@@ -824,496 +514,138 @@ Uses `rnnoise` to filter out background noise from your microphone input.
         }
     ]
     ```
-
-5.  **Restart PipeWire services or reboot:**
+4.  **Restart PipeWire Services:**
     ```bash
     systemctl --user restart pipewire pipewire-pulse wireplumber
     ```
-    After restarting, you should see a new input source named "Noise Canceling Source" in your sound settings. Select this as your input device in applications.
+    After restarting, a new input device named "Noise Canceling Source" will be available in your audio settings. Select it in your applications for a clear microphone signal.
 
-### 5.5. UniClip: Sync Clipboards Across Mac and Linux PCs (Optional)
+## 8. Linux Gaming Setup
 
-1.  **Installation:**
+Optimize your system for a great gaming experience.
 
-    - Go to the [UniClip GitHub releases page](https://github.com/quackduck/uniclip/releases).
-    - Download the binary for your architecture (e.g., `uniclip_xxx_linux_x86_64.tar.gz`).
-    - Extract and install:
-      ```bash
-      # Example for a downloaded tar.gz file
-      # tar -xzf uniclip_*.tar.gz
-      # cd uniclip_*/
-      # sudo cp uniclip /usr/local/bin/ # Or /usr/bin/
-      ```
+### 8.1. Steam & Lutris
 
-2.  **Firewall Configuration (using `ufw`):**
-    UniClip uses a random port between 30000 and 60000.
-
-    - Run `uniclip` on the "host" device. It will display its IP and the port it's using.
-    - On **each** device that needs to connect, allow incoming connections _from_ the other devices' IPs to this port range.
-      Example: If Host A is `192.168.1.10` and Host B is `192.168.1.11`.
-      - On Host A, to allow connections from Host B:
-        ```bash
-        sudo ufw allow from 192.168.1.11 proto tcp to any port 30000:60000
-        ```
-      - On Host B, to allow connections from Host A:
-        ```bash
-        sudo ufw allow from 192.168.1.10 proto tcp to any port 30000:60000
-        ```
-    - **Security Note:** This opens a wide port range from specific IPs. If UniClip supports static ports in the future, narrow this rule.
-
-3.  **Usage:**
-    - Run `uniclip` on the first device (server). It will print its IP and port.
-    - Run `uniclip <server_ip>:<port>` on other devices to connect.
-
----
-
-## 6. Linux Gaming Setup
-
-Optimize your system for gaming.
-
-### 6.1. Install Steam
+Install Steam for native Linux games and Proton, and Lutris for managing games from other sources.
 
 ```bash
-sudo pacman -S --needed steam
+# Enable the [multilib] repository in /etc/pacman.conf first!
+sudo pacman -S --needed steam lutris
 ```
 
-Ensure your system is 32-bit compatible (`multilib` repository enabled in `/etc/pacman.conf`). Steam requires many 32-bit libraries.
+### 8.2. Wine and Dependencies
 
-### 6.2. Graphics Drivers
+Install `wine-staging` and the essential libraries needed to run Windows games. This tiered approach starts with the absolute minimum and lets you add more if needed.
 
-- **AMD Graphics Driver (Mesa):**
+**Tier 1: Core Wine Installation (Essential)**
+```bash
+sudo pacman -S --needed wine-staging wine-mono wine-gecko winetricks
+```
 
-  ```bash
-  sudo pacman -S --needed mesa lib32-mesa libva-mesa-driver lib32-libva-mesa-driver \
-  mesa-vdpau lib32-mesa-vdpau vulkan-radeon lib32-vulkan-radeon \
-  vulkan-icd-loader lib32-vulkan-icd-loader
-  # For OpenCL (compute)
-  # sudo pacman -S --needed opencl-clover-mesa lib32-opencl-clover-mesa # Older OpenCL
-  # sudo pacman -S --needed opencl-rusticl-mesa lib32-opencl-rusticl-mesa # Newer OpenCL (Recommended)
-  # sudo pacman -S --needed rocm-opencl-runtime # For ROCm capable cards (usually newer)
-  ```
+**Tier 2: Minimal Runtime Dependencies (Highly Recommended)**
+These cover most basic requirements for games to launch.
+```bash
+sudo pacman -S --needed lib32-giflib lib32-gnutls lib32-v4l-utils lib32-libpulse lib32-alsa-plugins lib32-sqlite lib32-libxcomposite lib32-libva lib32-vulkan-icd-loader
+```
 
-  **Optional for X11 (if not using Wayland primarily):**
+**Tier 3: Common Optional Dependencies (Install if Needed)**
+Install these only if a specific game or application fails to run.
+```bash
+# sudo pacman -S --needed lib32-gst-plugins-base-libs lib32-ocl-icd lib32-gtk3 lib32-sdl2
+```
 
-  ```bash
-  # sudo pacman -S --needed xf86-video-amdgpu
-  # xf86-video-ati is for very old cards, amdgpu is for modern ones.
-  # Often not needed as Mesa's modesetting driver works well.
-  ```
+### 8.3. Gaming Tools & Utilities
 
-- **NVIDIA Graphics Driver:**
-  (This guide primarily focuses on AMD based on user input, but for NVIDIA):
-  ```bash
-  # For current GPUs:
-  # sudo pacman -S --needed nvidia nvidia-utils lib32-nvidia-utils
-  # For older GPUs, you might need nvidia-dkms, or specific legacy drivers (e.g., nvidia-470xx-dkms).
-  # Also install:
-  # sudo pacman -S --needed nvidia-settings
-  # For CUDA/OpenCL:
-  # sudo pacman -S --needed opencl-nvidia cuda
-  ```
-  Refer to the Arch Wiki for detailed NVIDIA instructions.
-
-### 6.3. Install Wine & Wine Dependencies
-
-For running Windows applications and games. The following approach prioritizes a minimal installation. Tiers 1, 2, and 3 represent a solid, functional Wine setup. Anything beyond Tier 3 should be considered **optional and only installed if a specific application or game explicitly requires it**, to avoid unnecessary bloat.
-
-- **Tier 1: Core Wine Installation (Essential)**
-  These are the fundamental Wine packages.
-
-  ```bash
-  sudo pacman -S --needed wine-staging wine-mono wine-gecko winetricks
-  ```
-
-  - `wine-staging`: The compatibility layer itself.
-  - `wine-mono`: Open-source implementation of .NET Framework for Wine.
-  - `wine-gecko`: Open-source implementation of Internet Explorer's Trident engine for Wine.
-  - `winetricks`: A helper script to download and install various redistributable runtime libraries.
-
-- **Tier 2: Minimal Wine Base Runtime Dependencies**
-  These libraries are crucial for basic Wine functionality as defined by your core needs.
-
-  ```bash
-  sudo pacman -S --needed  \
-  giflib lib32-giflib \
-  gnutls lib32-gnutls \
-  v4l-utils lib32-v4l-utils \
-  libpulse lib32-libpulse \
-  alsa-plugins lib32-alsa-plugins \
-  alsa-lib lib32-alsa-lib \
-  sqlite lib32-sqlite \
-  libxcomposite lib32-libxcomposite \
-  libva lib32-libva \
-  vulkan-icd-loader lib32-vulkan-icd-loader
-  ```
-
-- **Tier 3:Extra BUT Recommended Runtime Dependencies**
-  These provide additional common functionalities and are highly recommended for a more complete Wine experience, based on your "extra but absolute" list. but try running games/software with tier 2 only if works avoid this tier.
-
-  ```bash
-  sudo pacman -S --needed  \
-  gst-plugins-base-libs lib32-gst-plugins-base-libs \
-  ocl-icd lib32-ocl-icd \
-  gtk3 lib32-gtk3 \
-  sdl2-compat lib32-sdl2-compat
-   \
-
-  ```
-
-  - **Note on `sdl2-compat`**: This provides SDL 2 API compatibility using an SDL2 backend, matching your `-compat` suffix. If older SDL1.2 is needed directly, see Tier 4.
-
-- **Tier 4: Common Optional Dependencies (Install ONLY If Needed)**
-  The packages in this tier are **not considered part of the absolute base**. Install them only if a specific game or application fails and troubleshooting indicates one of these is required. Many common Wine features are covered by Tiers 1-3.
-
-  ```bash
-  # For font rendering and common image formats:
-  # sudo pacman -S --needed  fontconfig lib32-fontconfig libjpeg-turbo lib32-libjpeg-turbo libpng lib32-libpng libxslt lib32-libxslt
-
-  # For Direct3D 12 to Vulkan translation (if not using Proton's vkd3d-proton):
-  # sudo pacman -S --needed  vkd3d lib32-vkd3d
-
-  # For modern SDL1.2 (many old games use this directly):
-  # sudo pacman -S --needed  sdl12-compat lib32-sdl12-compat
-
-  # For 3D audio:
-  # sudo pacman -S --needed  openal lib32-openal
-
-  # For extended multimedia support (beyond gst-plugins-base-libs):
-  # sudo pacman -S --needed  gst-plugins-good lib32-gst-plugins-good
-
-  # For hardware interaction like printing, cameras, scanners (less common for games):
-  # sudo pacman -S --needed  cups lib32-cups libgphoto2 lib32-libgphoto2 sane lib32-sane
-
-  # Utilities and libraries for specific game installers or features:
-  # sudo pacman -S --needed cabextract innoextract ttf-liberation
-  # sudo pacman -S --needed gamemode lib32-gamemode # If you use gamemode
-  # sudo pacman -S --needed libldap lib32-libldap # For apps needing LDAP (e.g., some enterprise apps via Wine)
-  # sudo pacman -S --needed samba # For NTLM authentication, some older installers
-  ```
-
-  **Approach for Tier 4:** Uncomment and install only the specific lines you identify as necessary.
-
-- **Tier 5: Advanced or Highly Specific Dependencies (Avoid Unless Essential)**
-  This tier is for packages that are rarely required or are for very niche use cases. Installing these without a clear need contributes to bloat. Always try `winetricks` first for missing Windows components.
-
-  ```bash
-  # Example: For very old DOS games not handled by Wine/Lutris's DOSBox integration:
-  # sudo pacman -S --needed dosbox
-
-  # Example: For specific console applications within Wine or rare audio needs:
-  # sudo pacman -S --needed ncurses lib32-ncurses mpg123 lib32-mpg123
-
-  # Further extensive list (from original "Extras" and "Extreme" lists, use with extreme caution):
-  # sudo pacman -S --needed lib32-libnm cups-filters libexif libmikmod libpaper qpdf sdl_net sdl_sound lib32-libxss lib32-nspr lib32-nss lsb-release lsof usbutils xorg-xrandr zenity python-evdev lib32-libxxf86vm lib32-libxml2 lib32-openssl nss-mdns lib32-gstreamer gsm lib32-glu lib32-libsm lib32-libice
-  ```
-
-### 6.4. Install Lutris & Dependencies
-
-Lutris helps manage and launch games from various sources.
+*   **MangoHud:** An overlay to display FPS, CPU/GPU usage, and more.
+*   **Gamescope:** A micro-compositor that provides better control over game resolution, refresh rate, and scaling.
+*   **ProtonUp-Qt:** A graphical tool to easily install and manage community builds of Proton (Proton-GE) and Wine (Wine-GE).
 
 ```bash
-sudo pacman -S --needed lutris
-# Optional Lutris dependencies for wider compatibility:
-sudo pacman -S --needed vulkan-tools python-gobject python-requests python-pillow python-yaml python-setproctitle python-distro psmisc p7zip curl soundfont-fluid # python-evdev already in gaming section
-# GObject introspection runtime is usually pulled by python-gobject or gtk3
-# sudo pacman -S --needed gobject-introspection gobject-introspection-runtime
+sudo pacman -S --needed mangohud lib32-mangohud gamescope
+paru -S --needed protonup-qt
 ```
+To use MangoHud in Steam, add `mangohud %command%` to a game's launch options.
 
-### 6.5. Install FPS Overlay (MangoHud) & Gamescope
+### 8.4. Performance Tweaks
 
-- **MangoHud (FPS & System Monitoring Overlay):**
-
-  ```bash
-  sudo pacman -S --needed mangohud lib32-mangohud goverlay # Goverlay is a GUI for MangoHud
-  ```
-
-  Usage: Prepend `mangohud` to game launch commands, e.g., `mangohud steam` or in Steam launch options: `mangohud %command%`.
-
-- **Gamescope (Micro-compositor for games, Wayland/X11 nesting):**
-  ```bash
-  sudo pacman -S --needed gamescope
-  # lib32-vulkan-mesa-layers is part of lib32-mesa or specific vulkan drivers
-  ```
-  Usage: `gamescope -w <width> -h <height> -r <refresh_rate> -- %command%`
-
-### 6.6. Epic Games Launcher (Heroic Games Launcher)
-
+**Increase `vm.max_map_count`:**
+Some games, like CS2 and Elden Ring, require a higher memory map limit.
 ```bash
-paru -S --needed heroic-games-launcher-bin
+sudo vim /etc/sysctl.d/80-gamecompatibility.conf
 ```
+Add the following line:
+```
+vm.max_map_count = 262144
+```
+Apply the change immediately with `sudo sysctl --system`.
 
-### 6.7. Common Game Dependencies & Tools
+**Kernel Parameters (Advanced):**
+For maximum performance, you can add parameters to your bootloader's kernel command line.
+**Warning:** `mitigations=off` disables certain CPU security mitigations. Understand the security risks before using it.
 
-- **ProtonUp-Qt (Manage Proton-GE, Wine-GE, Luxtorpeda, etc.):**
-  ```bash
-  paru -S --needed protonup-qt
-  ```
-- **Microsoft Core Fonts (often needed by games):**
-  ```bash
-  paru -S --needed ttf-ms-win11-auto # Or ttf-ms-fonts from AUR for older set
-  ```
-- **GSM Audio Codec (some older games):**
-  ```bash
-  sudo pacman -S --needed lib32-gsm
-  ```
+Example parameters for an AMD GPU:
+`mitigations=off amdgpu.ppfeaturemask=0xffffffff`
 
-### 6.8. Use Custom Kernel & Wine (Advanced)
+Consult the Arch Wiki for instructions on how to add these to GRUB or `systemd-boot`.
 
-For potentially higher performance, but requires more effort.
+## 9. System Backup with Timeshift
 
-- **Custom Kernel (e.g., `linux-tkg` , `linux-cachyos`):**
+Before you start heavy customization, create a system snapshot. Timeshift is an excellent tool for this.
 
-  - Follow instructions from [Frogging-Family/linux-tkg](https://github.com/Frogging-Family/linux-tkg). This involves cloning the repo, configuring, building, and installing the kernel. It's an advanced process.
-  - The video link you provided ([A1RM4X](https://youtu.be/QIEyv-Pnh0w?si=xBIZg6HLMzp9aP2X)) might offer a good tutorial.
-  - Cachyos kernel can be installed using aur (No compilation required)
-
-- **Custom Wine Builds (e.g., `wine-tkg-git`):**
-  - Prebuilt versions can often be found on the [wine-tkg-git GitHub Actions page](https://github.com/Frogging-Family/wine-tkg-git/actions/workflows/wine-arch.yml) (requires GitHub login).
-  - Alternatively, build it yourself using the `wine-tkg-git` PKGBUILDs.(Better Approach)
-
-### 6.9. Optimize Game Performance (System Tweaks)
-
-- **Increase `vm.max_map_count` (for some games like CS2, Elden Ring):**
-  Create a sysctl configuration file:
-
-  ```bash
-  sudo vim /etc/sysctl.d/80-gamecompatibility.conf
-  ```
-
-  Add:
-
-  ```
-  vm.max_map_count = 262144
-  ```
-
-  Apply immediately: `sudo sysctl --system` or reboot.
-
-- **Mitigate Split Lock (Optional, potential performance gain, slight stability risk):**
-  Create a sysctl configuration file:
-
-  ```bash
-  sudo vim /etc/sysctl.d/99-splitlock.conf
-  ```
-
-  Add:
-
-  ```
-  kernel.split_lock_mitigate=0
-  ```
-
-  Apply immediately: `sudo sysctl --system` or reboot.
-
-- **Kernel Parameters for Gaming (Advanced):**
-  Add these to your bootloader's kernel command line (GRUB: `/etc/default/grub` then `sudo grub-mkconfig -o /boot/grub/grub.cfg`; systemd-boot: edit your loader entry in `/boot/loader/entries/`).
-  **WARNING: Test these individually. `mitigations=off` disables CPU security mitigations and can be a security risk.**
-  ```
-  zswap.enabled=0
-  nowatchdog
-  mitigations=off # Use with extreme caution and understand the security implications
-  amdgpu.ppfeaturemask=0xffffffff # For AMD GPUs, unlocks power play features for overclocking tools
-  amdgpu.dcdebugmask=0x400 # Recommended if using Wayland and AMD GPU
-  # amdgpu.dcdebugmask=0x10 # Or, for specific AMD GPU debugging
-  # split_lock_detect=off # This will completely disable the kernel's split-lock detection mechanism. Might Increase Performance
-  ```
-  After adding to bootloader config, regenerate initramfs and reboot:
-  - If using `mkinitcpio` (default): `sudo mkinitcpio -P`
-  - If using `dracut`: `sudo dracut --regenerate-all --force`
-    Then reboot.
-
-### 6.10. Using `ananicy-cpp` instead of `gamemode` (Alternative)
-
-Ananicy manages process priorities. `cachyos-ananicy-rules` provides game/app-specific rules.
-
-**Important: This requires adding the CachyOS repositories to your system FIRST.** The process for this is not covered here; you'll need to find instructions for adding CachyOS repos to Arch Linux.
-
-1.  **Once CachyOS repos are added, install:**
-
+1.  **Install Timeshift:**
     ```bash
-    sudo pacman -S --needed ananicy-cpp cachyos-ananicy-rules-git power-profiles-daemon cpupower upower cachyos-settings-git python-gobject
+    sudo pacman -S --needed timeshift
     ```
+2.  **Launch and Configure:**
+    Run `sudo timeshift-gtk` from the terminal or find it in your application menu.
+    *   **Snapshot Type:** **Rsync** is recommended and works on any filesystem. Choose Btrfs only if your root partition (`/`) is Btrfs.
+    *   **Location:** Select a separate drive or partition for your snapshots. **Do not store system backups on the same drive as the OS.**
+    *   **Schedule:** Configure automated snapshots if desired.
+    *   **User Home Directories:** For system restoration, it's often best to **exclude** user home directories. Back up your personal data separately.
+3.  **Create Your First Snapshot:**
+    Click the "Create" button to make your first manual backup. This will be your clean baseline to restore to if anything goes wrong.
 
-    (Using `-git` versions for rules and settings as they are often more up-to-date from CachyOS).
-    Enable `ananicy-cpp` service: `sudo systemctl enable --now ananicy-cpp.service`
+## 10. Advanced & Specific Use Cases
 
-2.  **Trigger game mode via `cachyos-settings` script:**
-    In Steam launch options or when launching a game from terminal:
+This section covers tools and configurations for more specific needs.
 
-    ```
-    game-performance %command%
-    # Or for non-Steam games:
-    # game-performance /path/to/game_executable
-    ```
+### 10.1. Overclocking AMD GPUs (`corectrl`)
 
-    `LD_PRELOAD=""` might be needed if you encounter issues: `game-performance LD_PRELOAD="" %command%`
+`corectrl` provides a graphical interface to control GPU clock speeds, fan curves, and power settings.
 
-3.  **Ananicy-cpp + Gamemode is NOT recommended** as they perform similar functions and might conflict.
+**Warning:** Overclocking can cause system instability or damage hardware. Proceed with caution.
 
-4.  **CPU & PCI Latency Tweaks (if using `ananicy-cpp` ecosystem):**
-
-    - Set CPU governor to performance:
-      ```bash
-      sudo powerprofilesctl set performance # Requires power-profiles-daemon
-      # OR manually:
-      # sudo cpupower frequency-set -g performance
-      ```
-    - Improve PCI latency (cachyos-settings might provide this service):
-      ```bash
-      # sudo systemctl enable --now pci-latency.service # Check if this service is provided by cachyos-settings
-      ```
-
-5.  **Check AMD P-State and CPU Governor (For AMD Ryzen CPUs):**
-    - **In BIOS:** Ensure CPPC (Collaborative Processor Performance Control) and Core Performance Boost are enabled. Consider disabling C-States for consistent performance (may increase idle power).
-    - Verify P-State status:
-      ```bash
-      cat /sys/devices/system/cpu/amd_pstate/status # Should be 'active' or 'guided'
-      cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_driver # Should show amd_pstate_epp or similar
-      cat /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference # Should be 'performance' when gaming
-      ```
-
----
-
-## 7. Advanced & Specific Use Cases
-
-### 7.1. Android Debug Bridge (ADB) & Firmware Management (Heimdall)
-
-- **ADB Setup:**
-
-  1.  Install tools:
-      ```bash
-      sudo pacman -S --needed android-tools android-udev
-      ```
-  2.  Add user to `adbusers` group (or `adb` group, check `/usr/lib/udev/rules.d/51-android.rules` for the correct group name):
-      ```bash
-      sudo usermod -aG adbusers <your_username>
-      ```
-      Reboot or log out/in for group changes to apply.
-  3.  **Common ADB commands:**
-      ```bash
-      adb devices            # List connected devices (authorize on phone if prompted)
-      adb reboot bootloader  # Reboot to fastboot/bootloader mode
-      adb reboot recovery    # Reboot to recovery mode
-      # adb sideload <filename.zip> # Sideload update zip in recovery
-      ```
-
-- **Heimdall (for Samsung devices):**
-  1.  Install:
-      ```bash
-      sudo pacman -S --needed heimdall
-      ```
-  2.  **Common Heimdall commands (run as root or with `sudo`):**
-      ```bash
-      sudo heimdall print-pit                # Display partition table (device in download mode)
-      # sudo heimdall flash --RECOVERY recovery.img --no-reboot # Flash recovery image
-      ```
-
-### 7.2. Davinci Resolve (AMD GPU) Prerequisites for Pre-Vega GPUs
-
-For older AMD GPUs (Pre-Vega architecture like Polaris - RX 4xx/5xx series) to work with ROCm for Davinci Resolve.
-
-1.  **Install ROCm components and dependencies:**
-    ```bash
-    sudo pacman -S --needed libxcrypt-compat rocm-core libarchive xdg-user-dirs patchelf rocm-opencl-runtime
-    ```
-2.  **Set environment variable:**
-    Edit `/etc/environment`:
-    ```bash
-    sudo vim /etc/environment
-    ```
-    Add this line:
-    ```
-    ROC_ENABLE_PRE_VEGA=1
-    ```
-    Save and exit. A reboot is required for this to take effect system-wide.
-
-### 7.3. Overclocking AMD GPUs with corectrl (Minimal GUI tool)
-
-**WARNING: Overclocking can lead to instability or damage your hardware if not done carefully. Proceed at your own risk.**
-
-1.  **Installation:**
+1.  **Install `corectrl`:**
     ```bash
     sudo pacman -S --needed corectrl
     ```
-
-2.  **Enable Autostart & Permissions:**
-    Replace `your_username` with your actual Linux username.
-
-    *   **Autostart:**
-        ```bash
-        cp /usr/share/applications/org.corectrl.corectrl.desktop ~/.config/autostart/
-        ```
-
-    *   **Polkit Rule (for passwordless operation):**
-        Create and edit `/etc/polkit-1/rules.d/90-corectrl.rules`:
-        ```bash
-        sudo mkdir -p /etc/polkit-1/rules.d/
-        sudo vim /etc/polkit-1/rules.d/90-corectrl.rules
-        ```
-        Paste (and replace `your_username`):
-        ```javascript
-        polkit.addRule(function(action, subject) {
-            if ((action.id == "org.corectrl.helper.init" ||
-                 action.id == "org.corectrl.helperkiller.init" ||
-                 action.id == "org.corectrl.helper.apply" ||
-                 action.id == "org.corectrl.helper.fanmode") &&
-                subject.local == true &&
-                subject.active == true &&
-                (subject.isInGroup("wheel") || subject.user == "your_username")) {
-                    return polkit.Result.YES;
-            }
-        });
-        ```
-
-3.  **Set Kernel Parameter:**
-    Ensure `amdgpu.ppfeaturemask=0xffffffff` is added to your bootloader's kernel command line.
-    *   *See "Kernel Parameters for Gaming" section for how to do this (e.g., edit GRUB/systemd-boot config, then `sudo mkinitcpio -P` or `sudo dracut --regenerate-all --force`).*
-
-4.  **Reboot:**
+2.  **Add Kernel Parameter:**
+    You must add `amdgpu.ppfeaturemask=0xffffffff` to your bootloader's kernel parameters and reboot for `corectrl` to have full access.
+3.  **Configure Permissions:**
+    To allow `corectrl` to apply settings without asking for a password every time, create a Polkit rule.
     ```bash
-    reboot
+    sudo vim /etc/polkit-1/rules.d/90-corectrl.rules
     ```
-    After reboot, CoreCtrl should autostart and allow full control.
+    Paste the following, replacing `your_username`.
+    ```javascript
+    polkit.addRule(function(action, subject) {
+        if (action.id.startsWith("org.corectrl") && subject.user == "your_username") {
+            return polkit.Result.YES;
+        }
+    });
+    ```
+    After setting this up and rebooting, you can create performance profiles for your applications.
 
-### 7.4. Optional Personal Firmware (User-Specific)
+### 10.2. Android Debug Bridge (ADB)
 
-This section is for firmware specific to your hardware.
-The packages listed (`linux-firmware-qlogic`, `aic94xx-firmware`, `wd719x-firmware`, `upd72020x-fw`) are for specific, less common hardware. Install them if you know you need them. `linux-firmware` (a base package) usually covers most common hardware.
+For managing Android devices from your PC.
 
-```bash
-# Only install if you have identified a need for these specific firmware packages.
-# paru -S --needed linux-firmware-qlogic aic94xx-firmware wd719x-firmware upd72020x-fw
-```
-
----
-
-## 8. System Backup with Timeshift
-
-**Crucial Step:** After configuring your system, take a backup. Timeshift is excellent for system snapshots.
-
-1.  **Launch Timeshift** from your application menu or `sudo timeshift-gtk`.
-2.  **Setup Wizard (First Time):**
-    - **Snapshot Type:**
-      - **Rsync:** Recommended for most users. Backups can be saved to any filesystem (ext4, NTFS, etc.).
-      - **Btrfs:** If your root filesystem is Btrfs, this is very efficient. Snapshots are taken on the same Btrfs volume.
-    - **Snapshot Location:** Choose a partition for storing backups. **It's highly recommended to use a separate drive/partition for backups.**
-    - **Snapshot Levels (Schedule):** Configure how often to take automatic snapshots (optional).
-    - **User Home Directories:** Decide whether to include user home directories. By default, hidden files are included. You can exclude all user files or include all. For system restore purposes, often only system files are needed. Personal data should be backed up separately with a different tool (e.g., `rsync`, Pika Backup, BackInTime).
-3.  **Create Your First Snapshot:** Click "Create". Add a comment if desired.
-
-**Timeshift CLI Commands:**
-
-```bash
-sudo timeshift --list                # List available snapshots
-# sudo timeshift --list --snapshot-device /dev/sdaX # List snapshots on a specific device
-
-sudo timeshift --create --comments "Clean install baseline" --tags D # Create daily snapshot
-# sudo timeshift --restore # Interactively restore from a snapshot
-# sudo timeshift --restore --snapshot 'YYYY-MM-DD_HH-MM-SS' --target /dev/sdXY # Restore specific snapshot to target
-# sudo timeshift --delete --snapshot 'YYYY-MM-DD_HH-MM-SS' # Delete specific snapshot
-# sudo timeshift --delete-all # Delete ALL snapshots
-```
-
-If Timeshift GUI doesn't open in some window managers, try: `sudo -E timeshift-gtk`
-
----
-
-This revised guide(originally git:swapnanil1/arch) should be much easier to follow and provide a solid foundation for your Arch Linux setup! Remember to adapt it to your specific needs and hardware.
+1.  **Install Tools:**
+    ```bash
+    sudo pacman -S --needed android-tools android-udev
+    ```
+2.  **Add User to `adbusers` Group:**
+    ```bash
+    sudo usermod -aG adbusers <your_username>
+    ```
+    You must log out and log back in for the group change to apply. After that, you can run `adb devices` to see your connected phone (once authorized on the device).
