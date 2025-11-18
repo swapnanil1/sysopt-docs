@@ -161,11 +161,11 @@ Install a comprehensive set of codecs for broad multimedia playback support.
 sudo pacman -S --needed gst-libav gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gstreamer-vaapi x265 x264 lame
 ```
 
-## 3. Shell & AUR Helper Configuration
+### 3.0. Shell & AUR Helper Configuration
 
-Customize your shell and gain access to the Arch User Repository (AUR).
+Customize your shell, gain access to the Arch User Repository (AUR), and optionally switch to a more modern shell like Fish.
 
-### 3.1. Install an AUR Helper (`paru`)
+#### 3.1. Install an AUR Helper (`paru`)
 
 The AUR contains thousands of community-maintained packages. An AUR helper like `paru` automates the process of building and installing them.
 
@@ -173,20 +173,22 @@ The AUR contains thousands of community-maintained packages. An AUR helper like 
 # Ensure required build tools are installed
 sudo pacman -S --needed base-devel git
 
-# Clone and build paru
+# Clone, build, and install paru
 git clone https://aur.archlinux.org/paru-bin.git
 cd paru-bin
 makepkg -si
 cd .. && rm -rf paru-bin
 ```
 
-### 3.2. Customize Your Shell
+#### 3.2. Customize Your Shell with Aliases
 
-You can enhance your shell with aliases for common commands.
+You can enhance your shell with aliases for common commands. This saves time and reduces typos.
 
-**Example for Bash (`~/.bashrc`) or Zsh (`~/.zshrc`):**
+*   **For Bash**, edit `~/.bashrc`.
+*   **For Zsh**, edit `~/.zshrc`.
+
 ```bash
-# Replace ls with a modern alternative like eza
+# Replace ls with a modern alternative like eza (must be installed)
 alias ls='eza -al --color=always --group-directories-first'
 alias la='eza -a --color=always --group-directories-first'
 
@@ -197,8 +199,20 @@ alias prs='sudo pacman -Rns'
 
 # Use Neovim instead of Vim
 alias vim='nvim'
+```After editing, reload your shell's configuration (`source ~/.bashrc`) or open a new terminal.
+
+#### 3.3. Optional: Switch to Fish Shell
+
+Fish (Friendly Interactive Shell) offers advanced features out-of-the-box like autosuggestions, syntax highlighting, and simpler scripting.
+
+```bash
+# Install Fish and a recommended Nerd Font for better terminal icons
+sudo pacman -S --needed fish ttf-jetbrains-mono-nerd
+
+# Set Fish as the default shell for your user
+chsh -s /usr/bin/fish <your_username>
 ```
-After editing, reload your shell's configuration with `source ~/.bashrc` or simply open a new terminal.
+You must **log out and log back in** for the change to take effect. Note that Fish configuration is done in `~/.config/fish/config.fish` and its alias syntax is slightly different (e.g., `alias update 'sudo pacman -Syu && paru -Sua'`).
 
 ## 4. Hardware & Drivers
 
@@ -266,62 +280,112 @@ sudo pacman -S --needed ttf-dejavu ttf-liberation noto-fonts ttf-jetbrains-mono-
 ```
 For emoji and East Asian language support, also install `noto-fonts-emoji` and `noto-fonts-cjk`.
 
-### 5.2. Desktop Environment
+#### 5.2. Desktop Environment
 
-Choose **one** desktop environment. Here are a few popular options.
+Choose **one** desktop environment. After installing the base system, you can add optional applications and themes to complete the experience.
 
-#### KDE Plasma 6 (Minimal & Modular)
+##### **KDE Plasma 6 (Minimal & Modular)**
+*(Base installation instructions are the same)*
 
-This approach installs a lightweight but functional Plasma desktop, allowing you to add components as needed.
-
-1.  **Core Desktop:**
+*   **Optional Post-Installation Apps & Themes:**
+    To create a more full-featured KDE experience, you can install the common application suite and additional themes.
     ```bash
-    sudo pacman -S --needed plasma-desktop sddm konsole dolphin breeze-gtk kde-gtk-config powerdevil plasma-nm plasma-pa xdg-desktop-portal-kde
-    ```
-    1.  **Enable the Display Manager:**
-    ```bash
-    sudo systemctl enable sddm.service
-    ```
-2.  **Essential Utilities (Recommended):**
-    ```bash
-    sudo pacman -S --needed spectacle ark kinfocenter plasma-systemmonitor
-    ```
-After installing, **reboot** to log into your new Plasma session.
+    # KDE application suite
+    sudo pacman -S --needed okular gwenview kate kdenlive kdeconnect
 
-#### GNOME
+    # Extra themes and customization tools
+    sudo pacman -S --needed materia-kde materia-gtk-theme kvantum
+    ```
+
+##### **GNOME**
+*(Base installation instructions are the same)*
+
+*   **Optional Post-Installation Apps & Themes:**
+    Install essential GNOME utilities and popular themes to customize the look and feel.
+    ```bash
+    # Core GNOME utilities and customization tools
+    sudo pacman -S --needed gnome-tweaks gnome-shell-extensions gnome-system-monitor
+
+    # Popular themes for a different look
+    sudo pacman -S --needed arc-gtk-theme papirus-icon-theme
+    ```
+
+##### **Cinnamon**
+*(Base installation instructions are the same)*
+
+*   **Optional Post-Installation Apps & Themes:**
+    Install the standard suite of applications from the Linux Mint ecosystem and popular themes.
+    ```bash
+    # Core Mint applications and Nemo file manager extensions
+    paru -S --needed xed pix webapp-manager nemo-fileroller nemo-preview
+    
+    # Standard Mint themes and icons
+    paru -S --needed mint-themes mint-y-icons
+    ```
+---
+
+#### 5.3. Essential Applications
+
+Install a powerful terminal, text editor, web browser, and other key applications.
+
+##### 5.3.1. Terminal and CLI Tools
+
+Alacritty is a fast, GPU-accelerated terminal emulator. `eza`, `fd`, and `ripgrep` are modern, faster replacements for `ls`, `find`, and `grep`.
 
 ```bash
-sudo pacman -S --needed gnome gdm
-sudo systemctl enable gdm.service
-```
-After installing, **reboot** to log into GNOME.
-
-#### Cinnamon
-
-```bash
-sudo pacman -S --needed cinnamon lightdm lightdm-gtk-greeter
-sudo systemctl enable lightdm.service
-```
-After installing, **reboot** to log into Cinnamon.
-
-### 5.3. Essential Applications
-
-Install a web browser, text editor, and other key applications.
-
-```bash
-# Terminal Emulator (Alacritty is a fast, GPU-accelerated option)
 sudo pacman -S --needed alacritty eza fd ripgrep
+```
+*   **Optional: Alacritty Themes**
+    You can easily add themes to Alacritty for further customization.
+    ```bash
+    mkdir -p ~/.config/alacritty/themes
+    git clone https://github.com/alacritty/alacritty-theme ~/.config/alacritty/themes
+    ```
+    To apply a theme, you will need to edit `~/.config/alacritty/alacritty.yml` and add an `import` line pointing to your chosen theme file.
 
+##### 5.3.2. Text Editor: Neovim with LazyVim
+
+Install Neovim and its key dependencies, then set up LazyVim for a powerful, pre-configured IDE-like experience.
+
+1.  **Install Neovim and Dependencies:**
+    ```bash
+    sudo pacman -S --needed neovim python-pynvim nodejs npm
+    ```
+
+2.  **Back Up Existing Neovim Configuration (if any):**
+    ```bash
+    mv ~/.config/nvim{,.bak}
+    mv ~/.local/share/nvim{,.bak}
+    ```
+
+3.  **Clone the LazyVim Starter:**
+    ```bash
+    git clone https://github.com/LazyVim/starter ~/.config/nvim
+    ```
+
+4.  **Start Neovim:**
+    Launch `nvim`. LazyVim will automatically bootstrap itself and install all the configured plugins.
+
+##### 5.3.3. IDE: Code - OSS
+
+For a full-featured Visual Studio Code experience using the open-source build, install these packages to enable settings sync and access to the official Microsoft marketplace.
+
+```bash
+paru -S --needed code code-features code-marketplace
+```
+
+##### 5.3.4. Web Browsers & Common Applications
+
+Install your choice of web browsers and other daily-use applications.
+
+```bash
 # Web Browsers
 paru -S --needed firefox brave-bin
-
-# Text Editors / IDEs
-sudo pacman -S --needed neovim
-paru -S --needed code # Open-source build of VSCode
 
 # Common Applications
 paru -S --needed telegram-desktop keepassxc mpv qbittorrent bleachbit onlyoffice-bin
 ```
+
 
 ## 6. Storage: Mounting Additional Drives
 
