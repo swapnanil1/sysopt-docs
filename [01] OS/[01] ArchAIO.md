@@ -199,8 +199,9 @@ alias prs='sudo pacman -Rns'
 
 # Use Neovim instead of Vim
 alias vim='nvim'
-```After editing, reload your shell's configuration (`source ~/.bashrc`) or open a new terminal.
 
+After editing, reload your shell's configuration (`source ~/.bashrc`) or open a new terminal.
+```
 #### 3.3. Optional: Switch to Fish Shell
 
 Fish (Friendly Interactive Shell) offers advanced features out-of-the-box like autosuggestions, syntax highlighting, and simpler scripting.
