@@ -124,7 +124,7 @@ apt install -y --no-install-recommends \
   gnome-calculator gnome-text-editor gnome-characters \
   gnome-disk-utility evince eog baobab \
   xdg-user-dirs-gtk xdg-utils software-properties-gtk \
-  unzip zip curl wget sudo alsa-utils wpa-supplicant
+  unzip zip curl wget sudo alsa-utils wpasupplicant firmware-sof-signed
 ```
 
 ---
