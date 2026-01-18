@@ -124,7 +124,7 @@ apt install -y --no-install-recommends \
   gnome-calculator gnome-text-editor gnome-characters \
   gnome-disk-utility evince eog baobab \
   xdg-user-dirs-gtk xdg-utils software-properties-gtk \
-  unzip zip curl wget sudo alsa-utils
+  unzip zip curl wget sudo alsa-utils wpa-supplicant
 ```
 
 ---
@@ -143,14 +143,14 @@ Essential steps to ensure the system handles the BTRFS root subvolume and the ne
 
 ```bash
 # 1. Set Hostname and User
-echo "ubuntu-btrfs" > /etc/hostname
-useradd -m -G sudo -s /bin/bash yourusername
-passwd yourusername
-passwd # Set root password
+echo "darkgrid" > /etc/hostname
+useradd -m -G sudo,input,audio,video -s /bin/bash swapnanil
+passwd swapnanil
 
 # 2. Add BTRFS support to the Initramfs
 echo "btrfs" >> /etc/initramfs-tools/modules
-update-initramfs -u
+echo "nvme" >> /etc/initramfs-tools/modules
+update-initramfs -c -k -all
 
 # 3. Configure GRUB for Subvolume Booting
 UUID=$(blkid -s UUID -o value $(lsblk -no NAME,LABEL | grep "Ubuntu" | awk '{print "/dev/"$1}'))
