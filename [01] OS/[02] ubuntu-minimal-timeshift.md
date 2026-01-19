@@ -1,99 +1,61 @@
-# Ubuntu 25.10 (Questing Quokka) Minimal Install Guide
-
-This guide provides a manual, surgical installation of Ubuntu 25.10 from a live environment. It is designed for maximum performance using a BTRFS subvolume layout and a total hard-block on Snap packages.
+# Ubuntu 25.10 (Questing Quokka) - Minimalist "Nuclear" Guide
+### BTRFS + NoSnap + GNOME + Zero Telemetry
 
 ## Step 1: Prepare the Live Environment
-Boot from an Ubuntu 25.10 Live USB, open a terminal, and switch to the root user.
-
 ```bash
 sudo -i
 apt update && apt install -y debootstrap arch-install-scripts
 ```
 
----
-
 ## Step 2: Disk Partitioning (UEFI/GPT)
-*Replace `/dev/nvme0n1` with your actual target drive.*
-
 ```bash
-# 1. Create GPT label and partitions (512MB EFI, rest BTRFS)
+# Replace /dev/nvme0n1 with your drive
 parted -s /dev/nvme0n1 -- mklabel gpt \
   mkpart EFI fat32 1MiB 513MiB \
   set 1 esp on \
   mkpart "Ubuntu" btrfs 513MiB 100%
 
-# 2. Format partitions
 mkfs.fat -F 32 -n EFI /dev/nvme0n1p1
 mkfs.btrfs -L Ubuntu -f /dev/nvme0n1p2
 ```
 
----
-
 ## Step 3: BTRFS Subvolumes & Mounting
-We use separate subvolumes for the system (`@`) and user data (`@home`) to facilitate easy snapshots and rollbacks with ZSTD compression.
-
 ```bash
-# 1. Create subvolumes
 mount /dev/nvme0n1p2 /mnt
 btrfs subvolume create /mnt/@
 btrfs subvolume create /mnt/@home
 umount /mnt
 
-# 2. Mount with ZSTD compression and SSD optimizations
+# Mount with compression
 mount -o noatime,compress=zstd,subvol=@ /dev/nvme0n1p2 /mnt
 mkdir -p /mnt/boot/efi /mnt/home
 mount /dev/nvme0n1p1 /mnt/boot/efi
 mount -o noatime,compress=zstd,subvol=@home /dev/nvme0n1p2 /mnt/home
 ```
 
----
-
 ## Step 4: Install Base System
-We use the codename **`questing`** for Ubuntu 25.10.
-
 ```bash
 debootstrap --arch=amd64 questing /mnt
 ```
 
----
-
-## Step 5: Fstab Generation & Critical Cleanup
-`genfstab` is helpful, but we must manually remove `subvolid` references to ensure the fstab remains reliable if subvolumes are moved or snapshotted.
-
-1. **Generate the table:**
-   ```bash
-   genfstab -U /mnt >> /mnt/etc/fstab
-   ```
-
-2. **Manual Cleanup:**
-   Open the file: `nano /mnt/etc/fstab`
-   *   Locate the lines for `/` and `/home`.
-   *   **Remove** any `subvolid=XXX` parameters from the options list.
-   *   **Verify** the options match: `noatime,compress=zstd,subvol=@` (and `@home`).
-   *   Ensure the EFI partition has `umask=0077`.
-
-   **Example of a clean fstab:**
-   ```text
-   UUID=XXXX-XXXX      /boot/efi  vfat   umask=0077      0  1
-   UUID=YOUR-BTRFS-ID  /          btrfs  noatime,compress=zstd,subvol=@  0  0
-   UUID=YOUR-BTRFS-ID  /home      btrfs  noatime,compress=zstd,subvol=@home  0  0
-   ```
-
----
+## Step 5: Fstab Cleanup (Subvolid Removal)
+```bash
+genfstab -U /mnt >> /mnt/etc/fstab
+```
+*Action:* `nano /mnt/etc/fstab`. **Remove** all `subvolid=...` entries. Ensure they use `subvol=@` and `subvol=@home`. Ensure EFI has `umask=0077`.
 
 ## Step 6: Chroot and Snap Blocking
 ```bash
-# 1. Enter the new system
 arch-chroot /mnt
 
-# 2. Hard-Block Snapd
+# Block Snapd Forever
 cat <<EOF > /etc/apt/preferences.d/nosnap
 Package: snapd
 Pin: release a=*
 Pin-Priority: -1
 EOF
 
-# 3. Configure Repositories
+# Configure Repositories
 cat <<EOF > /etc/apt/sources.list
 deb http://archive.ubuntu.com/ubuntu/ questing main restricted universe multiverse
 deb http://archive.ubuntu.com/ubuntu/ questing-updates main restricted universe multiverse
@@ -103,79 +65,99 @@ EOF
 apt update
 ```
 
----
-
-## Step 7: Install Snap-Free Ubuntu Desktop
-This command installs the full Ubuntu GNOME 49 experience using native `.deb` packages.
+## Step 7: Install Snap-Free Modern Desktop
 
 ```bash
 apt install -y --no-install-recommends \
-  linux-image-generic linux-headers-generic linux-firmware \
+  linux-image-generic linux-headers-generic linux-firmware firmware-sof-signed \
   grub-efi-amd64 btrfs-progs \
   ubuntu-session ubuntu-settings gdm3 \
-  gnome-shell gnome-control-center nautilus gnome-terminal \
+  gnome-shell gnome-control-center nautilus gnome-console \
   gnome-shell-extension-ubuntu-dock \
   gnome-shell-extension-ubuntu-tiling-assistant \
   gnome-shell-extension-appindicator \
   gnome-shell-extension-desktop-icons-ng \
   yaru-theme-gtk yaru-theme-icon yaru-theme-sound yaru-theme-gnome-shell \
   fonts-ubuntu ubuntu-wallpapers \
-  network-manager pipewire-pulse wireplumber bluez \
-  gnome-calculator gnome-text-editor gnome-characters \
-  gnome-disk-utility evince eog baobab \
+  network-manager wpasupplicant bluez \
+  pipewire-pulse wireplumber \
+  gnome-calculator gnome-text-editor gnome-characters loupe \
+  gnome-disk-utility evince baobab \
   xdg-user-dirs-gtk xdg-utils software-properties-gtk \
-  unzip zip curl wget sudo alsa-utils wpasupplicant firmware-sof-signed
+  unzip zip curl wget sudo alsa-utils
 ```
 
----
-
-## Step 8: Install Brave Browser (Native .deb)
+## Step 8: Install Brave Browser
 ```bash
 curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
 echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg] https://brave-browser-apt-release.s3.brave.com/ stable main" | tee /etc/apt/sources.list.d/brave-browser-release.list
 apt update && apt install -y brave-browser
 ```
 
----
-
-## Step 9: Critical Boot Configuration
-Essential steps to ensure the system handles the BTRFS root subvolume and the new Rust-based core utilities correctly.
-
+## Step 9: Localization & User Setup
+**Do not skip this, or your hardware clock and keyboard will be wrong.**
 ```bash
-# 1. Set Hostname and User
+# Timezone (Change to your region)
+ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime
+hwclock --systohc
+
+# Locales
+sed -i 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+locale-gen
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+
+# Keyboard
+echo "KEYMAP=us" > /etc/vconsole.conf
+
+# User
 echo "darkgrid" > /etc/hostname
 useradd -m -G sudo,input,audio,video -s /bin/bash swapnanil
 passwd swapnanil
+```
 
-# 2. Add BTRFS support to the Initramfs
+## Step 10: The "Nuclear" Boot Fix
+This is where the Kernel Panic is solved. We force a fresh creation of the Initramfs.
+
+```bash
+# 1. Force modules
 echo "btrfs" >> /etc/initramfs-tools/modules
 echo "nvme" >> /etc/initramfs-tools/modules
-update-initramfs -c -k -all
 
-# 3. Configure GRUB for Subvolume Booting
-UUID=$(blkid -s UUID -o value $(lsblk -no NAME,LABEL | grep "Ubuntu" | awk '{print "/dev/"$1}'))
-sed -i "s|GRUB_CMDLINE_LINUX=\"\"|GRUB_CMDLINE_LINUX=\"root=UUID=$UUID rootflags=subvol=@\"|" /etc/default/grub
+# 2. Nuclear Initrd Rebuild (Create from scratch -c instead of update -u)
+# Remove any broken existing ones first
+rm -f /boot/initrd.img*
+update-initramfs -c -k all
+
+# 3. Configure GRUB
+UUID=$(blkid -s UUID -o value -L Ubuntu)
+sed -i "s|GRUB_CMDLINE_LINUX=\"\"|GRUB_CMDLINE_LINUX=\"root=UUID=$UUID rootflags=subvol=@ rw\"|" /etc/default/grub
 
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu
 update-grub
 
-# 4. Enable Networking
+# 4. Final Services
 systemctl enable NetworkManager
 ```
 
----
-
-## Step 10: Finalize and Reboot
+## Step 11: Finalize
 ```bash
 exit
 umount -R /mnt
 reboot
 ```
 
-### Post-Install Verification
-*   **No Snaps:** Run `snap list`. It should return a "command not found" error.
-*   **BTRFS Mounts:** Run `mount | grep btrfs`. You should see `subvol=/@` and `compress=zstd`.
-*   **Rust Coreutils:** Ubuntu 25.10 uses `uutils`. You can verify this by checking `ls --version`.
-*   **Visuals:** At the login screen, ensure the **Ubuntu** session is selected (via the gear icon) to enable the Dock and Yaru themes.
+---
 
-this is final i am usingf now check again all the commands are correct or not
+### Critical Quirks & Troubleshooting
+
+**Quirk 1: The Wi-Fi / NetworkManager Failure**
+If you don't install `wpasupplicant` in a minimal debootstrap, NetworkManager will start but cannot scan for Wi-Fi networks. This guide includes it in Step 7.
+
+**Quirk 2: The Missing BTRFS Initrd Module (Panic Fix)**
+If `lsinitramfs /boot/initrd.img-... | grep btrfs` is empty, the kernel will panic. The fix is to use `update-initramfs -c` (Create) instead of `-u` (Update). Updating a minimal config often ignores new modules added to `/etc/initramfs-tools/modules`.
+
+**Quirk 3: Rust Sudo (sudo-rs)**
+Ubuntu 25.10 uses a Rust-based sudo. If you get a "sudo not found" error, ensure you installed the `sudo` package. The debootstrap doesn't always include it in the `base` variant.
+
+**Quirk 4: No Sound on Laptops**
+Modern Intel/AMD laptops require `firmware-sof-signed`. Without it, you will see a dummy output in sound settings. This guide includes it in Step 7.
