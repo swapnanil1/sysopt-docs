@@ -20,8 +20,8 @@ This section houses comprehensive guides for operating system installation, post
 
 ### Arch Linux All-In-One Guide
 
-- **File:** [`[01] OS/[01] ArchAIO.md`](./[01]%20OS/[01]%20ArchAIO.md)
-- **Description:** A detailed, all-in-one guide covering Arch Linux installation, post-install configuration, essential applications, desktop environment setup (KDE Plasma, GNOME, Cinnamon), gaming optimization, system tuning, and backup strategies. This is the main guide for Arch Linux users.
+- **Files:** [`[01] OS/[01] ArchAIO.md`](./[01]%20OS/[01]%20ArchAIO.md) (index) + one short file per step in [`[01] OS/arch/`](./[01]%20OS/arch/), with all background in `arch/99-notes.md`
+- **Description:** Command-first. Takes an `archinstall` Minimal install to a tuned desktop in a fixed order: `fstab` first (ext4/btrfs, HDD/SSD, extra drives — SAFE vs FAST options for every line), CachyOS repositories, a bare desktop built package-by-package with no meta packages (KDE Plasma, GNOME, or Sway), hardware essentials (PipeWire, AMD/RADV + LACT, fonts, codecs), fish/zsh + paru, the CachyOS speed stack (`cachyos-settings`, `ananicy-cpp`), `linux-cachyos` on systemd-boot with a verified SAFE/MAX kernel command line, sysctl, a Timeshift baseline, and only then applications and the Steam/Proton stack. Every package and option was checked against a live pacman database and upstream docs; an appendix lists the "tweaks" from older guides that are no-ops or harmful.
 
 ---
 
