@@ -18,6 +18,6 @@ Short, command-first guide. One file per step, in the order they must run. Expla
 | 8 | [sysctl](./arch/08-sysctl.md) |
 | 9 | [Checks, Timeshift baseline, reboot](./arch/09-timeshift.md) |
 | 10 | [Applications & gaming](./arch/10-apps.md) — only after the snapshot |
-| + | [Extras](./arch/11-extras.md) (DNS-over-TLS, mic noise suppression, ADB) · [Notes & reference](./arch/99-notes.md) |
+| + | [Extras](./arch/11-extras.md) (DNS-over-TLS, mic noise suppression, ADB) · [HDD gaming tweaks](./arch/12-hdd-gaming.md) · [Notes & reference](./arch/99-notes.md) |
 
 Flow: `1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → reboot & verify kernel → 9 snapshot → 10 apps`.
