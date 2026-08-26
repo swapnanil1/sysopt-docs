@@ -33,16 +33,12 @@ tune2fs -l /dev/<root-partition> | grep 'Default mount options'   # journal_data
 
 Ctrl+Alt+F6 → Reboot. Kernel args, udev, sysctl/tuned and everything else are post-boot steps (they need `rpm-ostree`/systemd running).
 
-## Later, from any live USB (system already installed)
+## Recovery only (skipped step 0, or fstab broke the boot)
 
-The deployment is a directory on the root partition, not the root itself:
+From any live USB the deployment's `/etc` is a directory on the root partition, not `/mnt/etc`:
 
 ```bash
-mount /dev/<root-partition> /mnt
-D=$(ls -d /mnt/ostree/deploy/default/deploy/*.0 | head -1)     # current deployment; its /etc is $D/etc
-nano "$D/etc/fstab"
-tune2fs -o journal_data_writeback /dev/<root-partition>
-umount /mnt
+mount /dev/<root-partition> /mnt && nano /mnt/ostree/deploy/default/deploy/*.0/etc/fstab && umount /mnt
 ```
 
-`chroot "$D"` is possible (`mount --bind /mnt/ostree/deploy/default/var "$D/var"` first) but unnecessary for these two edits, and `rpm-ostree` does not run inside such a chroot — kargs are always set from the booted system ([06-kargs](./06-kargs.md)). [notes §0](./99-notes.md#0-before-first-boot).
+No chroot needed; kargs are still a post-boot job ([06-kargs](./06-kargs.md)). [notes §0](./99-notes.md#0-before-first-boot).
