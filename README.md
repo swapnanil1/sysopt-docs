@@ -6,6 +6,7 @@ Welcome to the `sysopt` repository! This collection contains various guides, con
 
 1.  [Operating System Setups & Configurations](#1-operating-system-setups--configurations)
     - [Arch Linux All-In-One Guide](#arch-linux-all-in-one-guide)
+    - [Bazzite Performance Guide](#bazzite-performance-guide)
 2.  [Network & Router Configurations](#2-network--router-configurations)
     - [Arch Linux DNS Setup (dnsmasq & Stubby)](#arch-linux-dns-setup-dnsmasq--stubby)
     - [Bufferbloat Fix Guide](#bufferbloat-fix-guide)
@@ -22,6 +23,13 @@ This section houses comprehensive guides for operating system installation, post
 
 - **Files:** [`[01] OS/[01] ArchAIO.md`](./[01]%20OS/[01]%20ArchAIO.md) (index) + one short file per step in [`[01] OS/arch/`](./[01]%20OS/arch/), with all background in `arch/99-notes.md`
 - **Description:** Command-first. Takes an `archinstall` Minimal install to a tuned desktop in a fixed order: `fstab` first (ext4/btrfs, HDD/SSD, extra drives — SAFE vs FAST options for every line), CachyOS repositories, a bare desktop built package-by-package with no meta packages (KDE Plasma, GNOME, or Sway), hardware essentials (PipeWire, AMD/RADV + LACT, fonts, codecs), fish/zsh + paru, the CachyOS speed stack (`cachyos-settings`, `ananicy-cpp`), `linux-cachyos` on systemd-boot with a verified SAFE/MAX kernel command line, sysctl, a Timeshift baseline, and only then applications and the Steam/Proton stack. Every package and option was checked against a live pacman database and upstream docs; an appendix lists the "tweaks" from older guides that are no-ops or harmful.
+
+---
+
+### Bazzite Performance Guide
+
+- **Files:** [`[01] OS/[03] Bazzite.md`](./[01]%20OS/[03]%20Bazzite.md) (index) + step files in [`[01] OS/bazzite/`](./[01]%20OS/bazzite/)
+- **Description:** The Arch guide's tweaks for the immutable Bazzite KDE image, restricted to what survives ostree/bootc updates (`/etc`, `/var`, `rpm-ostree kargs`, layers, Flatpak/Homebrew): fstab for a HDD root + games HDD under `/var/mnt`, debloat, LACT, fish + brew, what the image already tunes vs. what to add (tuned profiles for HDD memory tuning, HDD udev rule, sched-ext LAVD, SAFE/MAX kernel args), deployment pinning and rollback, apps.
 
 ---
 

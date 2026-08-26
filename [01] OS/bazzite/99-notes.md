@@ -1,0 +1,59 @@
+# Notes & reference (Bazzite)
+
+Verified 2026-08-26 against `ghcr.io/ublue-os/bazzite:stable` (release 44.20260825: Fedora 44 Kinoite, OGC kernel 7.2.0, Mesa 26.2.1), the `ublue-os/bazzite` repo (Containerfile, `system_files/`, ujust recipes) and the docs source repo (`ublue-os/docs.bazzite.gg`; the rendered site blocked the fetcher). Unverified items are marked.
+
+## Persistence (ostree / bootc)
+
+- `/usr` is the image: read-only, replaced per deployment. `/etc` is **3-way merged**: a file you modified is kept as-is forever (even if the image changes it later); unmodified files follow the image; a file that later equals the new default resumes tracking. Metadata changes count as modified. Inspect: `sudo ostree admin config-diff`; reset one file: copy it from `/usr/etc/…`. Staged updates merge at shutdown, so edits after staging are included.
+- `/var` is never touched by updates (`/var/home`, `/var/mnt`, `/var/usrlocal`, `/var/opt`, `/var/roothome`; `/mnt`, `/home`, `/opt`, `/usr/local` are symlinks into it). Image content under `/var` is only unpacked at install time.
+- Kernel args: `rpm-ostree kargs --append-if-missing= / --delete-if-present= / --replace=` (what Bazzite's own scripts and ujust use); bootc has no karg CLI. GRUB2 + BLS entries `/boot/loader/entries/ostree-*.conf` are regenerated per deployment — hand edits are not a persistence mechanism. `/etc/default/grub` only matters for `ujust regenerate-grub`/`grub-timeout`.
+- Layering (`rpm-ostree install`) persists, needs a reboot, is "last resort" per the docs (can block updates/rebases); `rpm-ostree reset` drops all layers. COPRs discouraged. Only 2 deployments are kept unless pinned.
+- Updates: `uupd.timer` (daily, idle-gated), `ujust update`, Bazzite Updater GUI; applied at next reboot; need ≥3 % free space.
+
+## 1 fstab
+
+Installer: btrfs, `compress=zstd:1`, subvolumes `root` (`/`), `var` (`/var`), `home` (`/var/home`) on one volume + ext4 `/boot` + EFI; other root options unverified (Anaconda defaults). btrfs option rules are the Arch ones ([Arch notes §1](../arch/99-notes.md#1-fstab)): first-mounted subvolume's compression applies to all; `noatime` matters more with snapshots; `subvolid=` breaks snapper rollbacks; no `nodatacow`/`autodefrag`. Bazzite docs: NTFS/exFAT/FAT for games "will eventually lead to data corruption" (an `ntfs-nag` service warns); btrfs (SSD) or ext4 (HDD) only. `ujust automounting` mounts labelled internal drives at `/run/media/system/<LABEL>` via systemd-mount with btrfs `noatime,lazytime,commit=120,discard=async,compress-force=zstd:1,space_cache=v2,nofail,users,exec,x-gvfs-show` / ext4 `noatime,errors=remount-ro,nofail,users,exec,x-gvfs-show` (note: `users,exec` in that order — they know about the `noexec` trap). A bad fstab: boot `ostree:1` from GRUB. Swapfile guide (docs): `/var/swap` subvolume + `btrfs filesystem mkswapfile`, `swapfile_t` SELinux label, blank `/etc/systemd/zram-generator.conf` to disable zram.
+
+## 2 Debloat
+
+`bazzite-flatpak-manager.service` manages remotes/overrides/runtime pins only; the install list is used by the ISO and `ujust _install-system-flatpaks` — uninstalled Flatpaks stay uninstalled. Flathub filter blocks the Steam and Lutris Flatpaks (both are RPMs). `rpm-ostree override remove` is not mentioned anywhere in Bazzite docs; removing Steam would break `bazzite-steam` autostart wiring — treat as unsupported. KDE ISO Flatpaks: Firefox, Gwenview, Okular, KCalc, Haruna, Filelight, DistroShelf, Gear Lever, Flatseal, Warehouse, ProtonUp-Qt, Kontainer, protontricks, ProtonPlus, GNOME Firmware, MangoHud/vkBasalt/OBSVkCapture runtime layers, OBS plugins. `ujust clean-system` = `podman image prune -af; flatpak uninstall --unused; rpm-ostree cleanup -bm`.
+
+## 3 Hardware
+
+- LACT: not in the image, not in the Portal, `ujust install-lact` removed (issue #3338); Flathub `io.github.ilya_zlobintsev.LACT` 0.9.1 or Terra RPM 0.10.0 (Terra repo present but `enabled=0` → `--enablerepo=terra`). Whether the Flatpak sets up its own `lactd` service on first run: **unverified** — if the GUI can't connect, layer the RPM. `amdgpu.ppfeaturemask` is only auto-set on handhelds/Valve hardware (`bazzite-hardware-setup`); the maintainer's stance: "LACT offers to apply this for you now". Use `default | 0x4000`, not `0xffffffff`.
+- CoolerControl: `ujust install-coolercontrol` layers RPMs (warns about `rpm-ostree reset`).
+- Kargs auto-added by `bazzite-hardware-setup` on every machine: `bluetooth.disable_ertm=1`; removes `nomodeset`. `amd_iommu=off` only on Valve/Legion Go/ROG Ally.
+- Audio: PipeWire + rtkit are Fedora defaults; no `@audio` limits trick needed. `noise-suppression-for-voice` is a Fedora RPM (layer) — the filter-chain config from the Arch guide's extras applies.
+- `80-gpu-reset.rules` (KDE image): on amdgpu reset kills the offending PID; restarts sddm if VRAM was lost.
+
+## 4 Shell
+
+`fish` RPM is in the image; zsh is not ("install with Homebrew"). Docs (Best Shell Practices): change the shell in the terminal emulator profile, not `chsh` — `chsh` still works (`/etc/passwd` is in `/etc`) but a brew-installed shell as login shell is fragile (brew lives in `/home`, mounted late; `/etc/shells` doesn't list it). Homebrew: tarball unpacked to `/home/linuxbrew/.linuxbrew` by `brew-setup.service` on first boot; `/etc/profile.d/brew.sh` (bash, appends brew to the *end* of PATH) and `/usr/share/fish/vendor_conf.d/ublue-brew.fish`; `brew-update.timer`/`brew-upgrade.timer`. `ujust bazzite-cli` installs the `bazzite-cli.Brewfile` (atuin, bat, eza, fd, rg, starship, zoxide, …) and accepts `SHELL=fish`.
+
+## 5 Performance
+
+- Kernel: **OGC** (Open Gaming Collective) — upstream kernel.org + one `monolithic.patch`, Fedora config + OGC overrides, clang/LLVM LTO, sched_ext enabled; pre-built as `ghcr.io/ublue-os/akmods:ogc-44-*` and **versionlocked** in the image. FAQ: "it is not possible to manually change driver or kernel versions". Patch contents (BORE? fsync?) unverified. No ujust/override path; custom image is the only sanctioned route.
+- sched-ext: `scx-scheds` + `scx-tools` are installed (COPR `bieszczaders/kernel-cachyos-addons`) but `scx_loader.service` is **disabled** on desktop and there is no `/etc/scx_loader/config.toml` (the deck image ships one with `scx_lavd`/Auto — the block in step 5 is that file). Bazzite's tuned profile scripts run `scxctl switch -m gaming` (performance) / `-m auto` (balanced) only if the loader is enabled. Config lookup: `/etc/scx_loader/config.toml` → `/etc/scx_loader.toml` → `/usr/share/scx_loader/config.toml`. Exact `scxctl` subcommand syntax unverified beyond `get`/`switch`.
+- Image sysctl (`/usr/lib/sysctl.d/`): `kernel.split_lock_mitigate=0`; `vm.max_map_count=2147483642`; `net.ipv4.tcp_congestion_control=bbr`, `tcp_mtu_probing=1`, IPv6 temp addresses; inotify 8192/524288. **VM knobs live in tuned**, not sysctl.d: `balanced-bazzite` (include=balanced) and `throughput-performance-bazzite` (include=throughput-performance, `[cpu] boost=1`) set `vm.swappiness=180`, `watermark_boost_factor=0`, `watermark_scale_factor=125`, `dirty_bytes=268435456`, `dirty_background_bytes=134217728`, `page-cluster=0`, `[audio] timeout=0`, `amd_pstate/cpb_boost=enabled`; `powersave-bazzite` disables boost. `/etc/tuned/ppd.conf` maps ppd names → these (sed-edited at build; it is an `/etc` file, so your edits persist). tuned-ppd provides the `powerprofilesctl` / `net.hadess.PowerProfiles` API; there is no `game-performance` wrapper. `bazzite-hardware-setup` raises `vm.min_free_kbytes` to 1 % of RAM at boot (not a file).
+- udev: `60-schedulers.rules` — SATA SSD/NVMe → kyber, HDD → bfq, mmc → bfq. No hdparm/ALPM rules. zram: `/etc/systemd/zram-generator.conf` = zstd, `min(ram/2, 16384)` (in `/etc`, so subject to the merge). ntsync via `modules-load.d/wine-ntsync.conf`. No modprobe.d on AMD, no THP tmpfiles (THP default unverified). dracut forces vfio drivers into the initramfs.
+- Daemons: **gamemode removed** (`dnf remove gamemode` in the Containerfile; docs: unsupported, remove `gamemoderun`); no ananicy/system76-scheduler; instead `dmemcg-booster` + `plasma-foreground-booster-dmemcg` (foreground app cgroup boost), `bpftune-gaming` (network auto-tuner; enabled-by-default status unverified), `vulkan-low-latency-layer`, `cardwire` (GPU select, replaces switcheroo), greenboot auto-rollback. `ujust configure-watchdog` = `nowatchdog` + `modprobe.blacklist=iTCO_wdt,sp5100_tco`.
+
+## 6 kargs
+
+No kargs baked at build. Same SAFE/MAX semantics as the Arch guide; Bazzite differences: `quiet rhgb` come from Anaconda; `nowatchdog` via ujust; `amdgpu.ppfeaturemask` via step 3. Fedora kernels have `CONFIG_INIT_ON_ALLOC_DEFAULT_ON=y` (so `init_on_alloc=0` is a real MAX change); zswap default state on the OGC kernel unverified — `zswap.enabled=0` is harmless either way. Bazzite docs prefer kargs over `/etc/modprobe.d` + initramfs rebuilds ("will slow down your updates"). Nothing in the docs about `mitigations=off`. `ujust configure-amd-hdmi21` (`amdgpu.dcfeaturemask=0x402`) exists for HDMI 2.1 FRL.
+
+## 7 sysctl, tuned, udev
+
+Why a tuned profile: tuned applies its `[sysctl]` section on every profile activation (boot and each switch), after `systemd-sysctl` — a `/etc/sysctl.d/99-*.conf` value for a key tuned manages is overwritten. `/etc/tuned/profiles/<name>/tuned.conf` (tuned ≥2.23; older `/etc/tuned/<name>/`) with `include=` extends the image profile and wins on the listed keys; mapping in `/etc/tuned/ppd.conf` (`[profiles]` `balanced=`, `performance=`, `power-saver=`; `[battery]` variants). Keys tuned doesn't set (`default_qdisc`, `tcp_fastopen`, `tcp_slow_start_after_idle`, `sysrq`) can live in `/etc/sysctl.d`. `ujust reisub` sets SysRq. HDD udev: same reasoning as [Arch notes §12](../arch/99-notes.md#12-hdd-gaming); the image's `60-schedulers.rules` already gives HDDs bfq, so only read-ahead and the games-disk scheduler choice change anything. `hdparm` and `e4defrag` (e2fsprogs) are in the image.
+
+## 8 Rollback
+
+Docs: pin (`ostree admin pin`), `rpm-ostree rollback` (alias `bruh moment`), GRUB `ostree:1` (menu hidden by default; `ujust grub-timeout` to show it), `brh` (bazzite-rollback-helper: `brh list`, `brh rebase stable:<version>`, builds from the last 90 days), Bazzite Updater GUI. "Rollback does not affect personal files." Home: `ujust configure-snapshots enable|disable|wipe` (snapper on `/var/home`, `btrfs-assistant` GUI, script `/usr/libexec/bazzite-snapper-config`); Warehouse for Flatpak data; no Pika/Deja Dup guidance in docs (Pika is a normal Flathub app). Timeshift: not shipped; the rootfs is image-managed, so it has no role (inference).
+
+## 9 Apps
+
+Preinstalled RPMs: Steam (autostarts silently: `~/.config/autostart/steam.desktop` from skel), Lutris, MangoHud/vkBasalt/OBS-VkCapture (x86_64 + i686), `terra-gamescope` + ScopeBuddy (`scb`), umu-launcher, winetricks, Waydroid (service off), Distrobox + DistroShelf, input-remapper, btop/fastfetch/duf/vim/lm_sensors/ryzenadj/amdsmi, snapper/btrfs-assistant/bees/compsize, cockpit (off), tailscale (off). Not shipped: Heroic, Bottles, Discord, OBS Studio, LACT, Timeshift, zsh, gamemode. Flatpak IDs above are the standard Flathub IDs (not individually re-verified). `ujust get-protonplus`, `get-steamcmd`, `get-emudeck`, `setup-sunshine`, `setup-virtualization`, `configure-waydroid`, `openrgb`, `install-openrazer`, `opentabletdriver` exist. Steam Flatpak would need `game-devices-udev`; the RPM is the supported path.
+
+## Unverified
+
+Rendered docs site (403; source repo used instead); OGC patch contents; `bpftune.service` default state; root/home mount options beyond `compress=zstd:1`; THP default; kdeconnect presence; exact `scxctl` syntax; `rpm-ostree override remove` stance; LACT Flatpak daemon setup; Flatpak IDs not individually checked.
