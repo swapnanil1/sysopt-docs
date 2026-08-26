@@ -2,7 +2,7 @@
 
 **What this does.** `/etc/fstab` is the table that says which partition is mounted where, with which options. It is a normal file in `/etc`, so your edits survive updates. A typo here can stop the system from booting — that's why every block ends with `findmnt --verify` and why step 9 tells you how to boot the previous deployment if it does.
 
-If you did [step 0](./00-before-first-boot.md) the root/home lines and `tune2fs` are already done — verify with `findmnt -t ext4 -o TARGET,OPTIONS` and skip to the games disk.
+If you did [step 0](./00-before-first-boot.md), the games-disk line and `tune2fs` are done (`findmnt /var/mnt/Games`; `tune2fs -l /dev/<root> | grep 'Default mount'`) — do the root/home lines here, then `mount -a` shows any mistake immediately while the system is still up. If you skipped step 0, do everything here and reboot once for `tune2fs`.
 
 ```bash
 lsblk -f -o NAME,FSTYPE,SIZE,ROTA,UUID,MOUNTPOINTS

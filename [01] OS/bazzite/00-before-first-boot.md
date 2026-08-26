@@ -1,6 +1,6 @@
 # 0 — Before the first boot (installer still open)
 
-**What this does.** The installer has already written Bazzite to the disk; it just hasn't been booted yet. Because the installed system is still mounted, you can open a terminal *inside the installer* and edit its files as if they were on a USB stick — no special "immutable" tricks needed. We use that window for two things that are easiest before the first boot: the disk table (`fstab`) and one ext4 setting that has to be written to the partition itself.
+**What this does.** The installer has already written Bazzite to the disk; it just hasn't been booted yet. Because the installed system is still mounted, you can open a terminal *inside the installer* and edit its files as if they were on a USB stick — no special "immutable" tricks needed. Do here only what cannot break the first boot: the **games-disk line** (`nofail` makes a mistake harmless) and the **ext4 `tune2fs` setting** (a superblock default, effective from the first boot). The root/home option changes are just as valid here, but if you mistype them the *first* boot fails with nothing set up yet — so the guide does those in step 2, on a running system where `mount -a` shows errors immediately. Skip this step entirely if you prefer; step 2 covers everything, at the cost of one extra reboot for `tune2fs`.
 
 Everything here is done from the installer's own shell after Anaconda says "Complete!" and **before** you click Reboot — the installed system is still mounted. Nothing needs a chroot: fstab is a file on the target, `tune2fs` works on the block device.
 
@@ -16,7 +16,7 @@ grep -v '^#' "$T/etc/fstab"
 
 ```bash
 cp "$T/etc/fstab" "$T/etc/fstab.bak"
-nano "$T/etc/fstab"        # /, /var/home, /boot, /boot/efi from 02-fstab.md; games disk line too (mkdir "$T/var/mnt/Games" is fine, /var is the persistent one)
+nano "$T/etc/fstab"        # append the games-disk line from 02-fstab.md (it has nofail); leave the installer's /, /var/home, /boot lines alone for now
 findmnt --verify --tab-file "$T/etc/fstab"    # must report no errors (UUID checks work because the devices are present)
 ```
 
