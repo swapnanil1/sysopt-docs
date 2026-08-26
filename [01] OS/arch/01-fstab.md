@@ -21,7 +21,7 @@ UUID=<home>   /home  ext4  defaults,noatime,lazytime,commit=60,data=writeback,er
 # FAST+ (UPS only): append ,barrier=0
 ```
 
-`data=writeback` on `/` cannot come from fstab — bake it in once: `sudo tune2fs -o journal_data_writeback /dev/<root-partition>` (or `rootflags=data=writeback` on the cmdline, step 7).
+`data=writeback` on `/` cannot come from fstab — bake it in once: `sudo tune2fs -o journal_data_writeback /dev/<root-partition>` (or `rootflags=data=writeback` on the cmdline, step 7). `tune2fs` works on the mounted root and takes effect at the next boot — no live USB or chroot needed; `/home` and data disks take `data=writeback` directly in fstab.
 
 ## OS drive — btrfs (`@` / `@home`, Timeshift-compatible)
 

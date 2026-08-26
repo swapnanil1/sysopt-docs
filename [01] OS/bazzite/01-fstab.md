@@ -21,7 +21,7 @@ UUID=<btrfs>  /var       btrfs  subvol=var,compress=zstd:3,noatime,lazytime,comm
 UUID=<btrfs>  /var/home  btrfs  subvol=home,compress=zstd:3,noatime,lazytime,commit=120   0 0
 ```
 
-SSD root: keep the installer's `zstd:1`. Leave `/boot` (ext4) and `/boot/efi` (vfat) lines alone. Never `subvolid=`, never `nodatacow`/`autodefrag` (snapper), no `ssd`/`space_cache=v2`/`discard=async` (defaults).
+No `data=writeback`/`tune2fs` step here: the root is btrfs (that is an ext4 journal option); it only applies to the ext4 games disk below, where fstab is enough. SSD root: keep the installer's `zstd:1`. Leave `/boot` (ext4) and `/boot/efi` (vfat) lines alone. Never `subvolid=`, never `nodatacow`/`autodefrag` (snapper), no `ssd`/`space_cache=v2`/`discard=async` (defaults).
 
 ## Games HDD — ext4, mounted under `/var/mnt`
 
