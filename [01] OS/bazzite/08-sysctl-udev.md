@@ -1,4 +1,4 @@
-# 7 — sysctl, tuned & HDD udev
+# 8 — sysctl, tuned & HDD udev
 
 **tuned rewrites `vm.swappiness`/`vm.dirty_*`/watermarks every time a power profile activates (after `systemd-sysctl` ran), so HDD memory tuning goes into a tuned profile, not `/etc/sysctl.d`.** Profiles under `/etc/tuned/profiles/` persist and extend the image's.
 
@@ -55,4 +55,4 @@ sudo udevadm control --reload-rules && sudo udevadm trigger --action=change /dev
 cat /sys/block/sd[ab]/queue/scheduler /sys/block/sd[ab]/queue/read_ahead_kb
 ```
 
-No hdparm rule in the image: for no-spindown on the games disk add `ACTION=="add|change", KERNEL=="sdb", RUN+="/usr/sbin/hdparm -B 254 -S 0 /dev/%k"` (hdparm is in the image). After big Steam installs on the HDD: `sudo e4defrag -c /var/mnt/Games` then `sudo e4defrag /var/mnt/Games`. [notes §7](./99-notes.md#7-sysctl-tuned-udev).
+No hdparm rule in the image: for no-spindown on the games disk add `ACTION=="add|change", KERNEL=="sdb", RUN+="/usr/sbin/hdparm -B 254 -S 0 /dev/%k"` (hdparm is in the image). After big Steam installs on the HDD: `sudo e4defrag -c /var/mnt/Games` then `sudo e4defrag /var/mnt/Games`. [notes §7](./99-notes.md#8-sysctl-tuned-udev).

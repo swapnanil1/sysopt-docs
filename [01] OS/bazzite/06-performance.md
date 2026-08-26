@@ -1,4 +1,4 @@
-# 5 — Performance
+# 6 — Performance
 
 Already in the image (don't duplicate): `vm.max_map_count=2147483642`, `kernel.split_lock_mitigate=0`, BBR + `tcp_mtu_probing`, inotify limits; via **tuned** profiles `balanced-bazzite`/`throughput-performance-bazzite`: `vm.swappiness=180`, `watermark_boost_factor=0`, `watermark_scale_factor=125`, `dirty_bytes=256M`/`dirty_background_bytes=128M`, `page-cluster=0`, AMD boost on; udev I/O schedulers (HDD bfq, SSD/NVMe kyber); zram zstd `min(ram/2, 16G)`; ntsync; foreground-app cgroup boost (`dmemcg-booster`); bpftune network tuner. **gamemode is removed and unsupported** — drop `gamemoderun` from launch options; there is no ananicy.
 
@@ -32,4 +32,4 @@ Bazzite's tuned scripts then switch LAVD to gaming mode on *Performance* and bac
 ujust configure-watchdog
 ```
 
-[notes §5](./99-notes.md#5-performance).
+[notes §5](./99-notes.md#6-performance).

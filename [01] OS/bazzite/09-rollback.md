@@ -1,4 +1,4 @@
-# 8 — Rollback & backup
+# 9 — Rollback & backup
 
 Once everything works:
 
@@ -21,4 +21,4 @@ flatpak install -y flathub org.gnome.World.PikaBackup    # borg-based, to an ext
 rsync -aHAX --delete ~/ /run/media/$USER/EXT/home/       # the plain version
 ```
 
-Timeshift does not apply to ostree systems. [notes §8](./99-notes.md#8-rollback).
+Timeshift does not apply to ostree systems. [notes §8](./99-notes.md#9-rollback).

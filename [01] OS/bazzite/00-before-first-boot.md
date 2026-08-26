@@ -10,11 +10,11 @@ T=$(ls -d /mnt/sysroot/etc /mnt/sysimage/etc 2>/dev/null | head -1 | xargs dirna
 grep -v '^#' "$T/etc/fstab"
 ```
 
-## fstab — write the step-1 lines now
+## fstab — write the step-2 lines now
 
 ```bash
 cp "$T/etc/fstab" "$T/etc/fstab.bak"
-nano "$T/etc/fstab"        # /, /var/home, /boot, /boot/efi from 01-fstab.md; games disk line too (mkdir "$T/var/mnt/Games" is fine, /var is the persistent one)
+nano "$T/etc/fstab"        # /, /var/home, /boot, /boot/efi from 02-fstab.md; games disk line too (mkdir "$T/var/mnt/Games" is fine, /var is the persistent one)
 findmnt --verify --tab-file "$T/etc/fstab"    # must report no errors (UUID checks work because the devices are present)
 ```
 
@@ -41,4 +41,4 @@ From any live USB the deployment's `/etc` is a directory on the root partition, 
 mount /dev/<root-partition> /mnt && nano /mnt/ostree/deploy/default/deploy/*.0/etc/fstab && umount /mnt
 ```
 
-No chroot needed; kargs are still a post-boot job ([06-kargs](./06-kargs.md)). [notes §0](./99-notes.md#0-before-first-boot).
+No chroot needed; kargs are still a post-boot job ([07-kargs](./07-kargs.md)). [notes §0](./99-notes.md#0-before-first-boot).

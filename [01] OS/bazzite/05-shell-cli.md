@@ -1,4 +1,4 @@
-# 4 — Shell & CLI
+# 5 — Shell & CLI
 
 `fish` is an RPM in the image and Homebrew (`/home/linuxbrew/.linuxbrew`) is preinstalled and already initialised for bash and fish.
 
@@ -36,4 +36,4 @@ if status is-interactive
 end
 ```
 
-zsh: `brew install zsh` and set it in the terminal profile (not in the image). Homebrew binaries sit at the *end* of `PATH` so system tools win — `type -a nvim` shows which one you run. [notes §4](./99-notes.md#4-shell).
+zsh: `brew install zsh` and set it in the terminal profile (not in the image). Homebrew binaries sit at the *end* of `PATH` so system tools win — `type -a nvim` shows which one you run. [notes §4](./99-notes.md#5-shell).
