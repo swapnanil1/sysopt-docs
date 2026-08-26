@@ -30,8 +30,8 @@ Check what you've changed under `/etc` any time: `sudo ostree admin config-diff`
 
 | Step | File |
 |---|---|
-| 0 | [Before the first boot](./bazzite/00-before-first-boot.md) — fstab + `tune2fs` from the installer shell, no chroot needed |
-| 1 | [fstab](./bazzite/01-fstab.md) — ext4 root/home options, games HDD under `/var/mnt` |
+| 0 | [Before the first boot](./bazzite/00-before-first-boot.md) — from the installer shell: games-disk fstab line + `tune2fs` only (boot-safe edits) |
+| 1 | [fstab](./bazzite/01-fstab.md) — after the first boot: `/` and `/var/home` option lines (games disk already done in step 0) |
 | 2 | [Update & rebase to DX](./bazzite/02-update-rebase-dx.md) — update, rebase to `bazzite-dx`, Docker, node/php/laravel/go via brew |
 | 3 | [Debloat](./bazzite/03-debloat.md) — Flatpaks, autostarts; what not to remove |
 | 4 | [Hardware](./bazzite/04-hardware.md) — LACT, CoolerControl, OverDrive karg |

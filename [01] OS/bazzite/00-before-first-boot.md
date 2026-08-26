@@ -1,6 +1,11 @@
 # 0 — Before the first boot (installer still open)
 
-**What this does.** The installer has already written Bazzite to the disk; it just hasn't been booted yet. Because the installed system is still mounted, you can open a terminal *inside the installer* and edit its files as if they were on a USB stick — no special "immutable" tricks needed. Do here only what cannot break the first boot: the **games-disk line** (`nofail` makes a mistake harmless) and the **ext4 `tune2fs` setting** (a superblock default, effective from the first boot). The root/home option changes are just as valid here, but if you mistype them the *first* boot fails with nothing set up yet — so the guide does those in step 1, on a running system where `mount -a` shows errors immediately. Skip this step entirely if you prefer; step 1 covers everything, at the cost of one extra reboot for `tune2fs`.
+**What this does.** The installer has already written Bazzite to the disk; it just hasn't been booted yet. Because the installed system is still mounted, you can open a terminal *inside the installer* and edit its files directly — no "immutable" tricks needed.
+
+> **Where does fstab happen? Both, split by risk.**
+> - **Step 0 (installer shell, before the first boot):** only the games-disk line and `tune2fs` on the root partition. Neither can stop the system from booting.
+> - **Step 1 (after the first boot):** the `/` and `/var/home` option lines. Same file — done on a running system so `mount -a` shows a mistake immediately instead of a failed first boot.
+> - Prefer one place? Everything in step 0 (risk: a root-line typo = live-USB fix) or everything in step 1 (cost: one extra reboot for `tune2fs`). Both are fine.
 
 Everything here is done from the installer's own shell after Anaconda says "Complete!" and **before** you click Reboot — the installed system is still mounted. Nothing needs a chroot: fstab is a file on the target, `tune2fs` works on the block device.
 
