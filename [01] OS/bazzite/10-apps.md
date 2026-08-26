@@ -13,7 +13,7 @@ flatpak install -y flathub com.obsproject.Studio          # VkCapture plugin run
 flatpak install -y flathub org.keepassxc.KeePassXC org.qbittorrent.qBittorrent io.mpv.Mpv org.telegram.desktop com.spotify.Client org.localsend.localsend_app com.rustdesk.RustDesk
 flatpak install -y flathub org.libreoffice.LibreOffice    # or org.onlyoffice.desktopeditors
 # dev
-flatpak install -y flathub dev.zed.Zed                    # VS Code is in the DX image; node/go/php/laravel: step 1
+flatpak install -y flathub dev.zed.Zed                    # VS Code is in the DX image; node/go/php/laravel: step 2
 brew install rustup uv syncthing && brew services start syncthing
 # layering, only if nothing else works (reboot after)
 sudo rpm-ostree install noise-suppression-for-voice

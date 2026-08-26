@@ -17,4 +17,4 @@ Steam autostarts silently at login; to stop it:
 rm -f ~/.config/autostart/steam.desktop
 ```
 
-Things that look like bloat but aren't: `bees`, `snapper`, `btrfs-assistant`, `input-remapper`, `waydroid` (service disabled), `distrobox`, `cockpit-*`, `tailscale` (disabled). They cost nothing at runtime unless enabled. [notes §2](./99-notes.md#3-debloat).
+Things that look like bloat but aren't: `bees`, `snapper`, `btrfs-assistant`, `input-remapper`, `waydroid` (service disabled), `distrobox`, `cockpit-*`, `tailscale` (disabled). They cost nothing at runtime unless enabled. [notes §1](./99-notes.md#3-debloat).

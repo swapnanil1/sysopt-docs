@@ -1,4 +1,4 @@
-# 2 — fstab
+# 1 — fstab
 
 **What this does.** `/etc/fstab` is the table that says which partition is mounted where, with which options. It is a normal file in `/etc`, so your edits survive updates. A typo here can stop the system from booting — that's why every block ends with `findmnt --verify` and why step 9 tells you how to boot the previous deployment if it does.
 
@@ -33,7 +33,7 @@ sudo tune2fs -o journal_data_writeback /dev/<root-partition>     # works on the 
 # alternative, same effect from the kernel line:  sudo rpm-ostree kargs --append-if-missing=rootflags=data=writeback
 ```
 
-If `rpm-ostree kargs` already shows a `rootflags=` entry, that entry — not fstab — is what the initramfs uses for `/`: put `noatime,lazytime,commit=60` in it too (`sudo rpm-ostree kargs --editor`). `/var` is a bind mount inside `/` and inherits its options. btrfs root (SSD, installer default): [notes §1](./99-notes.md#2-fstab).
+If `rpm-ostree kargs` already shows a `rootflags=` entry, that entry — not fstab — is what the initramfs uses for `/`: put `noatime,lazytime,commit=60` in it too (`sudo rpm-ostree kargs --editor`). `/var` is a bind mount inside `/` and inherits its options. btrfs root (SSD, installer default): [notes §2](./99-notes.md#1-fstab).
 
 ## Games HDD — ext4, mounted under `/var/mnt`
 
@@ -58,4 +58,4 @@ sudo chown "$USER:$USER" /var/mnt/Games      # after the first mount
 
 Alternative with zero fstab editing: label the filesystem (`sudo e2label /dev/sdX1 Games`) and run `ujust automounting` — Bazzite mounts labelled internal btrfs/ext4 drives at `/run/media/system/<LABEL>` with sane options. Steam is an RPM here (not a Flatpak), so it sees either path without portal permissions; the Protontricks Flatpak is pre-granted `/var/mnt` and `/run/media`.
 
-A broken fstab boots the *previous* deployment from GRUB (`ostree:1`) — [08-rollback](./09-rollback.md). Details: [notes §1](./99-notes.md#2-fstab).
+A broken fstab boots the *previous* deployment from GRUB (`ostree:1`) — [08-rollback](./09-rollback.md). Details: [notes §2](./99-notes.md#1-fstab).
