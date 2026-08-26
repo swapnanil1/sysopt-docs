@@ -1,5 +1,7 @@
 # 4 — Hardware
 
+**What this does.** Adds the one GPU tool Bazzite no longer ships (LACT: fan curve, power limit, sensors) and the kernel argument it needs on a desktop card. Everything else for hardware — drivers, audio, Bluetooth, MangoHud, gamescope — is already in the image.
+
 Already in the image, nothing to install: Mesa/RADV (+32-bit), PipeWire + rtkit, MangoHud, vkBasalt, gamescope + ScopeBuddy, umu, ntsync autoload, input-remapper, lm_sensors, btop, fastfetch, duf.
 
 ## LACT (fan curve / power limit / monitoring) — not shipped any more

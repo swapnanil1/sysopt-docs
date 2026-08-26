@@ -1,5 +1,7 @@
 # 1 — First boot: update, then rebase to Bazzite DX
 
+**What this does.** Brings the image to today's version, then switches it to the "DX" variant (same Bazzite plus developer tools). A rebase is not a reinstall: it downloads a different image and makes it your next deployment; your files and settings stay. Doing it first means every later tweak is made once, on the image you'll actually keep.
+
 DX = the same image plus Docker (ready to use), VS Code with devcontainers and the container-centric Ptyxis terminal. Same KDE, same kernel; everything in this guide applies unchanged. Do this before any other step so the tweaks land once, on the image you keep.
 
 ```bash

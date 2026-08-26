@@ -1,5 +1,7 @@
 # 9 — Rollback & backup
 
+**What this does.** Pinning tells Bazzite "never delete this deployment" — otherwise the working OS you just finished tuning is gone two updates later. Rollback boots the previous deployment; it changes only the OS image, never your files (see the primer in the index). Home backup is separate: rollback does not protect your data, only the system.
+
 Once everything works:
 
 ```bash

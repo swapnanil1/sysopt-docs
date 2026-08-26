@@ -1,5 +1,7 @@
 # 10 — Apps
 
+**What this does.** Installs applications in Bazzite's preferred order: Flatpak for graphical apps, Homebrew for command-line ones, and `rpm-ostree install` only when neither can. The first two live outside the image and survive updates without slowing them down; a layered RPM is re-applied on every update and can block one.
+
 Priority: Flatpak (GUI) → Homebrew (CLI) → `rpm-ostree install` (last resort; each layer = slower updates, reboot).
 
 ```bash

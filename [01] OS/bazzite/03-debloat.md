@@ -1,5 +1,7 @@
 # 3 — Debloat
 
+**What this does.** You can't delete programs baked into the image (that's the read-only part), but Flatpak apps and autostart entries are yours to remove, and removals stick. Leave the image's own packages alone; they cost nothing unless you enable their services.
+
 Removing Flatpaks sticks (the image's flatpak manager does not reinstall them). Do **not** `rpm-ostree override remove` image RPMs — undocumented on Bazzite, and Steam/Lutris removal breaks the image's own wiring.
 
 ```bash

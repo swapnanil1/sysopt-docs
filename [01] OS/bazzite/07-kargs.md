@@ -1,5 +1,7 @@
 # 7 — Kernel args
 
+**What this does.** Kernel arguments are boot-time switches. On Bazzite you never edit boot files by hand — `rpm-ostree kargs` records them so every future update keeps them, and it creates a new deployment, which is why a reboot follows. Run *one* command with all the flags rather than one per flag, or you'll create a deployment per run.
+
 Bazzite bakes none; `rpm-ostree kargs` is the persistence mechanism (bootc has no karg command; the two interoperate). Never edit `/boot/loader/entries` by hand. One command, then reboot:
 
 ```bash

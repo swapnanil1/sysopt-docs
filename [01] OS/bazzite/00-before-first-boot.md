@@ -1,5 +1,7 @@
 # 0 — Before the first boot (installer still open)
 
+**What this does.** The installer has already written Bazzite to the disk; it just hasn't been booted yet. Because the installed system is still mounted, you can open a terminal *inside the installer* and edit its files as if they were on a USB stick — no special "immutable" tricks needed. We use that window for two things that are easiest before the first boot: the disk table (`fstab`) and one ext4 setting that has to be written to the partition itself.
+
 Everything here is done from the installer's own shell after Anaconda says "Complete!" and **before** you click Reboot — the installed system is still mounted. Nothing needs a chroot: fstab is a file on the target, `tune2fs` works on the block device.
 
 ```bash

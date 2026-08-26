@@ -1,5 +1,7 @@
 # 8 — sysctl, tuned & HDD udev
 
+**What this does.** `sysctl` values are kernel tunables (how much data to keep in RAM before writing, how aggressively to use swap…). On Bazzite a service called **tuned** re-applies its own set of these every time the power profile changes, so anything you put in a plain sysctl file gets overwritten seconds later. The fix is to give tuned a small profile of your own that extends Bazzite's — then *tuned* applies your HDD values. The udev rule at the end tells the kernel how to queue disk requests per drive; that part is not managed by tuned and lives in `/etc` normally.
+
 **tuned rewrites `vm.swappiness`/`vm.dirty_*`/watermarks every time a power profile activates (after `systemd-sysctl` ran), so HDD memory tuning goes into a tuned profile, not `/etc/sysctl.d`.** Profiles under `/etc/tuned/profiles/` persist and extend the image's.
 
 ```bash

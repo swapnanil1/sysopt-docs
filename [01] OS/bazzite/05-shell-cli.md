@@ -1,5 +1,7 @@
 # 5 — Shell & CLI
 
+**What this does.** Sets up fish and the command-line tools. Bazzite's rule of thumb: CLI programs come from Homebrew (lives in `/home`, survives updates), not from the image. Changing the *login* shell system-wide is discouraged by Bazzite because a shell that lives in `/home` isn't available early in boot; setting it in the terminal app's profile gives you fish everywhere you'd type anyway.
+
 `fish` is an RPM in the image and Homebrew (`/home/linuxbrew/.linuxbrew`) is preinstalled and already initialised for bash and fish.
 
 ```bash
