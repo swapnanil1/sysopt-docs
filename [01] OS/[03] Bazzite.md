@@ -16,6 +16,7 @@ Check what you've changed under `/etc` any time: `sudo ostree admin config-diff`
 
 | Step | File |
 |---|---|
+| 0 | [Before the first boot](./bazzite/00-before-first-boot.md) — fstab + `tune2fs` from the installer shell, no chroot needed |
 | 1 | [fstab](./bazzite/01-fstab.md) — root subvolumes on a HDD, games HDD under `/var/mnt` |
 | 2 | [Debloat](./bazzite/02-debloat.md) — Flatpaks, autostarts; what not to remove |
 | 3 | [Hardware](./bazzite/03-hardware.md) — LACT, CoolerControl, OverDrive karg |
@@ -27,4 +28,4 @@ Check what you've changed under `/etc` any time: `sudo ostree admin config-diff`
 | 9 | [Apps](./bazzite/09-apps.md) — Flatpak / brew / layering, Steam launch options |
 | + | [Notes & reference](./bazzite/99-notes.md) |
 
-Flow: `1 → 2 → 3 → 4 → 5 → 6 → 7 → reboot → 8 pin → 9 apps`. Kargs and layered packages only take effect after a reboot; batch them.
+Flow: `0 (installer shell) → first boot → 1 → 2 → 3 → 4 → 5 → 6 → 7 → reboot → 8 pin → 9 apps`. Kargs and layered packages only take effect after a reboot; batch them.

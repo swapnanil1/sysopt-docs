@@ -1,5 +1,7 @@
 # 1 — fstab
 
+If you did [step 0](./00-before-first-boot.md) the root/home lines and `tune2fs` are already done — verify with `findmnt -t ext4 -o TARGET,OPTIONS` and skip to the games disk.
+
 ```bash
 lsblk -f -o NAME,FSTYPE,SIZE,ROTA,UUID,MOUNTPOINTS
 sudo cp /etc/fstab /etc/fstab.bak
