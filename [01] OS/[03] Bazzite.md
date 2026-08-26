@@ -31,8 +31,8 @@ Check what you've changed under `/etc` any time: `sudo ostree admin config-diff`
 | Step | File |
 |---|---|
 | 0 | [Before the first boot](./bazzite/00-before-first-boot.md) — fstab + `tune2fs` from the installer shell, no chroot needed |
-| 1 | [fstab](./bazzite/01-fstab.md) — root subvolumes on a HDD, games HDD under `/var/mnt` |
-| 2 | [Update & rebase to DX](./bazzite/02-update-rebase-dx.md) — first boot: update, rebase to `bazzite-dx`, Docker, node/php/laravel/go via brew |
+| 1 | [fstab](./bazzite/01-fstab.md) — ext4 root/home options, games HDD under `/var/mnt` |
+| 2 | [Update & rebase to DX](./bazzite/02-update-rebase-dx.md) — update, rebase to `bazzite-dx`, Docker, node/php/laravel/go via brew |
 | 3 | [Debloat](./bazzite/03-debloat.md) — Flatpaks, autostarts; what not to remove |
 | 4 | [Hardware](./bazzite/04-hardware.md) — LACT, CoolerControl, OverDrive karg |
 | 5 | [Shell & CLI](./bazzite/05-shell-cli.md) — fish (in the image), Homebrew tools |
