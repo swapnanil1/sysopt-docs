@@ -2,7 +2,7 @@
 
 Command-first, same shape as the [Arch guide](./[01]%20ArchAIO.md). Background and sources: [`bazzite/99-notes.md`](./bazzite/99-notes.md). Verified against the `bazzite:stable` image and its docs source, August 2026 (Fedora 44 base, OGC kernel 7.2).
 
-**Start point:** `bazzite` (KDE desktop image, AMD GPU) installed from the ISO with the default btrfs layout (`root`/`home`/`var` subvolumes, `compress=zstd:1`), root on a HDD, a second HDD for games.
+**Start point:** `bazzite` (KDE desktop image, AMD GPU) installed from the ISO with **manual partitioning, ext4 everywhere** because the drives are HDDs: `/boot/efi` (EFI, 1 GiB), `/boot` (ext4, 1 GiB), `/` (ext4), `/var/home` (ext4, rest), plus a second ext4 HDD for games. Bazzite's docs say only btrfs is supported for `/` — ext4 installs and boots fine (ostree does not need btrfs), but `ujust configure-snapshots` (snapper), bees dedup and the btrfs SD-card tooling stop applying. On an SSD, keep the installer's btrfs default and see the btrfs lines in the notes.
 
 **What persists across image updates — put every tweak here, nowhere else:**
 

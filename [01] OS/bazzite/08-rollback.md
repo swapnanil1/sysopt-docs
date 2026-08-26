@@ -14,10 +14,9 @@ rpm-ostree rollback && systemctl reboot        # or pick "ostree:1" in GRUB (hol
 brh list && brh rebase stable:<version>        # any build from the last 90 days
 ```
 
-Home backup (choose one):
+Home backup (choose one; `ujust configure-snapshots`/snapper needs a btrfs home and does not apply to the ext4 layout):
 
 ```bash
-ujust configure-snapshots enable               # snapper on /var/home (btrfs-assistant GUI); same disk — protects against mistakes, not disk death
 flatpak install -y flathub org.gnome.World.PikaBackup    # borg-based, to an external drive
 rsync -aHAX --delete ~/ /run/media/$USER/EXT/home/       # the plain version
 ```

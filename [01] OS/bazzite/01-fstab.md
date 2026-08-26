@@ -6,22 +6,30 @@ sudo cp /etc/fstab /etc/fstab.bak
 sudoedit /etc/fstab
 ```
 
-## Root btrfs on a HDD (installer layout: `root`, `var`, `home` subvolumes)
+## Root on ext4 HDDs (manual partitioning: `/`, `/var/home`, `/boot`, `/boot/efi`)
 
-Keep the UUIDs and `subvol=` names the installer wrote; only change the option strings. All three lines must carry the **same** compression/commit options (btrfs applies the first-mounted subvolume's to the whole filesystem).
+Keep the UUIDs Anaconda wrote; change only the option strings. On ostree the initramfs mounts the real root with the options from this `/` line (dracut parses the root's fstab when no `rootflags=` karg is set — Anaconda sets none for ext4), so the same rules as Arch apply.
 
 ```
-# SAFE  (installer line + noatime; zstd:3 on a HDD — fewer bytes for the slow disk)
-UUID=<btrfs>  /          btrfs  subvol=root,compress=zstd:3,noatime                       0 0
-UUID=<btrfs>  /var       btrfs  subvol=var,compress=zstd:3,noatime                        0 0
-UUID=<btrfs>  /var/home  btrfs  subvol=home,compress=zstd:3,noatime                       0 0
+# SAFE
+UUID=<efi>    /boot/efi  vfat  umask=0077,shortname=winnt                                   0 2
+UUID=<boot>   /boot      ext4  defaults,noatime                                             1 2
+UUID=<root>   /          ext4  defaults,noatime,errors=remount-ro                           1 1
+UUID=<home>   /var/home  ext4  defaults,noatime,errors=remount-ro                           1 2
 # FAST
-UUID=<btrfs>  /          btrfs  subvol=root,compress=zstd:3,noatime,lazytime,commit=120   0 0
-UUID=<btrfs>  /var       btrfs  subvol=var,compress=zstd:3,noatime,lazytime,commit=120    0 0
-UUID=<btrfs>  /var/home  btrfs  subvol=home,compress=zstd:3,noatime,lazytime,commit=120   0 0
+UUID=<root>   /          ext4  defaults,noatime,lazytime,commit=60,errors=remount-ro                    1 1
+UUID=<home>   /var/home  ext4  defaults,noatime,lazytime,commit=60,data=writeback,errors=remount-ro     1 2
+# FAST+ (UPS only): append ,barrier=0
 ```
 
-No `data=writeback`/`tune2fs` step here: the root is btrfs (that is an ext4 journal option); it only applies to the ext4 games disk below, where fstab is enough. SSD root: keep the installer's `zstd:1`. Leave `/boot` (ext4) and `/boot/efi` (vfat) lines alone. Never `subvolid=`, never `nodatacow`/`autodefrag` (snapper), no `ssd`/`space_cache=v2`/`discard=async` (defaults).
+`data=writeback` for `/` is baked into the superblock, not written in fstab (ext4 cannot switch data mode on a remount):
+
+```bash
+sudo tune2fs -o journal_data_writeback /dev/<root-partition>     # works on the mounted root; live from the next boot
+# alternative, same effect from the kernel line:  sudo rpm-ostree kargs --append-if-missing=rootflags=data=writeback
+```
+
+If `rpm-ostree kargs` already shows a `rootflags=` entry, that entry — not fstab — is what the initramfs uses for `/`: put `noatime,lazytime,commit=60` in it too (`sudo rpm-ostree kargs --editor`). `/var` is a bind mount inside `/` and inherits its options. btrfs root (SSD, installer default): [notes §1](./99-notes.md#1-fstab).
 
 ## Games HDD — ext4, mounted under `/var/mnt`
 
