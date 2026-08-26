@@ -1,32 +1,43 @@
-# 4 — Hardware
+# Step 4 — Hardware (GPU tool, fans)
 
-**What this does.** Adds the one GPU tool Bazzite no longer ships (LACT: fan curve, power limit, sensors) and the kernel argument it needs on a desktop card. Everything else for hardware — drivers, audio, Bluetooth, MangoHud, gamescope — is already in the image.
+## What this step is
 
-Already in the image, nothing to install: Mesa/RADV (+32-bit), PipeWire + rtkit, MangoHud, vkBasalt, gamescope + ScopeBuddy, umu, ntsync autoload, input-remapper, lm_sensors, btop, fastfetch, duf.
+Almost everything hardware-related is **already in Bazzite**: graphics drivers (Mesa/RADV, including 32-bit for games), audio (PipeWire with realtime priority), Bluetooth, MangoHud (the FPS overlay), gamescope, vkBasalt, `umu`, sensors tools. You install nothing for those.
 
-## LACT (fan curve / power limit / monitoring) — not shipped any more
+What is missing is **LACT** — the app that shows GPU temperatures and lets you set a fan curve and a power limit (the replacement for CoreCtrl from the Arch guide). Bazzite used to ship it and no longer does.
+
+## 1. Install LACT
+
+Pick one:
 
 ```bash
-# A) Flatpak (Bazaar or:)
+# A) Flatpak, from the Bazaar app store or:
 flatpak install -y flathub io.github.ilya_zlobintsev.LACT
-# B) layer the Terra RPM (0.10.x, reboot required)
-sudo rpm-ostree install --enablerepo=terra lact && sudo systemctl enable lactd.service
+# B) or as a system package ("layered" onto the image; needs a reboot):
+sudo rpm-ostree install --enablerepo=terra lact
+sudo systemctl enable lactd.service
 ```
 
-RDNA3/RDNA4 fan curves and clocks need amdgpu OverDrive. Bazzite only adds it on handhelds; on a desktop card add it yourself (LACT's "Enable Overclocking" button does the same):
+Try A first; it is simpler. If LACT opens but says it cannot connect to its service, use B.
+
+## 2. Unlock fan-curve editing (RDNA 3 / RDNA 4 cards, e.g. RX 7000 / RX 9000)
+
+On these cards even a custom fan curve needs a kernel setting called "OverDrive" turned on. Bazzite turns it on automatically only for handheld PCs, so on a desktop card you add it yourself. This command computes the right value for *your* card and records it as a kernel argument (a boot-time switch that Bazzite keeps across updates):
 
 ```bash
 sudo rpm-ostree kargs --append-if-missing="$(printf 'amdgpu.ppfeaturemask=0x%x' "$(( $(cat /sys/module/amdgpu/parameters/ppfeaturemask) | 0x4000 ))")"
 ```
 
-(Reboot — batch it with [07-kargs](./07-kargs.md).)
+It takes effect after a reboot. You can wait and reboot together with Step 7 (kernel args) — one reboot for both. LACT's own "Enable Overclocking" button does the same thing if you prefer clicking.
 
-## CoolerControl (case / AIO fans)
+## 3. Case and AIO fans (optional): CoolerControl
 
 ```bash
-ujust install-coolercontrol install      # layers the RPMs; reboot
+ujust install-coolercontrol install      # Bazzite's recipe; installs as a layered package, reboot afterwards
 ```
 
-## Bluetooth, audio
+## Audio and Bluetooth
 
-Bluetooth is on; the image already adds `bluetooth.disable_ertm=1`. Audio threads already get realtime priority via rtkit. Mic noise suppression: the Arch guide's PipeWire filter-chain works unchanged under `~/.config/pipewire/pipewire.conf.d/` (RNNoise plugin via `rpm-ostree install noise-suppression-for-voice` or skip). [notes §3](./99-notes.md#4-hardware).
+Nothing to do. If you want microphone noise suppression, the PipeWire filter from the Arch guide's extras works unchanged here: copy the file into `~/.config/pipewire/pipewire.conf.d/` and install the plugin with `sudo rpm-ostree install noise-suppression-for-voice` (reboot).
+
+Background: [notes §4](./99-notes.md#4-hardware).

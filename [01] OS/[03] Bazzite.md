@@ -4,6 +4,16 @@ Command-first, same shape as the [Arch guide](./[01]%20ArchAIO.md), with a short
 
 **Start point:** `bazzite` (KDE desktop image, AMD GPU; rebased to `bazzite-dx` in step 2) installed from the ISO with **manual partitioning, ext4 everywhere** because the drives are HDDs: `/boot/efi` (EFI, 1 GiB), `/boot` (ext4, 1 GiB), `/` (ext4), `/var/home` (ext4, rest), plus a second ext4 HDD for games. Bazzite's docs say only btrfs is supported for `/` — ext4 installs and boots fine (ostree does not need btrfs), but `ujust configure-snapshots` (snapper), bees dedup and the btrfs SD-card tooling stop applying. On an SSD, keep the installer's btrfs default and see the btrfs lines in the notes.
 
+## Before you type anything (the basics this guide assumes)
+
+- **Terminal:** open *Konsole* from the application menu. You type a command, press Enter, read what comes back.
+- **`sudo`:** put in front of a command to run it as the administrator. It asks for your password; nothing appears while you type it. That is normal.
+- **Editing a file:** `sudoedit /etc/some-file` opens it in the editor *nano*. Arrow keys move, `Ctrl+O` then `Enter` saves, `Ctrl+X` leaves. Some steps instead paste a whole file with a `sudo tee … <<'EOF' … EOF` block — copy the whole block, from the `sudo tee` line to the `EOF` line, and paste it into the terminal in one go.
+- **Placeholders:** anything in angle brackets like `<root-partition>` or `<games-uuid>` is a value you must replace with your own (the guide tells you how to find it). Never type the `<` `>`.
+- **Multi-line commands:** a line ending in `\` continues on the next line — copy all of them together.
+- **Reboot:** `systemctl reboot` in the terminal, or the normal KDE menu. Several steps end with a reboot; when a step says "reboot together with Step 7", it means the setting waits for the next reboot, so you can save reboots.
+- **Checking:** every step ends with a command whose output you compare with the text. If it doesn't match, stop there and re-read the step; nothing later depends on guessing.
+
 ## How Bazzite works, in plain language
 
 - **The OS is one read-only image.** Think phone firmware: `/usr` (every program Bazzite ships, the kernel, drivers) is a single snapshot you cannot edit, and an update is a *whole new snapshot*, not a pile of package changes. That is "immutable". It is not locked any further than that — your files, your settings and anything you install the Bazzite way are ordinary writable files.
@@ -30,17 +40,17 @@ Check what you've changed under `/etc` any time: `sudo ostree admin config-diff`
 
 | Step | File |
 |---|---|
-| 0 | [Before the first boot](./bazzite/00-before-first-boot.md) — from the installer shell: games-disk fstab line + `tune2fs` only (boot-safe edits) |
-| 1 | [fstab](./bazzite/01-fstab.md) — after the first boot: `/` and `/var/home` option lines (games disk already done in step 0) |
+| 0 | [Before the first boot](./bazzite/00-before-first-boot.md) — installer still open: add the games disk, run `tune2fs` |
+| 1 | [fstab](./bazzite/01-fstab.md) — after the first boot: make the system and home partitions faster |
 | 2 | [Update & rebase to DX](./bazzite/02-update-rebase-dx.md) — update, rebase to `bazzite-dx`, Docker, node/php/laravel/go via brew |
-| 3 | [Debloat](./bazzite/03-debloat.md) — Flatpaks, autostarts; what not to remove |
-| 4 | [Hardware](./bazzite/04-hardware.md) — LACT, CoolerControl, OverDrive karg |
-| 5 | [Shell & CLI](./bazzite/05-shell-cli.md) — fish (in the image), Homebrew tools |
-| 6 | [Performance](./bazzite/06-performance.md) — what the image already tunes, sched-ext LAVD, power profiles |
-| 7 | [Kernel args](./bazzite/07-kargs.md) — SAFE / MAX via `rpm-ostree kargs` |
-| 8 | [sysctl, tuned & HDD udev](./bazzite/08-sysctl-udev.md) — HDD tuning that tuned won't overwrite |
-| 9 | [Rollback & backup](./bazzite/09-rollback.md) — pin the deployment, home backup |
-| 10 | [Apps](./bazzite/10-apps.md) — Flatpak / brew / layering, Steam launch options |
+| 3 | [Debloat](./bazzite/03-debloat.md) — remove the apps you don't want |
+| 4 | [Hardware](./bazzite/04-hardware.md) — GPU fan/power tool (LACT), case fans |
+| 5 | [Shell & CLI](./bazzite/05-shell-cli.md) — fish and command-line tools |
+| 6 | [Performance](./bazzite/06-performance.md) — what is already tuned, the Performance switch, LAVD |
+| 7 | [Kernel args](./bazzite/07-kargs.md) — boot-time switches, SAFE or MAX |
+| 8 | [Memory, network & disk rules](./bazzite/08-sysctl-udev.md) — HDD-specific tuning |
+| 9 | [Pin & backup](./bazzite/09-rollback.md) — keep a known-good system, back up your files |
+| 10 | [Apps](./bazzite/10-apps.md) — install programs, Steam launch options |
 | + | [Notes & reference](./bazzite/99-notes.md) |
 
 Flow: `0 (installer shell) → first boot → 1 fstab → 2 update + DX → 3 → 4 → 5 → 6 → 7 → 8 → reboot → 9 pin → 10 apps`. Kargs and layered packages only take effect after a reboot; batch them.

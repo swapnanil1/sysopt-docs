@@ -1,14 +1,29 @@
-# 6 — Performance
+# Step 6 — Performance settings that Bazzite already has, and two you can add
 
-**What this does.** Shows what the image already tunes so you don't redo it, then adds the two optional levers Bazzite leaves off by default: a sched-ext CPU scheduler (LAVD — a scheduler tuned for games that you can load and unload without touching the kernel) and a watchdog toggle. "Power profile" is the Balanced/Performance switch in KDE's battery menu; on Bazzite that switch also changes CPU boost, memory tuning and (once enabled) the LAVD mode — it is the replacement for `gamemode`.
+## What this step is
 
-Already in the image (don't duplicate): `vm.max_map_count=2147483642`, `kernel.split_lock_mitigate=0`, BBR + `tcp_mtu_probing`, inotify limits; via **tuned** profiles `balanced-bazzite`/`throughput-performance-bazzite`: `vm.swappiness=180`, `watermark_boost_factor=0`, `watermark_scale_factor=125`, `dirty_bytes=256M`/`dirty_background_bytes=128M`, `page-cluster=0`, AMD boost on; udev I/O schedulers (HDD bfq, SSD/NVMe kyber); zram zstd `min(ram/2, 16G)`; ntsync; foreground-app cgroup boost (`dmemcg-booster`); bpftune network tuner. **gamemode is removed and unsupported** — drop `gamemoderun` from launch options; there is no ananicy.
+Most of the performance tuning from the Arch guide is **already built into Bazzite**. This step lists it so you don't redo it, then adds two optional things Bazzite leaves switched off, and explains the one habit that replaces `gamemode`.
 
-## Power profile = the game-performance switch
+## Already done for you (do not add these again)
 
-KDE's battery/power applet → *Performance* maps to `throughput-performance-bazzite` (governor performance, boost on, and — if enabled below — LAVD in gaming mode). CLI: `powerprofilesctl set performance` (tuned-ppd). No wrapper script needed.
+- Memory and swap tuning (`vm.max_map_count`, `swappiness=180` with zram compressed swap, dirty-memory limits) — applied by a service called **tuned**.
+- Disk request scheduling per drive type (HDD → `bfq`, SSD/NVMe → `kyber`) via udev rules.
+- Network: BBR congestion control, MTU probing.
+- `ntsync` for Wine/Proton, a "foreground app gets priority" booster for KDE, and a network auto-tuner.
+- **gamemode is deliberately removed** from Bazzite and is not supported. If a game's launch options contain `gamemoderun %command%`, delete that word. There is no `ananicy` either.
 
-## sched-ext LAVD (optional; off by default on desktop, config persists in `/etc`)
+## The Balanced / Performance switch is your "game mode"
+
+Click the battery/power icon in the KDE tray → choose **Performance** before a heavy game, **Balanced** afterwards. On Bazzite this switch does more than on other distros: it changes the CPU governor and boost, memory tuning, and (after the next section) the CPU scheduler mode. From the terminal the same thing is:
+
+```bash
+powerprofilesctl set performance
+powerprofilesctl set balanced
+```
+
+## Optional A — LAVD, a game-oriented CPU scheduler
+
+Bazzite's kernel supports "sched-ext": CPU schedulers you can load and unload while the system runs. **LAVD** is the one written with games in mind. Bazzite installs it but leaves it off on desktops. Turning it on is a small config file in `/etc` (survives updates) plus enabling a service:
 
 ```bash
 sudo install -Dm644 /dev/stdin /etc/scx_loader/config.toml <<'EOF'
@@ -22,16 +37,23 @@ lowlatency_mode = ["--performance"]
 powersave_mode = ["--powersave"]
 EOF
 sudo systemctl enable --now scx_loader.service
-scxctl get                       # current scheduler / mode
-# undo: sudo systemctl disable --now scx_loader.service
+scxctl get                       # should show scx_lavd and the current mode
 ```
 
-Bazzite's tuned scripts then switch LAVD to gaming mode on *Performance* and back to auto on *Balanced*.
+From now on the Performance/Balanced switch above also flips LAVD between "gaming" and "auto" — Bazzite wires that up itself. If anything feels worse (stutter, audio crackle), turn it off again:
 
-## Watchdog off (Bazzite's own recipe; sets `nowatchdog` + blacklists the TCO modules)
+```bash
+sudo systemctl disable --now scx_loader.service
+```
+
+## Optional B — switch off the hardware watchdog
+
+A watchdog is a timer that reboots the machine if the kernel hangs completely. Desktops don't need it and it costs a little. Bazzite has a recipe that sets the `nowatchdog` kernel argument and blacklists the watchdog drivers; it asks a yes/no question:
 
 ```bash
 ujust configure-watchdog
 ```
 
-[notes §5](./99-notes.md#6-performance).
+(Takes effect after a reboot — combine with Step 7.)
+
+Background: [notes §6](./99-notes.md#6-performance).

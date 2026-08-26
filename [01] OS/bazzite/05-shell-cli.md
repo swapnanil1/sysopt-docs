@@ -1,28 +1,49 @@
-# 5 — Shell & CLI
+# Step 5 — The fish shell and command-line tools
 
-**What this does.** Sets up fish and the command-line tools. Bazzite's rule of thumb: CLI programs come from Homebrew (lives in `/home`, survives updates), not from the image. Changing the *login* shell system-wide is discouraged by Bazzite because a shell that lives in `/home` isn't available early in boot; setting it in the terminal app's profile gives you fish everywhere you'd type anyway.
+## What this step is
 
-`fish` is an RPM in the image and Homebrew (`/home/linuxbrew/.linuxbrew`) is preinstalled and already initialised for bash and fish.
+The "shell" is the program that reads what you type in the terminal. Bazzite gives you `bash`; **fish** is friendlier (it suggests commands as you type, colours mistakes, completes file names). fish is already installed. Command-line tools (a better `ls`, a better `cat`, a fuzzy finder, …) come from **Homebrew**, which is also already installed and lives in `/home`, so updates never remove them.
+
+## 1. Use fish in your terminal
+
+Bazzite's recommended way is to tell the terminal app to start fish, rather than changing the system-wide login shell:
+
+- **Konsole:** Settings → Configure Konsole → Profiles → your profile → Edit → **Command:** `/usr/bin/fish` → OK. Open a new tab: the prompt looks different and typing `ls` shows a grey suggestion. That is fish.
+- **Ptyxis** (the DX terminal): Preferences → Profiles → your profile → "Use custom command" → `/usr/bin/fish`.
+
+If you really want fish everywhere, including the text console (this also persists across updates):
 
 ```bash
-# Bazzite's recommended way: set the shell per terminal profile (Konsole → profile → Command: /usr/bin/fish), not system-wide
-# If you want it as the login shell anyway (persists; /etc/passwd lives in /etc):
-chsh -s /usr/bin/fish
-
-# CLI tools via Homebrew (never layer these)
-brew install eza bat fd ripgrep fzf zoxide neovim starship tealdeer dust jq doggo
-# or Bazzite's curated set (atuin, bat, eza, fd, rg, starship, zoxide, …):
-SHELL=fish ujust bazzite-cli
+chsh -s /usr/bin/fish     # asks for your password; applies at next login
 ```
 
-`~/.config/fish/config.fish` — same as the Arch guide minus the pacman abbreviations:
+## 2. Install the tools
+
+```bash
+brew install eza bat fd ripgrep fzf zoxide neovim starship tealdeer dust jq doggo
+```
+
+What they are: `eza` (nicer `ls`), `bat` (nicer `cat`), `fd` (nicer `find`), `ripgrep` (`rg`, fast text search), `fzf` (fuzzy search in history and files), `zoxide` (`z folder` jumps to folders you use), `neovim` (editor), `starship` (prompt), `tealdeer` (`tldr` = short examples for any command), `dust` (disk usage), `jq` (JSON), `doggo` (DNS lookups).
+
+Or Bazzite's own curated set in one go (`atuin`, `bat`, `eza`, `fd`, `rg`, `starship`, `zoxide`, …): `SHELL=fish ujust bazzite-cli`.
+
+## 3. fish configuration
+
+Create the folder and file, paste the block, save (`Ctrl+O`, `Enter`, `Ctrl+X`):
+
+```bash
+mkdir -p ~/.config/fish
+nano ~/.config/fish/config.fish
+```
 
 ```fish
 set -gx EDITOR nvim
 set -gx VISUAL nvim
 fish_add_path -g ~/.local/bin
+fish_add_path -g ~/.config/composer/vendor/bin      # laravel (Step 2)
 if status is-interactive
-    set -g fish_greeting
+    set -g fish_greeting                            # no welcome message
+    # abbreviations: type the short word, press Space, it expands to the full command
     abbr -a update  'ujust update'
     abbr -a rs      'rpm-ostree status'
     abbr -a fi      'flatpak install flathub'
@@ -33,9 +54,16 @@ if status is-interactive
         alias la  'eza -la --group-directories-first --icons=auto --git'
     end
     type -q bat;    and alias cat 'bat --paging=never'
-    type -q fzf;    and fzf --fish | source
-    type -q zoxide; and zoxide init fish | source
+    type -q fzf;    and fzf --fish | source          # Ctrl+R = search history, Ctrl+T = find files
+    type -q zoxide; and zoxide init fish | source    # `z name` jumps to a folder you've used
 end
 ```
 
-zsh: `brew install zsh` and set it in the terminal profile (not in the image). Homebrew binaries sit at the *end* of `PATH` so system tools win — `type -a nvim` shows which one you run. [notes §4](./99-notes.md#5-shell).
+Open a new terminal tab; `ls` now shows icons and `Ctrl+R` searches your history.
+
+## Good to know
+
+- Homebrew's programs are placed at the *end* of your PATH, so a program that exists in both Bazzite and brew runs the Bazzite one. `type -a nvim` shows which copy runs.
+- Want zsh instead of fish: `brew install zsh`, then set it in the terminal profile the same way.
+
+Background: [notes §5](./99-notes.md#5-shell).
