@@ -12,7 +12,6 @@ mkdir -p ~/repos/swapnanil2
 mkdir -p ~/.ssh
 
 # 3. Generate SSH keys (creates id_s1 and id_s2 with no passphrases)
-# We check if the key already exists so we don't accidentally overwrite it
 if [ ! -f ~/.ssh/id_s1 ]; then
     ssh-keygen -t ed25519 -f ~/.ssh/id_s1 -C "$S1_EMAIL" -N ""
 fi
@@ -80,13 +79,19 @@ echo " STEP 3: HOW TO CLONE REPOSITORIES"
 echo "========================================================"
 echo "When cloning, you MUST replace 'git@github.com:' with your alias ('s1:' or 's2:')."
 echo ""
-echo "❌ WRONG: git clone git@github.com:swapnanil1/sysopt-docs.git"
-echo "❌ WRONG: git clone s1:git@github.com:swapnanil1/sysopt-docs.git"
-echo "✅ RIGHT: git clone s1:swapnanil1/sysopt-docs.git"
+echo "❌ WRONG: git clone git@github.com:swapnanil1/repo.git"
+echo "✅ RIGHT: git clone s1:swapnanil1/repo.git"
+
+echo -e "\n========================================================"
+echo " STEP 4: INITIALIZING OR FIXING EXISTING REPOSITORIES"
+echo "========================================================"
+echo "If you run 'git init' locally, or if you already have a cloned"
+echo "repository that is failing to push, use these commands:"
 echo ""
-echo "HOW IT WORKS:"
-echo "By replacing 'git@github.com' with 's1', your computer looks inside your"
-echo "~/.ssh/config file. It sees 'Host s1', routing the connection to github.com"
-echo "but forcing it to use the exact SSH key for Account 1 (~/.ssh/id_s1)."
+echo "To ADD a remote to a newly initialized repository:"
+echo "👉 git remote add origin s1:swapnanil1/repo.git"
+echo ""
+echo "To FIX an existing repository URL (replace the bad link):"
+echo "👉 git remote set-url origin s1:swapnanil1/repo.git"
 echo "========================================================"
 echo "Setup Complete!"
