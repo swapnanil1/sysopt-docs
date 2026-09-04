@@ -86,7 +86,7 @@ Keep `/etc/zsh/zprofile`'s `emulate sh -c 'source /etc/profile'` line. paru: `[c
 | `modprobe.d/blacklist.conf`, `amdgpu.conf`, `nvidia.conf` | watchdogs `iTCO_wdt`/`sp5100_tco` off; GCN1/2 → amdgpu; NVIDIA `NVreg_InitializeSystemMemoryAllocations=0` |
 | `modules-load.d/ntsync.conf` | ntsync for Wine/Proton |
 | `tmpfiles.d/thp.conf`, `thp-shrinker.conf`, `coredump.conf` | THP `defrag=defer+madvise`, `max_ptes_none=409` (THP=always without RAM bloat), coredumps pruned after 3 d |
-| `system.conf.d/00-timeout.conf`, `10-limits.conf` (+user) | `DefaultTimeoutStopSec=10s`, NOFILE raised |
+| `system.conf.d/00-timeout.conf`, `10-limits.conf` (+user) | `DefaultTimeoutStopSec=10s`, NOFILE raised. The user-side copy also caps `psd unsync` (ExecStop) at 10 s: a ~300 MB Firefox profile on an HDD never finishes, psd logs `Stopping timed out` / `Ungraceful state detected` and restores the last hourly resync on the next boot — everything since the top of the hour is lost, which looks like "browsers log me out on reboot". Not a KWallet problem (Firefox never touches it). Fix: drop-in `TimeoutStopSec=120` on `psd.service` (step 3); `user@.service` allows 2 min, so it isn't clipped. `psd c` deletes the `*-backup-crashrecovery-*` snapshots afterwards. |
 | `journald.conf.d/00-journal-size.conf` | `SystemMaxUse=50M` |
 | `NetworkManager/conf.d/dns.conf`, `timesyncd.conf.d/10-timesyncd.conf` | `dns=systemd-resolved`; Cloudflare/Google NTP |
 | `limits.d/20-audio.conf` | `@audio rtprio 99, nice -11` |

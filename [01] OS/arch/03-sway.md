@@ -18,7 +18,11 @@ sudo pacman -S --needed \
 
 # Tier 2: pick
 sudo pacman -S --needed wlsunset wdisplays swayosd sway-contrib wtype wlogout
-sudo pacman -S --needed profile-sync-daemon && systemctl --user enable --now psd.service   # HDD root: yes
+# HDD root: profile-sync-daemon. cachyos-settings' 10 s user-service stop timeout kills the shutdown write-back of a big Firefox profile → next boot restores the last hourly copy (browser logins gone). Raise it BEFORE enabling.
+sudo pacman -S --needed profile-sync-daemon
+mkdir -p ~/.config/systemd/user/psd.service.d && printf '[Service]\nTimeoutStopSec=120\n' > ~/.config/systemd/user/psd.service.d/override.conf
+systemctl --user daemon-reload && systemctl --user enable --now psd.service
+# check after the first reboot: journalctl --user -u psd.service | grep -E 'timed out|Ungraceful'   → must be empty
 ```
 
 Pulled in (don't list / don't enable): wlroots, seatd (**never enable seatd.service**), polkit, grim, slurp, xdg-desktop-portal. Don't install: xf86-video-*, xorg-xhost, flameshot.

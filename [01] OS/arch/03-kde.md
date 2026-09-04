@@ -34,6 +34,12 @@ After first login:
 ```bash
 # wallet wizard: "classic blowfish", login password  → kwallet-pam unlocks it
 balooctl6 suspend && balooctl6 disable      # FAST / HDD root: no file indexing
+
+# HDD root: profile-sync-daemon. cachyos-settings' 10 s user-service stop timeout kills the shutdown write-back of a big Firefox profile → next boot restores the last hourly copy (browser logins gone). Raise it BEFORE enabling.
+sudo pacman -S --needed profile-sync-daemon
+mkdir -p ~/.config/systemd/user/psd.service.d && printf '[Service]\nTimeoutStopSec=120\n' > ~/.config/systemd/user/psd.service.d/override.conf
+systemctl --user daemon-reload && systemctl --user enable --now psd.service
+# check after the first reboot: journalctl --user -u psd.service | grep -E 'timed out|Ungraceful'   → must be empty
 ```
 
 Autologin: `/etc/plasmalogin.conf` → `[Autologin]` `User=<user>` `Session=plasma` (same keys in `/etc/sddm.conf.d/autologin.conf`). Package roles: [notes §3](./99-notes.md#3-desktops).

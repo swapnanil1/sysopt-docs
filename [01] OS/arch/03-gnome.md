@@ -42,6 +42,12 @@ gsettings set org.freedesktop.Tracker3.Miner.Files index-recursive-directories "
 gsettings set org.freedesktop.Tracker3.Miner.Files index-single-directories "[]"
 gsettings set org.freedesktop.Tracker3.Miner.Files enable-monitors false
 cp /etc/xdg/autostart/localsearch-3.desktop ~/.config/autostart/ && echo Hidden=true >> ~/.config/autostart/localsearch-3.desktop
+
+# HDD root: profile-sync-daemon. cachyos-settings' 10 s user-service stop timeout kills the shutdown write-back of a big Firefox profile → next boot restores the last hourly copy (browser logins gone). Raise it BEFORE enabling.
+sudo pacman -S --needed profile-sync-daemon
+mkdir -p ~/.config/systemd/user/psd.service.d && printf '[Service]\nTimeoutStopSec=120\n' > ~/.config/systemd/user/psd.service.d/override.conf
+systemctl --user daemon-reload && systemctl --user enable --now psd.service
+# check after the first reboot: journalctl --user -u psd.service | grep -E 'timed out|Ungraceful'   → must be empty
 ```
 
 Autologin: `/etc/gdm/custom.conf` → `[daemon]` `AutomaticLoginEnable=True` `AutomaticLogin=<user>`. Empty user list on the GDM 50 greeter: [notes §3](./99-notes.md#3-desktops).
