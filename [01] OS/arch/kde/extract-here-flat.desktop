@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Service
+MimeType=application/zip;application/x-7z-compressed;application/vnd.rar;application/x-rar;application/x-tar;application/gzip;application/x-xz;application/zstd;application/x-bzip2;application/x-compressed-tar;application/x-xz-compressed-tar;application/x-zstd-compressed-tar;application/x-bzip-compressed-tar;application/x-lzma-compressed-tar;
+Actions=extractflat;
+X-KDE-Priority=TopLevel
+
+[Desktop Action extractflat]
+Name=Extract here, flat (merge, terminal)
+Icon=archive-extract
+Exec=@HOME@/.local/bin/extract-here-flat %F
