@@ -11,7 +11,7 @@ sudo systemctl enable bluetooth.service        # bluez is pulled by gnome-contro
 # Tier 1
 sudo pacman -S --needed \
   gnome-console gnome-text-editor loupe papers file-roller 7zip unrar gnome-calculator \
-  gnome-disk-utility gnome-system-monitor gnome-tweaks \
+  gnome-disk-utility gnome-system-monitor gnome-tweaks seahorse \
   extension-manager gnome-shell-extension-appindicator \
   gst-plugin-pipewire gst-thumbnailers gst-libav noto-fonts-emoji
 
@@ -19,7 +19,7 @@ sudo pacman -S --needed \
 sudo pacman -S --needed showtime decibels snapshot gst-plugins-bad gst-plugins-ugly gst-plugin-va
 sudo pacman -S --needed gnome-clocks gnome-weather gnome-characters gnome-font-viewer gnome-logs baobab
 sudo pacman -S --needed gnome-calendar gnome-contacts          # pulls evolution-data-server
-sudo pacman -S --needed gvfs-mtp gvfs-smb seahorse dconf-editor
+sudo pacman -S --needed gvfs-mtp gvfs-smb dconf-editor
 sudo pacman -S --needed gnome-shell-extension-dash-to-dock gnome-shell-extension-no-overview gnome-shell-extension-caffeine gnome-shell-extension-vitals
 sudo pacman -S --needed flatpak                                # CLI only; do NOT install gnome-software
 sudo pacman -S --needed cups system-config-printer && sudo systemctl enable cups.socket
@@ -29,9 +29,17 @@ Already pulled in by `gnome-shell` (don't list): gnome-session, gnome-settings-d
 
 Skip: gnome-software, gnome-tour, gnome-initial-setup, yelp/gnome-user-docs, gnome-user-share, rygel, orca, malcontent, sushi, totem/evince/cheese, switcheroo-control, polkit-gnome, the `gnome`/`gnome-extra` groups.
 
+Keyring: nothing to configure. Arch's `gdm` ships `pam_gnome_keyring.so` in `/etc/pam.d/gdm-password` and `gdm-autologin` (auth, `password … use_authtok`, `session … auto_start`), and `gnome-keyring` (Tier 0) provides the module + libsecret. `~/.local/share/keyrings/login.keyring` is created at the first password login; Chromium/Electron apps encrypt their cookies with it, so a keyring that fails to unlock = every browser logged out. `seahorse` (Tier 1) is the only tool to fix a drifted keyring password — change the login password via Settings → Users, never bare `passwd`, or the two drift.
+
 After first login:
 
 ```bash
+# keyring check: must list login.keyring and return with NO unlock dialog
+ls ~/.local/share/keyrings/ && secret-tool lookup x y
+#   dialog appears → keyring password ≠ login password → Seahorse → Login → Change Password
+#   (or rm ~/.local/share/keyrings/login.keyring, log out/in: recreated from the login password)
+#   autologin → PAM has no password to unlock with → Seahorse → Login → Change Password → leave new password empty
+
 gnome-extensions enable appindicatorsupport@rgcjonas.gmail.com
 gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'
 gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'
