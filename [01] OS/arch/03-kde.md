@@ -42,4 +42,11 @@ systemctl --user daemon-reload && systemctl --user enable --now psd.service
 # check after the first reboot: journalctl --user -u psd.service | grep -E 'timed out|Ungraceful'   → must be empty
 ```
 
+Dolphin: one extra right-click entry for archives, *Extract here, merged (terminal)* — what Ark's *Extract here* doesn't do: multi-select, every archive unpacked as-is into the current folder with no per-archive subfolder (same-named folders merge), one terminal per archive ending with "Press any key to close". Files: [`kde/extract-here-flat`](./kde/extract-here-flat) + [`kde/extract-here-flat.desktop`](./kde/extract-here-flat.desktop).
+
+```bash
+install -Dm755 kde/extract-here-flat ~/.local/bin/extract-here-flat
+sed "s|@HOME@|$HOME|g" kde/extract-here-flat.desktop | install -Dm755 /dev/stdin ~/.local/share/kio/servicemenus/extract-here-flat.desktop
+```
+
 Autologin: `/etc/plasmalogin.conf` → `[Autologin]` `User=<user>` `Session=plasma` (same keys in `/etc/sddm.conf.d/autologin.conf`). Package roles: [notes §3](./99-notes.md#3-desktops).

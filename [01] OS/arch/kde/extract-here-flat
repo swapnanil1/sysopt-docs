@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# extract-here-flat ARCHIVE...
+# Dolphin service menu backend. One terminal window per archive. Each archive
+# extracts next to itself exactly as packed, merged into that folder: no
+# per-archive subfolder is created and nothing inside the archive is renamed
+# or stripped (archive/, r6/, bin/ … from many archives merge into one tree).
+
+# Launched from Dolphin (no terminal): open one window per archive and leave.
+if [ ! -t 1 ]; then
+  if command -v alacritty >/dev/null; then term=(alacritty -e); else term=(konsole -e); fi
+  for f in "$@"; do "${term[@]}" "$0" "$f" >/dev/null 2>&1 & done
+  exit 0
+fi
+
+f=$1
+dir=$(dirname -- "$f")
+printf '\033[1m==> %s\033[0m\n    into %s\n\n' "${f##*/}" "$dir"
+total=$(bsdtar -tf "$f" 2>/dev/null | grep -vc '/$')
+n=0
+if bsdtar -xvf "$f" -C "$dir" 2>&1 | while IFS= read -r line; do
+     case "$line" in x\ */) ;;
+       x\ *) n=$((n+1)); printf '\r\033[K[%d/%d] %s' "$n" "$total" "${line#x }" ;;
+       *)    printf '\n%s\n' "$line" ;;
+     esac; done; [ "${PIPESTATUS[0]}" -eq 0 ]; then
+  printf '\n\n\033[32mDone:\033[0m %d files extracted.\n' "$total"
+elif command -v 7z >/dev/null && 7z x -y -o"$dir" "$f"; then
+  printf '\n\033[32mDone\033[0m (extracted with 7z).\n'
+else
+  printf '\n\033[31mFAILED:\033[0m %s\n' "${f##*/}"
+fi
+printf '\nPress any key to close.\n'
+read -rsn1
