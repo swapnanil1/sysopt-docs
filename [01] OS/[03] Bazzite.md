@@ -46,9 +46,9 @@ Check what you've changed under `/etc` any time: `sudo ostree admin config-diff`
 | 3 | [Debloat](./bazzite/03-debloat.md) — remove the apps you don't want |
 | 4 | [Hardware](./bazzite/04-hardware.md) — GPU fan/power tool (LACT), case fans |
 | 5 | [Shell & CLI](./bazzite/05-shell-cli.md) — fish and command-line tools |
-| 6 | [Performance](./bazzite/06-performance.md) — what is already tuned, the Performance switch, LAVD |
+| 6 | [Performance](./bazzite/06-performance.md) — what is already tuned (and what is not), the Performance switch, the bpfland scheduler |
 | 7 | [Kernel args](./bazzite/07-kargs.md) — boot-time switches, SAFE or MAX |
-| 8 | [Memory, network & disk rules](./bazzite/08-sysctl-udev.md) — HDD-specific tuning |
+| 8 | [Memory, network & disk rules](./bazzite/08-sysctl-udev.md) — zram memory policy (needed on every install), network, HDD rules |
 | 9 | [Pin & backup](./bazzite/09-rollback.md) — keep a known-good system, back up your files |
 | 10 | [Apps](./bazzite/10-apps.md) — install programs, Steam launch options |
 | + | [Notes & reference](./bazzite/99-notes.md) |

@@ -1,44 +1,68 @@
-# Step 8 — Memory tuning for hard drives (tuned), network, and per-disk rules (udev)
+# Step 8 — Memory tuning (tuned), network, and per-disk rules (udev)
 
 ## What this step is
 
 Three small things, all in `/etc` (so they survive updates):
 
-1. **Memory/write tuning for HDDs.** The kernel keeps written data in RAM for a while before putting it on the disk. Bazzite's defaults are sized for SSDs; on a spinning drive they let too much pile up, and when it finally flushes the whole desktop stutters for seconds. We lower those limits. On Bazzite these values are managed by a service called **tuned**, which re-applies its own numbers every time you switch Balanced/Performance — so putting ours in the usual `sysctl` file would get overwritten. Instead we give tuned two tiny profiles of our own that *extend* Bazzite's. Then tuned applies our numbers.
+1. **Memory and swap policy — needed on every install, SSD or HDD.** Bazzite swaps into compressed RAM (zram), which is nearly free, but on image 44.20260919 nothing tells the kernel to *use* it: Performance mode inherits `vm.swappiness=10` from a server profile, so under memory pressure the kernel throws away file cache instead and everything has to be re-read from disk — stutter, or multi-second freezes with games on a hard drive. It also lets up to 40 % of RAM fill with unwritten data before flushing. We set the same values CachyOS ships. On Bazzite these values are managed by a service called **tuned**, which re-applies its own numbers every time you switch Balanced/Performance — so putting ours in the usual `sysctl` file would get overwritten. Instead we give tuned two tiny profiles of our own that *extend* Bazzite's. Then tuned applies our numbers.
 2. **A few network settings** tuned doesn't manage — these go into a normal sysctl file.
 3. **udev rules** — how the kernel queues requests for each disk, plus how far ahead it reads. Bazzite already sets a sensible default for HDDs; we tune the games disk specifically.
 
-## 1. HDD memory tuning via tuned
+## 1. Memory and swap policy via tuned
+
+Check what you have first — if this prints `10` or `60`, you need this section:
+
+```bash
+sysctl vm.swappiness
+```
 
 Paste the whole block into the terminal as one piece:
 
 ```bash
-sudo mkdir -p /etc/tuned/profiles/{balanced-hdd,performance-hdd}
-sudo tee /etc/tuned/profiles/balanced-hdd/tuned.conf >/dev/null <<'EOF'
+sudo mkdir -p /etc/tuned/profiles/{balanced-zram,performance-zram}
+sudo tee /etc/tuned/profiles/balanced-zram/tuned.conf >/dev/null <<'EOF'
 [main]
 include=balanced-bazzite
 [sysctl]
-vm.dirty_background_bytes=33554432
-vm.dirty_bytes=134217728
+vm.swappiness=150
+vm.page-cluster=0
+vm.watermark_boost_factor=0
+vm.watermark_scale_factor=125
+vm.compaction_proactiveness=0
+vm.vfs_cache_pressure=50
+vm.dirty_bytes=268435456
+vm.dirty_background_bytes=67108864
 vm.dirty_writeback_centisecs=1500
-vm.dirty_expire_centisecs=3000
-vm.vfs_cache_pressure=20
 EOF
-sudo sed 's/include=balanced-bazzite/include=throughput-performance-bazzite/' /etc/tuned/profiles/balanced-hdd/tuned.conf | sudo tee /etc/tuned/profiles/performance-hdd/tuned.conf >/dev/null
-sudo sed -i 's/^balanced=.*/balanced=balanced-hdd/; s/^performance=.*/performance=performance-hdd/' /etc/tuned/ppd.conf
+sudo sed 's/include=balanced-bazzite/include=throughput-performance-bazzite/' /etc/tuned/profiles/balanced-zram/tuned.conf | sudo tee /etc/tuned/profiles/performance-zram/tuned.conf >/dev/null
+sudo sed -i '/^\[profiles\]/,/^\[battery\]/ { s/^balanced=.*/balanced=balanced-zram/; s/^performance=.*/performance=performance-zram/ }' /etc/tuned/ppd.conf
 sudo systemctl restart tuned tuned-ppd
 ```
 
-What that did: created `balanced-hdd` (= Bazzite's Balanced profile + our five numbers) and `performance-hdd` (= Bazzite's Performance profile + the same five), and told the power-profile switch to use ours. The numbers: start writing to disk in the background at 32 MB of pending data, force programs to wait at 128 MB (instead of hundreds of MB), and keep file-name/folder information in memory (`vfs_cache_pressure=20`) so the disk head doesn't have to seek for it.
+What that did: created `balanced-zram` (= Bazzite's Balanced profile + our numbers) and `performance-zram` (= Bazzite's Performance profile + the same numbers), and told the power-profile switch to use ours. The `sed` only touches the `[profiles]` section of `ppd.conf`; the `[battery]` section has its own `balanced=` line that must keep pointing at the battery profile.
+
+The numbers: `swappiness=150` = prefer compressing idle memory over dropping file cache; `page-cluster=0` = read one page at a time from swap (read-ahead is for disks, not RAM); the two `watermark` values = start reclaiming memory early and gently instead of late and in bursts; `compaction_proactiveness=0` = no background memory defragmentation; `vfs_cache_pressure=50` = keep file-name/folder information in memory longer; `dirty_*` = start writing to disk in the background at 64 MB of pending data and make programs wait at 256 MB.
+
+**HDD root only** — if the *system* itself is on a spinning drive, use tighter write limits so a flush can't stall the desktop. In the block above replace the three `dirty`/`vfs` lines with:
+
+```
+vm.vfs_cache_pressure=20
+vm.dirty_bytes=134217728
+vm.dirty_background_bytes=33554432
+vm.dirty_writeback_centisecs=1500
+vm.dirty_expire_centisecs=3000
+```
+
+(An SSD root with games on HDDs keeps the main values — 256 MB is already small enough.)
 
 Check:
 
 ```bash
-tuned-adm active                                                 # → Current active profile: balanced-hdd
-sysctl vm.dirty_bytes vm.vfs_cache_pressure vm.swappiness        # → 134217728, 20, 180
+tuned-adm active                                                 # → Current active profile: balanced-zram (or performance-zram)
+sysctl vm.swappiness vm.page-cluster vm.dirty_bytes              # → 150, 0, 268435456
 ```
 
-`swappiness` stays at Bazzite's 180 on purpose — with compressed-RAM swap (zram) a high value is correct.
+Restarting `tuned-ppd` drops you back to the default power mode (Balanced); pick Performance again from the tray if you were in it. To boot straight into Performance every time: `sudo sed -i 's/^default=.*/default=performance/' /etc/tuned/ppd.conf`.
 
 ## 2. Network settings
 

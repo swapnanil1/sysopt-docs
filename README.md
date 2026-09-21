@@ -29,7 +29,7 @@ This section houses comprehensive guides for operating system installation, post
 ### Bazzite Performance Guide
 
 - **Files:** [`[01] OS/[03] Bazzite.md`](./[01]%20OS/[03]%20Bazzite.md) (index) + step files in [`[01] OS/bazzite/`](./[01]%20OS/bazzite/)
-- **Description:** The Arch guide's tweaks for the immutable Bazzite KDE image, restricted to what survives ostree/bootc updates (`/etc`, `/var`, `rpm-ostree kargs`, layers, Flatpak/Homebrew): fstab for a HDD root + games HDD under `/var/mnt`, debloat, LACT, fish + brew, what the image already tunes vs. what to add (tuned profiles for HDD memory tuning, HDD udev rule, sched-ext LAVD, SAFE/MAX kernel args), deployment pinning and rollback, apps.
+- **Description:** The Arch guide's tweaks for the immutable Bazzite KDE image, restricted to what survives ostree/bootc updates (`/etc`, `/var`, `rpm-ostree kargs`, layers, Flatpak/Homebrew): fstab for a HDD root + games HDD under `/var/mnt`, debloat, LACT, fish + brew, what the image already tunes vs. what to add (tuned profiles for the zram memory policy the image lacks, HDD udev rule, sched-ext bpfland — not LAVD, which stalls on the 7.2 kernel, SAFE/MAX kernel args), deployment pinning and rollback, apps.
 
 ---
 
