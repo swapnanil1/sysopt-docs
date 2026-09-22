@@ -7,6 +7,12 @@
 # Every change is reversible: delete the policy value / set the service back to its old start type.
 # Reboot after running.
 
+# Unattended-friendly: the window closes as soon as the script ends, so everything
+# printed is also written to C:\post-install-logs\perf.log
+$null = New-Item -ItemType Directory -Path "$env:SystemDrive\post-install-logs" -Force
+Start-Transcript -Path "$env:SystemDrive\post-install-logs\perf.log" -Append | Out-Null
+$ErrorActionPreference = 'Continue'
+
 function Set-Policy {
     param([String]$Path, [String]$Name, $Value, [String]$Type = 'DWord')
 
@@ -128,9 +134,6 @@ foreach($task in $tasks) {
 # No hibernation file (frees several GB) and no Fast Startup
 powercfg /hibernate off
 
-# Stop creating 8.3 short names on all volumes (less work per file create)
-fsutil 8dot3name set 1
-
 # Give back the ~7 GB Windows reserves for updates (matters on a 512 GB drive)
 DISM.exe /Online /Set-ReservedStorageState /State:Disabled
 
@@ -164,3 +167,5 @@ Write-Host 'Virtualization-based security state (2 = running):'
 
 Write-Host 'svchost footprint:'
 Get-Process svchost | Measure-Object WorkingSet -Sum | ForEach-Object { '{0} processes, {1:N0} MB' -f $_.Count, ($_.Sum / 1MB) }
+Write-Host 'Performance settings applied. Reboot after all scripts have run.'
+Stop-Transcript | Out-Null

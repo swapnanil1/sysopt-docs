@@ -2,7 +2,13 @@
 # Interface / quality-of-life settings for Windows 11 25H2/26H2. Companion to post-install-perf.ps1.
 # Values taken from the AtlasOS playbook (rewrite branch, 2026-09). Almost all are the same
 # registry values the Settings app or Folder Options write, so they can be undone from the UI.
-# Run as the user you will use daily (most are HKCU). Explorer restarts at the end.
+# Run as the user you will use daily (most are HKCU).
+
+# Unattended-friendly: the window closes as soon as the script ends, so everything
+# printed is also written to C:\post-install-logs\interface.log
+$null = New-Item -ItemType Directory -Path "$env:SystemDrive\post-install-logs" -Force
+Start-Transcript -Path "$env:SystemDrive\post-install-logs\interface.log" -Append | Out-Null
+$ErrorActionPreference = 'Continue'
 
 function Set-Policy {
     param([String]$Path, [String]$Name, $Value, [String]$Type = 'DWord')
@@ -155,5 +161,5 @@ Set-Policy 'HKCU:\Control Panel\Desktop' 'WaitToKillAppTimeOut' '2000' 'String'
 # draw over the prompt), so deliberately left off.
 # Set-Policy 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' 'PromptOnSecureDesktop' 0
 
-Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
-Write-Host 'Interface settings applied. Explorer restarted; sign out and back in for the rest.'
+Write-Host 'Interface settings applied. Explorer is restarted by the installer; sign out and back in for the rest.'
+Stop-Transcript | Out-Null

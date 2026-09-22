@@ -4,6 +4,12 @@
 # policies and Settings-app toggles. Nothing here touches services, drivers or Defender.
 # Run as the user you will use daily (HKCU values apply to that account). Reboot after.
 
+# Unattended-friendly: the window closes as soon as the script ends, so everything
+# printed is also written to C:\post-install-logs\privacy.log
+$null = New-Item -ItemType Directory -Path "$env:SystemDrive\post-install-logs" -Force
+Start-Transcript -Path "$env:SystemDrive\post-install-logs\privacy.log" -Append | Out-Null
+$ErrorActionPreference = 'Continue'
+
 function Set-Policy {
     param([String]$Path, [String]$Name, $Value, [String]$Type = 'DWord')
 
@@ -150,4 +156,5 @@ Set-Policy 'HKCU:\Software\Policies\Microsoft\office\common\clienttelemetry' 'se
 # Atlas also turns off Defender's "phishing protection" (WTDS). That is a security feature
 # with no performance cost; deliberately not included.
 
-Write-Host 'Privacy settings applied. Reboot to apply everything.'
+Write-Host 'Privacy settings applied. Reboot after all scripts have run.'
+Stop-Transcript | Out-Null
