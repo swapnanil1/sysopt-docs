@@ -51,6 +51,7 @@ Check what you've changed under `/etc` any time: `sudo ostree admin config-diff`
 | 8 | [Memory, network & disk rules](./bazzite/08-sysctl-udev.md) — zram memory policy (needed on every install), network, HDD rules |
 | 9 | [Pin & backup](./bazzite/09-rollback.md) — keep a known-good system, back up your files |
 | 10 | [Apps](./bazzite/10-apps.md) — install programs, Steam launch options |
+| 11 | [FSR 4 frame generation in Proton games](./bazzite/11-fsr4-framegen.md) — per-game DLL swap + Windows 11 prefix for Redstone ML frame gen; upscaling is automatic |
 | + | [Notes & reference](./bazzite/99-notes.md) |
 
 Flow: `0 (installer shell) → first boot → 1 fstab → 2 update + DX → 3 → 4 → 5 → 6 → 7 → 8 → reboot → 9 pin → 10 apps`. Kargs and layered packages only take effect after a reboot; batch them.
