@@ -34,6 +34,7 @@ On the real machine:
 6. Open **Windows Security** and confirm everything is green. Core isolation → Memory integrity shows **Off** with a yellow warning if you kept section 18's *Disable core isolation*, and **On** if you chose to keep it. Also expected: a yellow "Automatic sample submission is off" warning (dismiss it) and App & browser control → Smart App Control showing **Off**.
 7. If you change your mind about memory integrity, flip it in Windows Security → Device security → Core isolation and reboot. Section 18 says what it costs.
 8. There is no recovery partition. For Safe Mode tap F8 right after the firmware logo (the perf script turns the old boot menu on). For anything worse, reinstall from the USB stick.
+9. Optional: add the firewall allowlist from [07-firewall.md](07-firewall.md).
 
 ---
 

@@ -1,0 +1,568 @@
+{
+  "Service": {
+    "ConfigVersion": 1,
+    "Blocklists": {
+      "EnableBlocklists": false,
+      "EnablePortBlocklist": false,
+      "EnableHostsBlocklist": false
+    },
+    "LockHostsFile": true,
+    "AutoUpdateCheck": true,
+    "StartupMode": 0,
+    "Profiles": [
+      {
+        "ProfileName": "Default",
+        "SpecialExceptions": [
+          "Filtered_ICMP_Traffic",
+          "Windows_Defender",
+          "Windows_DHCP_Client",
+          "Windows_DNS_Client",
+          "Windows_Network_Discovery",
+          "Windows_Store_Update",
+          "Windows_Time_Sync",
+          "Windows_Update"
+        ],
+        "AllowLocalSubnet": false,
+        "AppExceptions": [
+          {
+            "Id": "6f85c866-ae72-400c-834d-2d31ecbae120",
+            "CreationDate": "2026-09-25T12:51:05.3630006+05:30",
+            "Timer": 0,
+            "Subject": {
+              "SubjectType": 2,
+              "ExecutablePath": "C:\\Windows\\explorer.exe"
+            },
+            "Policy": {
+              "PolicyType": 1
+            },
+            "ChildProcessesInherit": false
+          },
+          {
+            "Id": "c44ea3ea-3f64-46a3-b545-78bb6b4a9a0b",
+            "CreationDate": "2026-09-25T10:43:45.5083845+05:30",
+            "Timer": 0,
+            "Subject": {
+              "SubjectType": 2,
+              "ExecutablePath": "C:\\Windows\\ImmersiveControlPanel\\SystemSettings.exe"
+            },
+            "Policy": {
+              "PolicyType": 1
+            },
+            "ChildProcessesInherit": false
+          },
+          {
+            "Id": "745f28b4-70b3-497f-805e-35395e1262ba",
+            "CreationDate": "2026-09-25T11:02:58.6973129+05:30",
+            "Timer": 0,
+            "Subject": {
+              "SubjectType": 2,
+              "ExecutablePath": "C:\\Windows\\System32\\CompatTelRunner.exe"
+            },
+            "Policy": {
+              "PolicyType": 1
+            },
+            "ChildProcessesInherit": false
+          },
+          {
+            "Id": "5d638165-b170-4766-96e7-c8bf3c5e80c6",
+            "CreationDate": "2026-09-29T18:17:57.8770481+05:30",
+            "Timer": 0,
+            "Subject": {
+              "SubjectType": 2,
+              "ExecutablePath": "C:\\Windows\\System32\\lsass.exe"
+            },
+            "Policy": {
+              "PolicyType": 1
+            },
+            "ChildProcessesInherit": false
+          },
+          {
+            "Id": "705c9ac2-648b-4086-b60e-3456ce9308bd",
+            "CreationDate": "2026-09-29T18:17:57.8689946+05:30",
+            "Timer": 0,
+            "Subject": {
+              "SubjectType": 2,
+              "ExecutablePath": "C:\\Windows\\System32\\services.exe"
+            },
+            "Policy": {
+              "PolicyType": 1
+            },
+            "ChildProcessesInherit": false
+          },
+          {
+            "Id": "7ba3c919-737d-49c7-be51-fff1f1a0fa5a",
+            "CreationDate": "2026-09-23T12:55:15.0218714+05:30",
+            "Timer": 0,
+            "Subject": {
+              "SubjectType": 2,
+              "ExecutablePath": "C:\\Windows\\System32\\smartscreen.exe"
+            },
+            "Policy": {
+              "PolicyType": 1
+            },
+            "ChildProcessesInherit": false
+          },
+          {
+            "Id": "feb90e60-fa3d-4d80-87c1-4f64028f5db8",
+            "CreationDate": "2026-10-01T18:25:55.805326+05:30",
+            "Timer": 0,
+            "Subject": {
+              "SubjectType": 2,
+              "ExecutablePath": "C:\\Windows\\System32\\taskhostw.exe"
+            },
+            "Policy": {
+              "PolicyType": 1
+            },
+            "ChildProcessesInherit": false
+          },
+          {
+            "Id": "e1c0804f-a09a-46c1-b626-810ee98e18bb",
+            "CreationDate": "2026-09-29T18:17:57.8745368+05:30",
+            "Timer": 0,
+            "Subject": {
+              "SubjectType": 2,
+              "ExecutablePath": "C:\\Windows\\System32\\wininit.exe"
+            },
+            "Policy": {
+              "PolicyType": 1
+            },
+            "ChildProcessesInherit": false
+          },
+          {
+            "Id": "bac6f70a-980e-4283-abf4-5db244059a11",
+            "CreationDate": "2026-10-01T19:28:00.1393837+05:30",
+            "Timer": 0,
+            "Subject": {
+              "SubjectType": 2,
+              "ExecutablePath": "C:\\Windows\\SystemApps\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\\StartMenuExperienceHost.exe"
+            },
+            "Policy": {
+              "PolicyType": 1
+            },
+            "ChildProcessesInherit": false
+          },
+          {
+            "Id": "b2a00c34-d1fa-4491-b5de-97e4d4c8ca3d",
+            "CreationDate": "2026-09-25T10:00:51.198667+05:30",
+            "Timer": 0,
+            "Subject": {
+              "SubjectType": 2,
+              "ExecutablePath": "C:\\Windows\\SysWOW64\\rundll32.exe"
+            },
+            "Policy": {
+              "PolicyType": 1
+            },
+            "ChildProcessesInherit": false
+          },
+          {
+            "Id": "09ef5c2f-7866-4f8a-b3c7-74795ac93d8a",
+            "CreationDate": "2026-10-01T11:41:31.6152133+05:30",
+            "Timer": 0,
+            "Subject": {
+              "SubjectType": 2,
+              "ExecutablePath": "C:\\Windows\\System32\\appidcertstorecheck.exe"
+            },
+            "Policy": {
+              "PolicyType": 3,
+              "LocalNetworkOnly": false,
+              "AllowedRemoteTcpConnectPorts": "*",
+              "AllowedRemoteUdpConnectPorts": "*",
+              "AllowedLocalTcpListenerPorts": "*",
+              "AllowedLocalUdpListenerPorts": "*"
+            },
+            "ChildProcessesInherit": false
+          },
+          {
+            "Id": "f50d89fb-6814-4698-ba0f-ff8f8c162529",
+            "CreationDate": "2026-09-25T10:01:10.2601315+05:30",
+            "Timer": 0,
+            "Subject": {
+              "SubjectType": 2,
+              "ExecutablePath": "C:\\Windows\\System32\\curl.exe"
+            },
+            "Policy": {
+              "PolicyType": 3,
+              "LocalNetworkOnly": false,
+              "AllowedRemoteTcpConnectPorts": "*",
+              "AllowedRemoteUdpConnectPorts": "*",
+              "AllowedLocalTcpListenerPorts": "*",
+              "AllowedLocalUdpListenerPorts": "*"
+            },
+            "ChildProcessesInherit": false
+          },
+          {
+            "Id": "a7f07278-0bf1-44cb-9d13-3f6c153777e4",
+            "CreationDate": "2026-09-28T15:56:34.327973+05:30",
+            "Timer": 0,
+            "Subject": {
+              "SubjectType": 2,
+              "ExecutablePath": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+            },
+            "Policy": {
+              "PolicyType": 3,
+              "LocalNetworkOnly": false,
+              "AllowedRemoteTcpConnectPorts": "*",
+              "AllowedRemoteUdpConnectPorts": "*",
+              "AllowedLocalTcpListenerPorts": "*",
+              "AllowedLocalUdpListenerPorts": "*"
+            },
+            "ChildProcessesInherit": false
+          },
+          {
+            "Id": "bfdc322a-56b3-4318-96eb-39225666d692",
+            "CreationDate": "2026-10-01T18:17:22.1127251+05:30",
+            "Timer": 0,
+            "Subject": {
+              "SubjectType": 2,
+              "ExecutablePath": "C:\\Windows\\SystemApps\\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\\TextInputHost.exe"
+            },
+            "Policy": {
+              "PolicyType": 3,
+              "LocalNetworkOnly": false,
+              "AllowedRemoteTcpConnectPorts": "*",
+              "AllowedRemoteUdpConnectPorts": "*",
+              "AllowedLocalTcpListenerPorts": "*",
+              "AllowedLocalUdpListenerPorts": "*"
+            },
+            "ChildProcessesInherit": false
+          },
+          {
+            "Id": "bb4fd037-87e8-4b77-81e2-19a424ea052f",
+            "CreationDate": "2026-10-01T13:43:35.165643+05:30",
+            "Timer": 0,
+            "Subject": {
+              "SubjectType": 2,
+              "ExecutablePath": "C:\\Windows\\UUS\\amd64\\MoUsoCoreWorker.exe"
+            },
+            "Policy": {
+              "PolicyType": 3,
+              "LocalNetworkOnly": false,
+              "AllowedRemoteTcpConnectPorts": "*",
+              "AllowedRemoteUdpConnectPorts": "*",
+              "AllowedLocalTcpListenerPorts": "*",
+              "AllowedLocalUdpListenerPorts": "*"
+            },
+            "ChildProcessesInherit": false
+          }
+        ],
+        "DisplayOffBlock": false
+      }
+    ],
+    "ActiveProfileName": "Default",
+    "ActiveProfile": {
+      "ProfileName": "Default",
+      "SpecialExceptions": [
+        "Filtered_ICMP_Traffic",
+        "Windows_Defender",
+        "Windows_DHCP_Client",
+        "Windows_DNS_Client",
+        "Windows_Network_Discovery",
+        "Windows_Store_Update",
+        "Windows_Time_Sync",
+        "Windows_Update"
+      ],
+      "AllowLocalSubnet": false,
+      "AppExceptions": [
+        {
+          "Id": "6f85c866-ae72-400c-834d-2d31ecbae120",
+          "CreationDate": "2026-09-25T12:51:05.3630006+05:30",
+          "Timer": 0,
+          "Subject": {
+            "SubjectType": 2,
+            "ExecutablePath": "C:\\Windows\\explorer.exe"
+          },
+          "Policy": {
+            "PolicyType": 1
+          },
+          "ChildProcessesInherit": false
+        },
+        {
+          "Id": "c44ea3ea-3f64-46a3-b545-78bb6b4a9a0b",
+          "CreationDate": "2026-09-25T10:43:45.5083845+05:30",
+          "Timer": 0,
+          "Subject": {
+            "SubjectType": 2,
+            "ExecutablePath": "C:\\Windows\\ImmersiveControlPanel\\SystemSettings.exe"
+          },
+          "Policy": {
+            "PolicyType": 1
+          },
+          "ChildProcessesInherit": false
+        },
+        {
+          "Id": "745f28b4-70b3-497f-805e-35395e1262ba",
+          "CreationDate": "2026-09-25T11:02:58.6973129+05:30",
+          "Timer": 0,
+          "Subject": {
+            "SubjectType": 2,
+            "ExecutablePath": "C:\\Windows\\System32\\CompatTelRunner.exe"
+          },
+          "Policy": {
+            "PolicyType": 1
+          },
+          "ChildProcessesInherit": false
+        },
+        {
+          "Id": "5d638165-b170-4766-96e7-c8bf3c5e80c6",
+          "CreationDate": "2026-09-29T18:17:57.8770481+05:30",
+          "Timer": 0,
+          "Subject": {
+            "SubjectType": 2,
+            "ExecutablePath": "C:\\Windows\\System32\\lsass.exe"
+          },
+          "Policy": {
+            "PolicyType": 1
+          },
+          "ChildProcessesInherit": false
+        },
+        {
+          "Id": "705c9ac2-648b-4086-b60e-3456ce9308bd",
+          "CreationDate": "2026-09-29T18:17:57.8689946+05:30",
+          "Timer": 0,
+          "Subject": {
+            "SubjectType": 2,
+            "ExecutablePath": "C:\\Windows\\System32\\services.exe"
+          },
+          "Policy": {
+            "PolicyType": 1
+          },
+          "ChildProcessesInherit": false
+        },
+        {
+          "Id": "7ba3c919-737d-49c7-be51-fff1f1a0fa5a",
+          "CreationDate": "2026-09-23T12:55:15.0218714+05:30",
+          "Timer": 0,
+          "Subject": {
+            "SubjectType": 2,
+            "ExecutablePath": "C:\\Windows\\System32\\smartscreen.exe"
+          },
+          "Policy": {
+            "PolicyType": 1
+          },
+          "ChildProcessesInherit": false
+        },
+        {
+          "Id": "feb90e60-fa3d-4d80-87c1-4f64028f5db8",
+          "CreationDate": "2026-10-01T18:25:55.805326+05:30",
+          "Timer": 0,
+          "Subject": {
+            "SubjectType": 2,
+            "ExecutablePath": "C:\\Windows\\System32\\taskhostw.exe"
+          },
+          "Policy": {
+            "PolicyType": 1
+          },
+          "ChildProcessesInherit": false
+        },
+        {
+          "Id": "e1c0804f-a09a-46c1-b626-810ee98e18bb",
+          "CreationDate": "2026-09-29T18:17:57.8745368+05:30",
+          "Timer": 0,
+          "Subject": {
+            "SubjectType": 2,
+            "ExecutablePath": "C:\\Windows\\System32\\wininit.exe"
+          },
+          "Policy": {
+            "PolicyType": 1
+          },
+          "ChildProcessesInherit": false
+        },
+        {
+          "Id": "bac6f70a-980e-4283-abf4-5db244059a11",
+          "CreationDate": "2026-10-01T19:28:00.1393837+05:30",
+          "Timer": 0,
+          "Subject": {
+            "SubjectType": 2,
+            "ExecutablePath": "C:\\Windows\\SystemApps\\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\\StartMenuExperienceHost.exe"
+          },
+          "Policy": {
+            "PolicyType": 1
+          },
+          "ChildProcessesInherit": false
+        },
+        {
+          "Id": "b2a00c34-d1fa-4491-b5de-97e4d4c8ca3d",
+          "CreationDate": "2026-09-25T10:00:51.198667+05:30",
+          "Timer": 0,
+          "Subject": {
+            "SubjectType": 2,
+            "ExecutablePath": "C:\\Windows\\SysWOW64\\rundll32.exe"
+          },
+          "Policy": {
+            "PolicyType": 1
+          },
+          "ChildProcessesInherit": false
+        },
+        {
+          "Id": "09ef5c2f-7866-4f8a-b3c7-74795ac93d8a",
+          "CreationDate": "2026-10-01T11:41:31.6152133+05:30",
+          "Timer": 0,
+          "Subject": {
+            "SubjectType": 2,
+            "ExecutablePath": "C:\\Windows\\System32\\appidcertstorecheck.exe"
+          },
+          "Policy": {
+            "PolicyType": 3,
+            "LocalNetworkOnly": false,
+            "AllowedRemoteTcpConnectPorts": "*",
+            "AllowedRemoteUdpConnectPorts": "*",
+            "AllowedLocalTcpListenerPorts": "*",
+            "AllowedLocalUdpListenerPorts": "*"
+          },
+          "ChildProcessesInherit": false
+        },
+        {
+          "Id": "f50d89fb-6814-4698-ba0f-ff8f8c162529",
+          "CreationDate": "2026-09-25T10:01:10.2601315+05:30",
+          "Timer": 0,
+          "Subject": {
+            "SubjectType": 2,
+            "ExecutablePath": "C:\\Windows\\System32\\curl.exe"
+          },
+          "Policy": {
+            "PolicyType": 3,
+            "LocalNetworkOnly": false,
+            "AllowedRemoteTcpConnectPorts": "*",
+            "AllowedRemoteUdpConnectPorts": "*",
+            "AllowedLocalTcpListenerPorts": "*",
+            "AllowedLocalUdpListenerPorts": "*"
+          },
+          "ChildProcessesInherit": false
+        },
+        {
+          "Id": "a7f07278-0bf1-44cb-9d13-3f6c153777e4",
+          "CreationDate": "2026-09-28T15:56:34.327973+05:30",
+          "Timer": 0,
+          "Subject": {
+            "SubjectType": 2,
+            "ExecutablePath": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+          },
+          "Policy": {
+            "PolicyType": 3,
+            "LocalNetworkOnly": false,
+            "AllowedRemoteTcpConnectPorts": "*",
+            "AllowedRemoteUdpConnectPorts": "*",
+            "AllowedLocalTcpListenerPorts": "*",
+            "AllowedLocalUdpListenerPorts": "*"
+          },
+          "ChildProcessesInherit": false
+        },
+        {
+          "Id": "bfdc322a-56b3-4318-96eb-39225666d692",
+          "CreationDate": "2026-10-01T18:17:22.1127251+05:30",
+          "Timer": 0,
+          "Subject": {
+            "SubjectType": 2,
+            "ExecutablePath": "C:\\Windows\\SystemApps\\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\\TextInputHost.exe"
+          },
+          "Policy": {
+            "PolicyType": 3,
+            "LocalNetworkOnly": false,
+            "AllowedRemoteTcpConnectPorts": "*",
+            "AllowedRemoteUdpConnectPorts": "*",
+            "AllowedLocalTcpListenerPorts": "*",
+            "AllowedLocalUdpListenerPorts": "*"
+          },
+          "ChildProcessesInherit": false
+        },
+        {
+          "Id": "bb4fd037-87e8-4b77-81e2-19a424ea052f",
+          "CreationDate": "2026-10-01T13:43:35.165643+05:30",
+          "Timer": 0,
+          "Subject": {
+            "SubjectType": 2,
+            "ExecutablePath": "C:\\Windows\\UUS\\amd64\\MoUsoCoreWorker.exe"
+          },
+          "Policy": {
+            "PolicyType": 3,
+            "LocalNetworkOnly": false,
+            "AllowedRemoteTcpConnectPorts": "*",
+            "AllowedRemoteUdpConnectPorts": "*",
+            "AllowedLocalTcpListenerPorts": "*",
+            "AllowedLocalUdpListenerPorts": "*"
+          },
+          "ChildProcessesInherit": false
+        }
+      ],
+      "DisplayOffBlock": false
+    }
+  },
+  "Controller": {
+    "Language": "auto",
+    "UiTheme": "auto",
+    "ConnFormWindowState": 0,
+    "ConnFormWindowLoc": {
+      "IsEmpty": true,
+      "X": 0,
+      "Y": 0
+    },
+    "ConnFormWindowSize": {
+      "IsEmpty": true,
+      "Width": 0,
+      "Height": 0
+    },
+    "ConnFormColumnWidths": {
+    },
+    "ConnFormShowConnections": true,
+    "ConnFormShowOpenPorts": false,
+    "ConnFormShowBlocked": false,
+    "ProcessesFormWindowState": 0,
+    "ProcessesFormWindowLoc": {
+      "IsEmpty": true,
+      "X": 0,
+      "Y": 0
+    },
+    "ProcessesFormWindowSize": {
+      "IsEmpty": true,
+      "Width": 0,
+      "Height": 0
+    },
+    "ProcessesFormColumnWidths": {
+    },
+    "ServicesFormWindowState": 0,
+    "ServicesFormWindowLoc": {
+      "IsEmpty": true,
+      "X": 0,
+      "Y": 0
+    },
+    "ServicesFormWindowSize": {
+      "IsEmpty": true,
+      "Width": 0,
+      "Height": 0
+    },
+    "ServicesFormColumnWidths": {
+    },
+    "UwpPackagesFormWindowState": 0,
+    "UwpPackagesFormWindowLoc": {
+      "IsEmpty": true,
+      "X": 0,
+      "Y": 0
+    },
+    "UwpPackagesFormWindowSize": {
+      "IsEmpty": true,
+      "Width": 0,
+      "Height": 0
+    },
+    "UwpPackagesFormColumnWidths": {
+    },
+    "AskForExceptionDetails": false,
+    "SettingsTabIndex": 1,
+    "SettingsFormWindowLoc": {
+      "IsEmpty": false,
+      "X": 223,
+      "Y": 121
+    },
+    "SettingsFormWindowSize": {
+      "IsEmpty": false,
+      "Width": 1506,
+      "Height": 922
+    },
+    "SettingsFormAppListColumnWidths": {
+      "colApplication": 307,
+      "colType": 102,
+      "colDetails": 689,
+      "colLastModified": 120
+    },
+    "EnableGlobalHotkeys": true
+  }
+}

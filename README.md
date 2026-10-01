@@ -37,7 +37,7 @@ This section houses comprehensive guides for operating system installation, post
 ### Windows 11 Minimal Install Guide
 
 - **Files:** [`[01] OS/[04] Windows.md`](./[01]%20OS/[04]%20Windows.md) (index) + step files, scripts and templates in [`[01] OS/win/`](./[01]%20OS/win/)
-- **Description:** Windows 11 Pro built from Microsoft's own files and installed without clicks. Covers building a Pro-only ISO with UUP dump (latest cumulative update included, no Edge, no Store, one inbox app), filling in the unattend generator option by option, a disk script that makes two partitions and stops if it can't tell which disk to use, and three first-logon scripts for performance, privacy and interface that stick to documented policies. Nothing is patched or removed after install, so Defender and Windows Update keep working. Comes with a placeholder answer file to import into the generator. Assumes at least a Ryzen 5 3600 class CPU and 16 GB of RAM.
+- **Description:** Windows 11 Pro built from Microsoft's own files and installed without clicks. Covers building a Pro-only ISO with UUP dump (latest cumulative update included, no Edge, no Store, one inbox app), filling in the unattend generator option by option, a disk script that makes two partitions and stops if it can't tell which disk to use, and three first-logon scripts for performance, privacy and interface that stick to documented policies. Nothing is patched or removed after install, so Defender and Windows Update keep working. Comes with a placeholder answer file to import into the generator. Assumes at least a Ryzen 5 3600 class CPU and 16 GB of RAM. Optional last step: a TinyWall allowlist for the Windows components.
 
 ---
 

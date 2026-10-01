@@ -75,3 +75,14 @@ Defender definitions stall while this lasts, because Defender asks Windows Updat
 | Removing the CoreAI package | Needs an undocumented registry trick and comes back with updates. |
 
 The guide also doesn't remove Defender, patch system files, turn off Windows Update or strip components after install. That keeps cumulative updates working (step 1, section 0).
+
+## Firewall notes
+
+Step 7's file only has Windows components in it. Rules of thumb for your own apps:
+
+- Block: local databases (loopback always works), `adb.exe` over USB, tools whose only traffic is an update check, crash reporters, overlay browsers (`GameOverlayUI.exe`, the Epic overlay renderer), GPU control panels, single-player games.
+- Allow: browsers, game launchers with their web helpers and services, online games and their anti-cheat services, driver installers, git, node, python.
+- Blocking Vanguard's `vgtray.exe` is fine, it's only the tray icon. `vgc.exe` is the service the game needs, so keep that allowed.
+- Don't leave one-shot installers or old versioned paths in the list.
+
+With a default-deny firewall and no rule for Defender, definition updates fail with `0x80072EFD` (cannot connect). The Windows Defender special exception in step 7's file takes care of that.
