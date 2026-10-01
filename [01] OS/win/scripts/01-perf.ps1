@@ -1,10 +1,11 @@
 #Requires -RunAsAdministrator
 # Post-install performance settings for Windows 11 25H2/26H2 (Pro).
-# Target: Ryzen 5 3600 / 16 GB RAM / RX 9070 / single NVMe.
+# Assumes a desktop with at least a Ryzen 5 3600 class CPU and 16 GB RAM. Fine on anything faster.
 # Only documented policies, services, tasks and commands - no system file changes,
 # no Defender/mitigation/driver removal. Sources: Microsoft VDI + IoT Enterprise
 # service guidance, cross-checked against the AtlasOS playbook.
 # Every change is reversible: delete the policy value / set the service back to its old start type.
+# Smart App Control is the exception, it can't be turned back on.
 # Reboot after running.
 
 # Unattended-friendly: the window closes as soon as the script ends, so everything
@@ -46,8 +47,8 @@ Set-Policy 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Task Scheduler\Maintenance
 
 # --- Windows Update ------------------------------------------------------
 
-# Do not include drivers with Windows Updates: stops WU replacing the AMD GPU/chipset
-# drivers you installed with an older WHQL build. Update them from AMD yourself.
+# Do not include drivers with Windows Updates: stops WU replacing the GPU/chipset
+# drivers you installed with an older WHQL build. Update them from the vendor yourself.
 Set-Policy 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' 'ExcludeWUDriversInQualityUpdate' 1
 
 # No automatic restart while someone is logged on (updates wait until you reboot)
@@ -56,7 +57,7 @@ Set-Policy 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' 'NoAutoR
 # --- File Explorer -------------------------------------------------------
 
 # Stop Explorer guessing a folder "type" (Pictures/Music/...) from its contents on every open.
-# Large folders on the HDDs open noticeably faster. Same value the Atlas playbook applies.
+# Large folders open noticeably faster, most of all on hard disks. Same value the Atlas playbook applies.
 Set-Policy 'HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell' 'FolderType' 'NotSpecified' 'String'
 
 # --- Search indexing: keep it, but only for the Start menu ---------------
@@ -100,7 +101,9 @@ $services = @(
     'lfsvc'             # Geolocation
     'Spooler',        # Print Spooler - uncomment if you never print (also breaks Print to PDF)
     'LanmanServer',   # Server - uncomment if this PC never shares files/printers to others
-    'XblAuthManager', 'XblGameSave', 'XboxNetApiSvc', 'XboxGipSvc'   # uncomment if no Game Pass / Xbox app
+    'XblAuthManager', 'XblGameSave', 'XboxNetApiSvc', 'XboxGipSvc',  # uncomment if no Game Pass / Xbox app
+    'WSAIFabricSvc'   # Windows AI Fabric (Copilot+ model host), starts on boot even without an NPU.
+                      # Not from the IoT list. WinUtil disables it too. Remove on a Copilot+ PC.
 )
 
 foreach($name in $services) {
@@ -134,21 +137,40 @@ foreach($task in $tasks) {
 # No hibernation file (frees several GB) and no Fast Startup
 powercfg /hibernate off
 
-# Give back the ~7 GB Windows reserves for updates (matters on a 512 GB drive)
+# Give back the ~7 GB Windows reserves for updates (matters on a small system drive)
 DISM.exe /Online /Set-ReservedStorageState /State:Disabled
 
-# --- Optional, documented, costs security - off by default ---------------
+# --- Memory integrity / VBS ----------------------------------------------
+# Turn off Memory Integrity and the VBS hypervisor (Microsoft's own gaming guidance).
+# Biggest CPU-side gain in this file (~3-7% in CPU-bound games). Removes kernel-level
+# exploit protection. Same effect as Windows Security > Core isolation > Memory integrity > Off.
+# In the unattended build this is ALSO done in the specialize pass (generator option
+# "VM hosts > Disable core isolation") so it is off before OOBE. It is repeated here on
+# purpose so this script is complete when run by hand on any Windows 11 install.
+# Re-enable: set both values to 1 (or flip the toggle in Windows Security) and reboot.
+$deviceGuard = 'HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard'
+Set-Policy "$deviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" 'Enabled' 0
+Set-Policy $deviceGuard 'EnableVirtualizationBasedSecurity' 0
 
-# Turn off Memory Integrity and virtualization-based security (Microsoft's own gaming guidance).
-# Biggest CPU-side gain in this file (~3-7% in CPU-bound games). Breaks nothing, but removes
-# kernel-level exploit protection. Same effect as Windows Security > Core isolation > off.
-# $deviceGuard = 'HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard'
-# Set-Policy "$deviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" 'Enabled' 0
-# Set-Policy $deviceGuard 'EnableVirtualizationBasedSecurity' 0
+# --- Smart App Control ---------------------------------------------------
+# Off. A fresh install runs SAC in evaluation mode and it can switch to enforcing later.
+# When it does it blocks unsigned DLLs, which hits most scoop/GitHub dev tools
+# (seen with PostgreSQL's libxml2.dll about a week after install).
+# Can't be undone: once off, only a reinstall brings it back.
+# The answer file sets the same value in the specialize pass (generator option
+# "Disable Smart App Control"). This line is for running the script by hand.
+# Needs the reboot.
+Set-Policy 'HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy' 'VerifiedAndReputablePolicyState' 0
+
+# --- Boot ----------------------------------------------------------------
+# Old F8 boot menu (Safe Mode etc). The ISO has no WinRE (SkipWinRE=1 in ConvertConfig.ini),
+# so this is the only way into Safe Mode when Windows won't boot.
+# Tap F8 right after the firmware logo. Undo: bcdedit /set bootmenupolicy standard
+bcdedit.exe /set bootmenupolicy legacy
 
 # --- Optional, NOT officially documented - off by default ----------------
 
-# Group services back into shared svchost.exe processes (threshold 32 GB > your 16 GB).
+# Group services back into shared svchost.exe processes (threshold 32 GB, so it applies below that).
 # Roughly 70 svchost processes become 20 and a few hundred MB of RAM come back. Trade-off: one crashing
 # service takes its group down with it, and Task Manager can no longer show per-service usage.
 # Set-Policy 'HKLM:\SYSTEM\CurrentControlSet\Control' 'SvcHostSplitThresholdInKB' 0x2000000
@@ -159,7 +181,7 @@ Set-Policy 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Serialize' 
 # --- Report only - decide these yourself ---------------------------------
 
 Write-Host ''
-Write-Host 'Memory manager state (leave MemoryCompression on with 16 GB):'
+Write-Host 'Memory manager state (MemoryCompression should stay on):'
 Get-MMAgent
 
 Write-Host 'Virtualization-based security state (2 = running):'

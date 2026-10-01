@@ -7,6 +7,7 @@ Welcome to the `sysopt` repository! This collection contains various guides, con
 1.  [Operating System Setups & Configurations](#1-operating-system-setups--configurations)
     - [Arch Linux All-In-One Guide](#arch-linux-all-in-one-guide)
     - [Bazzite Performance Guide](#bazzite-performance-guide)
+    - [Windows 11 Minimal Install Guide](#windows-11-minimal-install-guide)
 2.  [Network & Router Configurations](#2-network--router-configurations)
     - [Arch Linux DNS Setup (dnsmasq & Stubby)](#arch-linux-dns-setup-dnsmasq--stubby)
     - [Bufferbloat Fix Guide](#bufferbloat-fix-guide)
@@ -30,6 +31,13 @@ This section houses comprehensive guides for operating system installation, post
 
 - **Files:** [`[01] OS/[03] Bazzite.md`](./[01]%20OS/[03]%20Bazzite.md) (index) + step files in [`[01] OS/bazzite/`](./[01]%20OS/bazzite/)
 - **Description:** The Arch guide's tweaks for the immutable Bazzite KDE image, restricted to what survives ostree/bootc updates (`/etc`, `/var`, `rpm-ostree kargs`, layers, Flatpak/Homebrew): fstab for a HDD root + games HDD under `/var/mnt`, debloat, LACT, fish + brew, what the image already tunes vs. what to add (tuned profiles for the zram memory policy the image lacks, HDD udev rule, sched-ext bpfland — not LAVD, which stalls on the 7.2 kernel, SAFE/MAX kernel args), deployment pinning and rollback, apps.
+
+---
+
+### Windows 11 Minimal Install Guide
+
+- **Files:** [`[01] OS/[04] Windows.md`](./[01]%20OS/[04]%20Windows.md) (index) + step files, scripts and templates in [`[01] OS/win/`](./[01]%20OS/win/)
+- **Description:** Windows 11 Pro built from Microsoft's own files and installed without clicks. Covers building a Pro-only ISO with UUP dump (latest cumulative update included, no Edge, no Store, one inbox app), filling in the unattend generator option by option, a disk script that makes two partitions and stops if it can't tell which disk to use, and three first-logon scripts for performance, privacy and interface that stick to documented policies. Nothing is patched or removed after install, so Defender and Windows Update keep working. Comes with a placeholder answer file to import into the generator. Assumes at least a Ryzen 5 3600 class CPU and 16 GB of RAM.
 
 ---
 

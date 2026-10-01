@@ -1,7 +1,8 @@
 #Requires -RunAsAdministrator
-# Privacy settings for Windows 11 25H2/26H2 (Pro). Companion to post-install-perf.ps1.
+# Privacy settings for Windows 11 25H2/26H2 (Pro). Companion to 01-perf.ps1.
 # Values taken from the AtlasOS playbook (rewrite branch, 2026-09), kept to documented
-# policies and Settings-app toggles. Nothing here touches services, drivers or Defender.
+# policies and Settings-app toggles. No services or drivers. The one Defender setting is
+# automatic sample submission, near the end.
 # Run as the user you will use daily (HKCU values apply to that account). Reboot after.
 
 # Unattended-friendly: the window closes as soon as the script ends, so everything
@@ -146,6 +147,14 @@ Set-Policy 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Paint' 'Dis
 Set-Policy 'HKCU:\Software\Policies\Microsoft\office\16.0\common' 'sendcustomerdata' 0
 Set-Policy 'HKCU:\Software\Policies\Microsoft\office\16.0\common' 'qmenable' 0
 Set-Policy 'HKCU:\Software\Policies\Microsoft\office\common\clienttelemetry' 'sendtelemetry' 3
+
+# --- Defender ------------------------------------------------------------
+
+# Never send file samples to Microsoft (default 1 = send "safe" samples without asking).
+# Real-time and cloud protection stay as they are. Windows Security shows a yellow
+# "Automatic sample submission is off" warning once, dismiss it.
+# Undo: Set-MpPreference -SubmitSamplesConsent 1
+Set-MpPreference -SubmitSamplesConsent 2
 
 # --- Optional - off by default -------------------------------------------
 

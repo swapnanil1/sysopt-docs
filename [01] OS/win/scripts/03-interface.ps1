@@ -1,5 +1,5 @@
 #Requires -RunAsAdministrator
-# Interface / quality-of-life settings for Windows 11 25H2/26H2. Companion to post-install-perf.ps1.
+# Interface / quality-of-life settings for Windows 11 25H2/26H2. Companion to 01-perf.ps1.
 # Values taken from the AtlasOS playbook (rewrite branch, 2026-09). Almost all are the same
 # registry values the Settings app or Folder Options write, so they can be undone from the UI.
 # Run as the user you will use daily (most are HKCU).

@@ -1,0 +1,8 @@
+{
+    "auto_install": [
+        {
+            "image": "/26300.9539.260907-1819.26H2_GE_RELEASE_SVC_PROD3_CLIENTPRO_OEMRET_X64FRE_EN-US.ISO",
+            "template": "/autounattend.xml"
+        }
+    ]
+}
