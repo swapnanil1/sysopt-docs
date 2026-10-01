@@ -69,7 +69,6 @@ Defender definitions stall while this lasts, because Defender asks Windows Updat
 | Ultimate Performance power plan | Balanced (or AMD Ryzen Balanced with the AMD chipset driver) already boosts fully. Ultimate Performance mostly stops cores from idling. |
 | Disabling the DiagTrack service | Microsoft supports that only on fixed-function devices. The telemetry policy is the supported control and is set. |
 | "Services to Manual" lists | The services on those lists are already stopped, trigger-started or disabled here. |
-| svchost split threshold | Saves 100 to 300 MB of RAM and no CPU. One crashing service takes its whole group with it. It's in `01-perf.ps1` as a commented line. |
 | Disabling Storage Sense, notifications or IPv6 | Each takes away something useful and gains nothing. |
 | Multiplane overlay off | That's a fix for flicker on some GPUs, not a default. |
 | Removing the CoreAI package | Needs an undocumented registry trick and comes back with updates. |

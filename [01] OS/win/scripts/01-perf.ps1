@@ -168,12 +168,16 @@ Set-Policy 'HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy' 'VerifiedAndReputa
 # Tap F8 right after the firmware logo. Undo: bcdedit /set bootmenupolicy standard
 bcdedit.exe /set bootmenupolicy legacy
 
-# --- Optional, NOT officially documented - off by default ----------------
+# --- Not officially documented -------------------------------------------
 
-# Group services back into shared svchost.exe processes (threshold 32 GB, so it applies below that).
-# Roughly 70 svchost processes become 20 and a few hundred MB of RAM come back. Trade-off: one crashing
-# service takes its group down with it, and Task Manager can no longer show per-service usage.
-# Set-Policy 'HKLM:\SYSTEM\CurrentControlSet\Control' 'SvcHostSplitThresholdInKB' 0x2000000
+# Group services back into shared svchost.exe processes, the way Windows runs on PCs with
+# less than 3.5 GB RAM. The threshold is set to the installed RAM so it applies on any machine
+# (WinUtil does the same). About 70 svchost processes become 20 or so, roughly 100 MB back.
+# Cost: one crashing service takes its group down, and Task Manager can't show per-service usage.
+# Undo: set the value back to 3670016 (0x380000) and reboot. Delete these lines to keep services separate.
+$ramKB = (Get-CimInstance Win32_PhysicalMemory | Measure-Object Capacity -Sum).Sum / 1KB
+if(-not $ramKB) { $ramKB = (Get-CimInstance Win32_OperatingSystem).TotalVisibleMemorySize + 1MB }
+Set-Policy 'HKLM:\SYSTEM\CurrentControlSet\Control' 'SvcHostSplitThresholdInKB' ([int]$ramKB)
 
 # Launch startup apps immediately instead of after Explorer's built-in delay
 Set-Policy 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Serialize' 'StartupDelayInMSec' 0
@@ -187,7 +191,7 @@ Get-MMAgent
 Write-Host 'Virtualization-based security state (2 = running):'
 (Get-CimInstance -Namespace root\Microsoft\Windows\DeviceGuard -ClassName Win32_DeviceGuard).VirtualizationBasedSecurityStatus
 
-Write-Host 'svchost footprint:'
+Write-Host 'svchost footprint now (grouping shows after the reboot):'
 Get-Process svchost | Measure-Object WorkingSet -Sum | ForEach-Object { '{0} processes, {1:N0} MB' -f $_.Count, ($_.Sum / 1MB) }
 Write-Host 'Performance settings applied. Reboot after all scripts have run.'
 Stop-Transcript | Out-Null
