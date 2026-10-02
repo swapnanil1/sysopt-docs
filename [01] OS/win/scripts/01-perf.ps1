@@ -80,13 +80,13 @@ Set-Policy 'HKLM:\SOFTWARE\Microsoft\Windows Search\Gather\Windows\SystemIndex' 
 Set-Policy 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile' 'SystemResponsiveness' 10
 
 # --- Services ------------------------------------------------------------
-# Only services that start automatically and are marked "OK to disable" in Microsoft's
-# IoT Enterprise guidance. Manual (trigger-start) services cost nothing while idle,
-# so disabling them gains nothing and only breaks features.
+# Services that start automatically and are marked "OK to disable" in Microsoft's
+# IoT Enterprise guidance, plus two at the end of the list that aren't from it.
+# Manual (trigger-start) services cost nothing while idle, so disabling them gains
+# nothing and only breaks features.
 
-# DiagTrack, PcaSvc, TrkWks and OneSyncSvc are deliberately NOT disabled here: the AtlasOS
-# rewrite audited them and found Microsoft only supports turning those off on fixed-function
-# IoT devices. The supported client controls are the two policies below.
+# PcaSvc, TrkWks and OneSyncSvc stay on: the AtlasOS rewrite found Microsoft only supports
+# turning those off on fixed-function IoT devices. The two policies below cover them instead.
 
 # Application Compatibility > Turn off Program Compatibility Assistant
 Set-Policy 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppCompat' 'DisablePCA' 1
@@ -102,8 +102,11 @@ $services = @(
     'Spooler',        # Print Spooler - uncomment if you never print (also breaks Print to PDF)
     'LanmanServer',   # Server - uncomment if this PC never shares files/printers to others
     'XblAuthManager', 'XblGameSave', 'XboxNetApiSvc', 'XboxGipSvc',  # uncomment if no Game Pass / Xbox app
-    'WSAIFabricSvc'   # Windows AI Fabric (Copilot+ model host), starts on boot even without an NPU.
+    'WSAIFabricSvc',  # Windows AI Fabric (Copilot+ model host), starts on boot even without an NPU.
                       # Not from the IoT list. WinUtil disables it too. Remove on a Copilot+ PC.
+    'DiagTrack'       # Telemetry service, always running. Microsoft only supports disabling it on
+                      # fixed-function devices, WinUtil does it anyway. Feedback Hub and Insider
+                      # builds need it. Remove this line to keep it.
 )
 
 foreach($name in $services) {
@@ -114,6 +117,10 @@ foreach($name in $services) {
     Set-Service -Name $name -StartupType Disabled
     Write-Host "Disabled $name"
 }
+
+# Storage Service: Manual instead of Automatic. It is trigger-started, so Windows still
+# starts it whenever something needs it.
+Set-Service -Name StorSvc -StartupType Manual -ErrorAction SilentlyContinue
 
 # --- Scheduled tasks -----------------------------------------------------
 

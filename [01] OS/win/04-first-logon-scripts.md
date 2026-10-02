@@ -37,7 +37,8 @@ Only documented policies, services listed as safe to disable in Microsoft's own 
 | MMCSS SystemResponsiveness 10 | Reserve 10 % CPU for background instead of 20 % | Documented Microsoft value; gives foreground multimedia (games, audio) a larger share. |
 | Program Compatibility Assistant off | | Stops the "this app might not have installed correctly" dialog and the process that watches every install for it. |
 | Telemetry = Required | Policy value 1 | The lowest level Pro honours. |
-| Services disabled | MapsBroker, RetailDemo, workfolderssvc, lfsvc (Geolocation), **Spooler, LanmanServer, four Xbox services**, WSAIFabricSvc | Only services that start automatically and are on Microsoft's safe-to-disable list. Manual (trigger-start) services cost nothing while idle, so the script deliberately does not touch them. **CHANGE:** remove `Spooler` if you print (also needed for Print to PDF). Remove `LanmanServer` if this PC shares folders to other machines. Remove the four Xbox lines if you use Game Pass or the Xbox app. `WSAIFabricSvc` (Windows AI Fabric) isn't from that list. It hosts on-device Copilot+ models and starts on boot even without an NPU. Remove the line on a Copilot+ PC. |
+| Services disabled | MapsBroker, RetailDemo, workfolderssvc, lfsvc (Geolocation), **Spooler, LanmanServer, four Xbox services**, WSAIFabricSvc, DiagTrack | Services that start automatically and are on Microsoft's safe-to-disable list, plus the last two. Manual (trigger-start) services cost nothing while idle, so the script deliberately does not touch them. **CHANGE:** remove `Spooler` if you print (also needed for Print to PDF). Remove `LanmanServer` if this PC shares folders to other machines. Remove the four Xbox lines if you use Game Pass or the Xbox app. `WSAIFabricSvc` (Windows AI Fabric) isn't from that list. It hosts on-device Copilot+ models and starts on boot even without an NPU. Remove the line on a Copilot+ PC. `DiagTrack` is the telemetry service. It runs all the time and holds around 30 MB. Microsoft only supports disabling it on fixed-function devices, and the Feedback Hub and Insider builds need it, so remove the line if you use either. |
+| Storage Service on Manual | `StorSvc` start type Automatic to Manual | It is trigger-started, so Windows still starts it when something needs it. A few MB while idle. |
 | Scheduled tasks disabled | CEIP Consolidator and UsbCeip, DiskDiagnostic collector, PcaPatchDb, Power Efficiency AnalyzeSystem, Flighting UsageDataReporting | Pure telemetry collectors that run on idle. |
 | Hibernate off | Deletes `hiberfil.sys` | Frees a file as big as your RAM (16 GB or more) on the SSD. Sleep still works. Section 14 disabled Fast Startup, which was the only other thing using it. |
 | Reserved storage off | | Windows otherwise holds ~7 GB back "for updates". On a small system drive you want it back. |
@@ -56,7 +57,7 @@ Values from the AtlasOS privacy playbook, filtered to documented policies and Se
 
 | Block | Why |
 |---|---|
-| Diagnostic data Required, no log/dump uploads, no feedback prompts | Stops the "rate your experience" pop-ups and reduces DiagTrack's upload work. |
+| Diagnostic data Required, no log/dump uploads, no feedback prompts | Stops the "rate your experience" pop-ups, and limits what DiagTrack uploads if you kept that service. |
 | CEIP off, Windows Error Reporting off | Crash reports stay in Event Viewer but are not uploaded. WER otherwise spawns `WerFault.exe` and phones home on every crash. |
 | App compat telemetry and inventory off | The `CompatTelRunner.exe` process that scans every installed program. Famous for pegging a CPU core on idle. |
 | No KMS activation ticket | Only relevant to volume licensing. Harmless on retail. |
