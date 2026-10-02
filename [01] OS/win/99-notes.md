@@ -73,6 +73,11 @@ What the runtime adds when it is installed:
 - The per-user Search values (`BingSearchEnabled`, `CortanaConsent`, `IsDynamicSearchBoxEnabled`) make no difference to its memory.
 - The input host hosts the emoji panel, clipboard history and the touch keyboard, and the service behind it is what lets you type into Start and Settings. Turning its features off doesn't shrink it and there is no supported way to remove it.
 - A replacement Start menu doesn't stop the Windows one from loading.
+- `CrossDeviceResume.exe` (about 35 MB, shown as Resume) is launched by the shell at logon. The Resume toggle in Settings doesn't stop it. The three cross-device policies in `02-privacy.ps1` do.
+
+### SysMain and memory compression
+
+`01-perf.ps1` disables SysMain. Memory compression runs inside that service, so it is off as well and the Memory Compression process is gone. That is fine with 16 GB or more. On a PC with less RAM keep SysMain.
 
 ### Windows Update error 0x8024402F
 

@@ -40,6 +40,7 @@ Only documented policies, services listed as safe to disable in Microsoft's own 
 | Telemetry = Required | Policy value 1 | The lowest level Pro honours. |
 | Services disabled | MapsBroker, RetailDemo, workfolderssvc, lfsvc (Geolocation), **Spooler, LanmanServer, four Xbox services**, WSAIFabricSvc, DiagTrack | Services that start automatically and are on Microsoft's safe-to-disable list, plus the last two. Manual (trigger-start) services cost nothing while idle, so the script deliberately does not touch them. **CHANGE:** remove `Spooler` if you print (also needed for Print to PDF). Remove `LanmanServer` if this PC shares folders to other machines. Remove the four Xbox lines if you use Game Pass or the Xbox app. `WSAIFabricSvc` (Windows AI Fabric) isn't from that list. It hosts on-device Copilot+ models and starts on boot even without an NPU. Remove the line on a Copilot+ PC. `DiagTrack` is the telemetry service. It runs all the time and holds around 30 MB. Microsoft only supports disabling it on fixed-function devices, and the Feedback Hub and Insider builds need it, so remove the line if you use either. |
 | Storage Service on Manual | `StorSvc` start type Automatic to Manual | It is trigger-started, so Windows still starts it when something needs it. A few MB while idle. |
+| SysMain off | Stops and disables `SysMain` (Superfetch) | No prefetching and none of its background disk activity. Memory compression goes with it, because SysMain is what runs it. With 16 GB or more that rarely matters. When RAM does run out, Windows pages to disk sooner. **CHANGE:** delete the two lines on a PC with less RAM. |
 | Scheduled tasks disabled | CEIP Consolidator and UsbCeip, DiskDiagnostic collector, PcaPatchDb, Power Efficiency AnalyzeSystem, Flighting UsageDataReporting | Pure telemetry collectors that run on idle. |
 | Hibernate off | Deletes `hiberfil.sys` | Frees a file as big as your RAM (16 GB or more) on the SSD. Sleep still works. Section 14 disabled Fast Startup, which was the only other thing using it. |
 | Reserved storage off | | Windows otherwise holds ~7 GB back "for updates". On a small system drive you want it back. |
@@ -49,7 +50,7 @@ Only documented policies, services listed as safe to disable in Microsoft's own 
 | svchost grouping | Sets the split threshold to the installed RAM, so services share processes the way they do on machines with under 3.5 GB RAM | About 70 svchost processes become 20 or so and roughly 100 MB of RAM comes back. No CPU gain. Not documented by Microsoft for this use. One crashing service takes its neighbours down, and Task Manager can no longer show usage per service. **CHANGE:** delete the three lines to keep services separate. Undo later by setting the value back to 3670016 and rebooting. |
 | Windows search off | `DisableSearch` policy, plus the indexer service disabled | The Search process never starts, which frees about 125 MB, and typing in Start finds nothing any more. The build expects another launcher: Open-Shell as the Start menu, or Everything, or pinned apps. Needs a sign-out. **CHANGE:** delete the three lines if you want to keep Windows search. |
 | StartupDelayInMSec 0 | Startup apps launch immediately after Explorer instead of after a built-in delay | Faster to a usable desktop. |
-| Report | Prints memory compression state, VBS state, svchost footprint to the log | Read `C:\post-install-logs\perf.log` after install. |
+| Report | Prints SysMain state, VBS state, svchost footprint to the log | Read `C:\post-install-logs\perf.log` after install. |
 
 Note: this script sets telemetry to 1 and the privacy script then sets it to 0. On Pro both map to "Required"; the last write wins and it does not matter.
 
@@ -70,6 +71,7 @@ Values from the AtlasOS privacy playbook, filtered to documented policies and Se
 | "Finish setting up your device" nag off, privacy questions not re-shown after feature updates | Two well-known Windows 11 interruptions. |
 | Language list not sent to websites | Fingerprinting reduction. |
 | Settings sync, clipboard sync, message sync, Find My Device off | Cloud features that need a Microsoft account you do not have. Each has a service that polls. |
+| Cross-device features off: continue on this device, Phone-PC linking, Resume | Three policies. With all of them set, `CrossDeviceResume.exe` no longer runs. The Resume toggle in Settings alone doesn't stop it. **CHANGE:** remove the three lines if you use Phone Link or Nearby sharing. |
 | Ink/typing personalization, contact harvesting, online speech off | Keystroke and handwriting samples stay local. |
 | Search: no location, no dynamic content, no cloud search, no device search history | Start search does not reach the network. |
 | App permission defaults: location, app diagnostics, account info, generative AI = Deny; no lock-screen camera | The Settings → Privacy toggles, set to off. |

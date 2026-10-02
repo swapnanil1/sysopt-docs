@@ -92,6 +92,13 @@ Set-Policy "$pol\SettingSync" 'DisableSettingSyncUserOverride' 1
 Set-Policy "$pol\System" 'AllowCrossDeviceClipboard' 0
 Set-Policy "$pol\Messaging" 'AllowMessageSync' 0
 
+# Cross-device: no "continue experiences on this device", no Phone-PC linking, no Resume.
+# With all three set CrossDeviceResume.exe no longer runs. The Resume toggle in Settings
+# alone doesn't stop it. Phone Link and Nearby sharing stop working.
+Set-Policy "$pol\System" 'EnableCdp' 0
+Set-Policy "$pol\System" 'EnableMmx' 0
+Set-Policy 'HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\Connectivity' 'DisableCrossDeviceResume' 1
+
 # Find My Device location beacon
 Set-Policy 'HKLM:\SOFTWARE\Policies\Microsoft\FindMyDevice' 'AllowFindMyDevice' 0
 

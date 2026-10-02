@@ -130,6 +130,13 @@ foreach($name in $services) {
 # starts it whenever something needs it.
 Set-Service -Name StorSvc -StartupType Manual -ErrorAction SilentlyContinue
 
+# SysMain (Superfetch) off: no prefetching and none of its background disk activity.
+# Memory compression goes with it, because SysMain is what runs it. With 16 GB or more that
+# rarely matters. When RAM does run out, Windows pages to disk sooner.
+# Delete these two lines on a PC with less RAM. Undo: set SysMain to Automatic and start it.
+Stop-Service -Name SysMain -Force -ErrorAction SilentlyContinue
+Set-Service -Name SysMain -StartupType Disabled
+
 # --- Scheduled tasks -----------------------------------------------------
 
 $tasks = @(
@@ -210,8 +217,8 @@ Set-Service -Name WSearch -StartupType Disabled
 # --- Report only - decide these yourself ---------------------------------
 
 Write-Host ''
-Write-Host 'Memory manager state (MemoryCompression should stay on):'
-Get-MMAgent
+Write-Host 'SysMain (prefetch and memory compression run inside it):'
+Get-Service SysMain | Format-Table Name, Status, StartType -AutoSize
 
 Write-Host 'Virtualization-based security state (2 = running):'
 (Get-CimInstance -Namespace root\Microsoft\Windows\DeviceGuard -ClassName Win32_DeviceGuard).VirtualizationBasedSecurityStatus
