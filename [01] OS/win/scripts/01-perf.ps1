@@ -196,6 +196,15 @@ Set-Policy 'HKLM:\SYSTEM\CurrentControlSet\Control' 'SvcHostSplitThresholdInKB' 
 # Launch startup apps immediately instead of after Explorer's built-in delay
 Set-Policy 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Serialize' 'StartupDelayInMSec' 0
 
+# --- Optional - off by default -------------------------------------------
+
+# Turn Windows search off completely: the Search process never starts and typing in Start
+# finds nothing. Only for people who launch apps another way (Everything, Open-Shell, pins).
+# Frees about 125 MB. The second line stops the indexer, which has nothing left to do.
+# Needs a sign-out. Undo: delete the DisableSearch value and set WSearch back to Automatic.
+# Set-Policy 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search' 'DisableSearch' 1
+# Set-Service -Name WSearch -StartupType Disabled
+
 # --- Report only - decide these yourself ---------------------------------
 
 Write-Host ''

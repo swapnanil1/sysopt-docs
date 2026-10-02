@@ -65,6 +65,15 @@ What the runtime adds when it is installed:
 
 `01-perf.ps1` sets a WebView2 policy for `SearchHost.exe` only, so Search keeps its built-in window and those processes never start. After the policy Search reports `IsWebView2=0` under `HKCU\Software\Microsoft\Windows\CurrentVersion\Search`.
 
+### Search and input host processes
+
+`SearchHost.exe` (about 125 MB), `StartMenuExperienceHost.exe` (about 60 MB) and `TextInputHost.exe` (about 130 MB, shown as Windows Input Experience) start at logon. Ending them doesn't help: Windows starts them again within seconds.
+
+- Search can be switched off for good with the `DisableSearch` policy, which is in `01-perf.ps1` as a commented line. Typing in Start stops finding things, so it only suits people with another launcher.
+- The per-user Search values (`BingSearchEnabled`, `CortanaConsent`, `IsDynamicSearchBoxEnabled`) make no difference to its memory.
+- The input host hosts the emoji panel, clipboard history and the touch keyboard, and the service behind it is what lets you type into Start and Settings. Turning its features off doesn't shrink it and there is no supported way to remove it.
+- A replacement Start menu doesn't stop the Windows one from loading.
+
 ### Windows Update error 0x8024402F
 
 Decode the update log with `Get-WindowsUpdateLog`. If it shows `Hash check on memory file using algorithm SHA1 failed` right before the error, the scan itself worked and one of the "external cab" files came back with the wrong content. Windows fetches those over plain HTTP from `download.windowsupdate.com`.
