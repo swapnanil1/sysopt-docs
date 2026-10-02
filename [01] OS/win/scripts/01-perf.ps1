@@ -42,6 +42,13 @@ Set-Policy 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent' 'DisableWind
 # Search > no web results in Start search (SearchHost stops doing network + render work per keystroke)
 Set-Policy 'HKCU:\Software\Policies\Microsoft\Windows\Explorer' 'DisableSearchBoxSuggestions' 1
 
+# Search > don't load WebView2 for the Start search window. Does nothing until the WebView2
+# runtime gets installed. From then on SearchHost starts a set of msedgewebview2 processes at
+# logon and keeps them open. This per-app WebView2 policy points SearchHost at a folder that
+# doesn't exist, so it uses its built-in window instead. Saves about 90 MB, other apps still
+# get the runtime. Undo: delete the SearchHost.exe value.
+Set-Policy 'HKCU:\Software\Policies\Microsoft\Edge\WebView2\BrowserExecutableFolder' 'SearchHost.exe' 'C:\NoWebView2ForSearch' 'String'
+
 # Task Scheduler > Maintenance > do not wake the PC for automatic maintenance
 Set-Policy 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Task Scheduler\Maintenance' 'WakeUp' 0
 

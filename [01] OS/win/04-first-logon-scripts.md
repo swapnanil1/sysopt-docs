@@ -28,6 +28,7 @@ Only documented policies, services listed as safe to disable in Microsoft's own 
 | Delivery Optimization = HTTP only | No peer-to-peer update sharing | Stops your PC uploading Windows Update bits to strangers and stops the DO service doing bandwidth probing. |
 | Consumer features off | Policy version of section 14's app-suggestion setting | Belt and braces; policies survive feature updates. |
 | Search box web suggestions off | Same as section 13, as policy | Same. |
+| Start search without WebView2 | Per-app WebView2 policy that points `SearchHost.exe` at a folder that doesn't exist | Only matters once the WebView2 runtime is installed. Search then starts a set of `msedgewebview2.exe` processes at logon and keeps them open. With the policy it uses its built-in window, which saves about 90 MB. Other apps still use the runtime. |
 | Maintenance does not wake the PC | | Your PC stays asleep at 3 a.m. |
 | Windows Update excludes drivers | | Windows Update otherwise replaces the GPU driver you installed with an older WHQL one, which breaks the vendor's control panel (AMD Adrenalin is the usual victim). Update GPU and chipset drivers from the vendor yourself. |
 | No auto-reboot with logged-on users | | Updates install but wait for *you* to reboot. |

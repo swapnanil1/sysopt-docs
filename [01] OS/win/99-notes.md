@@ -54,6 +54,17 @@ Print Spooler, Server and the four Xbox services are in the disabled list even t
 
 `WSAIFabricSvc` hosts on-device Copilot+ models and starts on boot even on a PC without an NPU, so it is in the disabled list. The `MicrosoftWindows.Client.CoreAI` package belongs to it. That one sits in `C:\Windows\SystemApps`, is flagged non-removable and isn't a Store app, so step 1's app list can't leave it out. The guide leaves it alone.
 
+### WebView2 runtime
+
+The image has no Edge and no WebView2 runtime. Windows keeps a private copy in `C:\Windows\System32\Microsoft-Edge-WebView` for its own components, and other apps can't use that one. An app that needs WebView2 usually installs the runtime itself.
+
+What the runtime adds when it is installed:
+
+- Run without admin rights, the installer puts it in `%LOCALAPPDATA%\Microsoft\EdgeWebView` together with Microsoft Edge Update: a startup entry and two scheduled tasks. The startup entry can be turned off in Startup apps. Leave the tasks, they keep the runtime patched. The Edge browser is not installed.
+- Start search picks the runtime up. `SearchHost.exe` then starts six `msedgewebview2.exe` processes at logon, about 175 MB, and keeps them open.
+
+`01-perf.ps1` sets a WebView2 policy for `SearchHost.exe` only, so Search keeps its built-in window and those processes never start. After the policy Search reports `IsWebView2=0` under `HKCU\Software\Microsoft\Windows\CurrentVersion\Search`.
+
 ### Windows Update error 0x8024402F
 
 Decode the update log with `Get-WindowsUpdateLog`. If it shows `Hash check on memory file using algorithm SHA1 failed` right before the error, the scan itself worked and one of the "external cab" files came back with the wrong content. Windows fetches those over plain HTTP from `download.windowsupdate.com`.
