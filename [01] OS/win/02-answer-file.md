@@ -169,7 +169,7 @@ This section decides which disk gets wiped, and it is where you paste `pe.cmd`. 
 
 | Option | Set | Why |
 |---|---|---|
-| Search box in the taskbar | **Hide** | The search box is also the surface for "search highlights" (daily web content). Hidden, plus the no-Bing setting below, means the search host does no network work. Press the Windows key and type; search still works. |
+| Search box in the taskbar | **Hide** | The search box is also the surface for "search highlights" (daily web content). Hidden, plus the no-Bing setting below, means the search host does no network work. The perf script in step 4 then turns Windows search off altogether. If you delete those lines there, pressing the Windows key and typing still searches. |
 | Icons to display in the taskbar | **Remove all icons** | The defaults pin Edge, Store, and Copilot. Edge and the Store are not even in this image. Pin your own apps after install. |
 | Disable widgets | **ON** | Widgets is a WebView2 (Edge engine) process that runs at logon and polls news, weather and stocks. Removing it saves 100 to 200 MB of RAM and a chunk of network traffic. |
 | Left-align the taskbar | **ON** | Start is at the fixed bottom-left corner, which you can hit without looking. Preference; turn OFF if you like centred. |

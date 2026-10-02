@@ -69,7 +69,7 @@ What the runtime adds when it is installed:
 
 `SearchHost.exe` (about 125 MB), `StartMenuExperienceHost.exe` (about 60 MB) and `TextInputHost.exe` (about 130 MB, shown as Windows Input Experience) start at logon. Ending them doesn't help: Windows starts them again within seconds.
 
-- Search can be switched off for good with the `DisableSearch` policy, which is in `01-perf.ps1` as a commented line. Typing in Start stops finding things, so it only suits people with another launcher.
+- Search is switched off for good with the `DisableSearch` policy in `01-perf.ps1`. Typing in Start stops finding things, so the build expects another launcher such as Open-Shell. Open-Shell's menu process holds about 2 MB.
 - The per-user Search values (`BingSearchEnabled`, `CortanaConsent`, `IsDynamicSearchBoxEnabled`) make no difference to its memory.
 - The input host hosts the emoji panel, clipboard history and the touch keyboard, and the service behind it is what lets you type into Start and Settings. Turning its features off doesn't shrink it and there is no supported way to remove it.
 - A replacement Start menu doesn't stop the Windows one from loading.

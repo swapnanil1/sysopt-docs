@@ -67,9 +67,10 @@ Set-Policy 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' 'NoAutoR
 # Large folders open noticeably faster, most of all on hard disks. Same value the Atlas playbook applies.
 Set-Policy 'HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell' 'FolderType' 'NotSpecified' 'String'
 
-# --- Search indexing: keep it, but only for the Start menu ---------------
+# --- Search indexing: only the Start menu --------------------------------
 # Search > Default indexed paths / Default excluded paths policies.
-# Start menu app search stays instant; the indexer never crawls your user folders.
+# Only matters if you keep Windows search (see the "Windows search off" block further down).
+# Start menu app search then stays instant and the indexer never crawls your user folders.
 
 $searchPolicy = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search'
 $startMenu = "file:///$env:ProgramData\Microsoft\Windows\Start Menu\Programs\*"
@@ -196,14 +197,15 @@ Set-Policy 'HKLM:\SYSTEM\CurrentControlSet\Control' 'SvcHostSplitThresholdInKB' 
 # Launch startup apps immediately instead of after Explorer's built-in delay
 Set-Policy 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Serialize' 'StartupDelayInMSec' 0
 
-# --- Optional - off by default -------------------------------------------
-
-# Turn Windows search off completely: the Search process never starts and typing in Start
-# finds nothing. Only for people who launch apps another way (Everything, Open-Shell, pins).
-# Frees about 125 MB. The second line stops the indexer, which has nothing left to do.
-# Needs a sign-out. Undo: delete the DisableSearch value and set WSearch back to Automatic.
-# Set-Policy 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search' 'DisableSearch' 1
-# Set-Service -Name WSearch -StartupType Disabled
+# --- Windows search off --------------------------------------------------
+# The Search process never starts and typing in Start finds nothing. This build expects
+# another launcher: Open-Shell as the Start menu, or Everything, or pinned apps.
+# Frees about 125 MB. The service lines stop the indexer, which has nothing left to do.
+# Needs a sign-out. To keep Windows search, delete the three lines below.
+# Undo later: delete the DisableSearch value and set WSearch back to Automatic.
+Set-Policy 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search' 'DisableSearch' 1
+Stop-Service -Name WSearch -Force -ErrorAction SilentlyContinue
+Set-Service -Name WSearch -StartupType Disabled
 
 # --- Report only - decide these yourself ---------------------------------
 

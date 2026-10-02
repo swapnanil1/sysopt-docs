@@ -11,6 +11,7 @@ Building it takes about an hour the first time. After that an install takes arou
 - You make your own files. The answer file in this repo is a template with placeholder values. Import it into the generator or read it, but don't copy it to a stick.
 - **CHANGE** marks the values that are yours (user name, disk size, country). The rest can stay as written.
 - The install wipes one whole disk. Which one depends on a size range you type in step 3. Back up first.
+- Windows search is off. Typing in Start finds nothing, and the build expects Open-Shell or another launcher. Step 4 says which lines to delete if you want to keep it.
 - Every step ends with a check. If yours doesn't match, stop and fix it before going on.
 - You need a Windows 10 or 11 PC to build on, 25 GB free, a USB stick of 8 GB or more, and Ethernet on the target PC.
 
