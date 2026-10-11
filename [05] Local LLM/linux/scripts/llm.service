@@ -1,0 +1,17 @@
+# Optional systemd user unit. Install: cp llm.service ~/.config/systemd/user/ && systemctl --user daemon-reload
+# Use: systemctl --user start|stop|restart|status llm    Logs: journalctl --user -u llm -f
+# Runs the same start-llm.sh, so the flags live in one place. Do not run it alongside the keybinding.
+[Unit]
+Description=llama-server (local LLM)
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/llm/start-llm.sh
+ExecStop=%h/llm/close-llm.sh
+Restart=no
+KillSignal=SIGINT
+TimeoutStopSec=15
+
+[Install]
+WantedBy=default.target

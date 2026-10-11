@@ -13,6 +13,9 @@ Welcome to the `sysopt` repository! This collection contains various guides, con
     - [Bufferbloat Fix Guide](#bufferbloat-fix-guide)
 3.  [Hardware Configurations & Profiles](#3-hardware-configurations--profiles)
     - [CoreCtrl Overclock Profile (AMD RX 570)](#corectrl-overclock-profile-amd-rx-570)
+4.  [Local LLM](#4-local-llm)
+    - [llama.cpp on an AMD GPU under Windows 11](#llamacpp-on-an-amd-gpu-under-windows-11)
+    - [llama.cpp on an AMD GPU under CachyOS / Arch](#llamacpp-on-an-amd-gpu-under-cachyos--arch)
 
 ---
 
@@ -72,3 +75,19 @@ Specific configuration files and profiles tailored for particular hardware compo
 - **File Page:** [`[03] Hardware Configs/corectrl_oc_570.ccpro`](https://github.com/swapnanil/sysopt/blob/main/[03]%20Hardware%20Configs/corectrl_oc_570.ccpro)
 - **Description:** A saved `CoreCtrl` application profile (`.ccpro` file) containing overclocking and fan control settings for an AMD Radeon RX 570 graphics card.
   - _To use:_ Download this file and import it into the CoreCtrl application.
+
+---
+
+## 4. Local LLM
+
+Running language models on your own hardware: building the runtime, launching it correctly, and knowing what to expect from it.
+
+### llama.cpp on an AMD GPU under Windows 11
+
+- **Files:** [`[05] Local LLM/[01] Windows.md`](./[05]%20Local%20LLM/[01]%20Windows.md) (index) + step files and scripts in [`[05] Local LLM/windows/`](./[05]%20Local%20LLM/windows/); the OS-independent reality check and model-choice files in [`[05] Local LLM/common/`](./[05]%20Local%20LLM/common/)
+- **Description:** Measurement-first. Builds `llama.cpp` from source for a single AMD GPU target with the ROCm 10.1 (TheRock) SDK on Windows 11: every dependency in install order (ROCm Adrenalin driver, TheRock tarball, VS Build Tools, Windows SDK, CMake, Ninja), the CMake configure that uses the correct compiler driver, a thirty-second check that the GPU kernels are actually optimized, and the memory rules for a 16 GB machine. Then the launch script flag by flag, split into machine-wide flags and per-model flags, with the llama-bench results behind each choice (micro-batch size at depth, KV cache precision, speculative decoding from the model's own draft head, sampling defaults and reasoning effort), a five-minute tuning procedure for any new model, and a prompt that produces launch flags from a model name. Ends with a measured comparison against hosted frontier models and a short list of what would still help. Written against an RX 9070 16 GB, a Ryzen 5 3600 and 16 GB of RAM; other RDNA 3 and 4 cards change one target name.
+
+### llama.cpp on an AMD GPU under CachyOS / Arch
+
+- **Files:** [`[05] Local LLM/[02] Linux.md`](./[05]%20Local%20LLM/[02]%20Linux.md) (index) + step files and scripts in [`[05] Local LLM/linux/`](./[05]%20Local%20LLM/linux/)
+- **Description:** The same machine under CachyOS with Sway, on top of the Arch guide. Setup first: the distribution's `llama-cpp` package already carries the Vulkan and ROCm backends, so a model runs in ten minutes with no build and no SDK. Then the optional from-source build for one GPU target with both backends in one binary (three pacman packages, no compiler-driver trap), a benchmark script that selects the backend, the launcher with a Sway keybinding and an optional systemd user unit, and a system-tuning file that says what the Arch guide already handled, which two LACT knobs matter, and what does nothing. The card-level flag measurements carry over from the Windows guide; Linux-specific numbers are marked as expectations until measured.
