@@ -11,6 +11,7 @@ Welcome to the `sysopt` repository! This collection contains various guides, con
 2.  [Network & Router Configurations](#2-network--router-configurations)
     - [Arch Linux DNS Setup (dnsmasq & Stubby)](#arch-linux-dns-setup-dnsmasq--stubby)
     - [Bufferbloat Fix Guide](#bufferbloat-fix-guide)
+    - [SQM switch for an OpenWrt bridge](#sqm-switch-for-an-openwrt-bridge)
 3.  [Hardware Configurations & Profiles](#3-hardware-configurations--profiles)
     - [CoreCtrl Overclock Profile (AMD RX 570)](#corectrl-overclock-profile-amd-rx-570)
 4.  [Local LLM](#4-local-llm)
@@ -57,6 +58,11 @@ Guides and configurations related to improving network performance, DNS setup, a
 
 - **File:** [`[02] Network & Routers/bufferbloat_fix.md`](./[02]%20Network%20&%20Routers/bufferbloat_fix.md)
 - **Description:** A guide discussing bufferbloat, its impact on network latency, and methods/configurations (e.g., SQM - Smart Queue Management) to mitigate it for a smoother internet experience.
+
+### SQM switch for an OpenWrt bridge
+
+- **Files:** [`[02] Network & Routers/sqm-toggle.md`](./[02]%20Network%20&%20Routers/sqm-toggle.md) with `sqm.cmd` (Windows) and `sqm.sh` (Linux)
+- **Description:** A small menu, or one command, that turns the cake shaper on an OpenWrt box on or off from the PC behind it, or reads its state. One SSH session per action, so one password prompt until the menu's key item installs a key. Handles the dropped session that stopping the shaper causes, needs no administrator rights or network changes on the PC, stores no password.
 
 ---
 

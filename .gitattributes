@@ -1,0 +1,2 @@
+# shell scripts run on Linux or in Git Bash and break with CRLF
+*.sh text eol=lf
