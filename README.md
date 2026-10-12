@@ -17,6 +17,9 @@ Welcome to the `sysopt` repository! This collection contains various guides, con
 4.  [Local LLM](#4-local-llm)
     - [llama.cpp on an AMD GPU under Windows 11](#llamacpp-on-an-amd-gpu-under-windows-11)
     - [llama.cpp on an AMD GPU under CachyOS / Arch](#llamacpp-on-an-amd-gpu-under-cachyos--arch)
+5.  [Software Configs](#5-software-configs)
+    - [MangoHud](#mangohud)
+    - [EQ presets for an IEM](#eq-presets-for-an-iem)
 
 ---
 
@@ -97,3 +100,19 @@ Running language models on your own hardware: building the runtime, launching it
 
 - **Files:** [`[05] Local LLM/[02] Linux.md`](./[05]%20Local%20LLM/[02]%20Linux.md) (index) + step files and scripts in [`[05] Local LLM/linux/`](./[05]%20Local%20LLM/linux/)
 - **Description:** The same machine under CachyOS with Sway, on top of the Arch guide. Setup first: the distribution's `llama-cpp` package already carries the Vulkan and ROCm backends, so a model runs in ten minutes with no build and no SDK. Then the optional from-source build for one GPU target with both backends in one binary (three pacman packages, no compiler-driver trap), a benchmark script that selects the backend, the launcher with a Sway keybinding and an optional systemd user unit, and a system-tuning file that says what the Arch guide already handled, which two LACT knobs matter, and what does nothing. The card-level flag measurements carry over from the Windows guide; Linux-specific numbers are marked as expectations until measured.
+
+---
+
+## 5. Software Configs
+
+Ready-to-use configuration files for individual programs.
+
+### MangoHud
+
+- **Files:** [`[04] Software Configs/MangoHud/`](./[04]%20Software%20Configs/MangoHud/)
+- **Description:** `MangoHud.conf` and `presets.conf` for the in-game overlay, with the font they expect. Copy to `~/.config/MangoHud/`.
+
+### EQ presets for an IEM
+
+- **Files:** [`[04] Software Configs/EQ/`](./[04]%20Software%20Configs/EQ/) (`README.md`, `EQ.py`, generated `windows/` and `linux/` folders)
+- **Description:** 25 equaliser presets for one budget single dynamic driver IEM, in five confidence tiers and five use cases (music, two gaming profiles, movies, bass), each as an Equalizer APO text file for Windows and an Easy Effects JSON for Linux with identical filters. The generator takes a table of filters, computes a clipping-safe preamp from the combined response, and writes both formats, so it serves any other IEM once its frequency response is known. The README explains what each filter corrects, how to judge the tiers by ear, and how to find your own treble peaks with a sine sweep.

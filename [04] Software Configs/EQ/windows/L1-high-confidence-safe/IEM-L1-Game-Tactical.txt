@@ -1,0 +1,9 @@
+# IEM-L1-Game-Tactical
+# Level: L1-high-confidence-safe
+# Flat-map shooters (CS2, Valorant, Siege, PUBG, DbD). Less sub-bass and low-mid mud for footsteps, presence lift at 3-5 kHz, lighter 8 kHz cut so transient snap survives.
+Preamp: -2.0 dB
+Filter 1: ON LSC Fc 100 Hz Gain -3.0 dB Q 0.70
+Filter 2: ON PK Fc 250 Hz Gain -1.0 dB Q 1.00
+Filter 3: ON PK Fc 3000 Hz Gain 2.0 dB Q 1.20
+Filter 4: ON PK Fc 8000 Hz Gain -1.5 dB Q 1.50
+Filter 5: ON PK Fc 11000 Hz Gain -2.0 dB Q 2.00

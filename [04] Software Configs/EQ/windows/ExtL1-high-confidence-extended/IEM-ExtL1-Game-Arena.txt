@@ -1,0 +1,14 @@
+# IEM-ExtL1-Game-Arena
+# Level: ExtL1-high-confidence-extended
+# Multi-level and hero shooters (Overwatch, Rivals, The Finals, Arc Raiders, Apex). Same bass and mids, no 5 kHz lift, wider smoother 6-12 kHz so the game's elevation cues arrive less distorted.
+Preamp: -2.0 dB
+Filter 1: ON LSC Fc 105 Hz Gain -3.0 dB Q 0.70
+Filter 2: ON PK Fc 200 Hz Gain -1.0 dB Q 1.00
+Filter 3: ON PK Fc 420 Hz Gain 0.5 dB Q 1.20
+Filter 4: ON PK Fc 1000 Hz Gain 0.0 dB Q 1.20
+Filter 5: ON PK Fc 2000 Hz Gain 0.0 dB Q 1.50
+Filter 6: ON PK Fc 3100 Hz Gain 2.0 dB Q 1.20
+Filter 7: ON PK Fc 5000 Hz Gain 0.0 dB Q 1.50
+Filter 8: ON PK Fc 8000 Hz Gain -2.5 dB Q 1.50
+Filter 9: ON PK Fc 11000 Hz Gain -2.0 dB Q 1.50
+Filter 10: ON HSC Fc 14000 Hz Gain 0.0 dB Q 0.70

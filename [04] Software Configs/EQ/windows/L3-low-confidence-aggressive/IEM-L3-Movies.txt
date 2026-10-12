@@ -1,0 +1,12 @@
+# IEM-L3-Movies
+# Level: L3-low-confidence-aggressive
+# Cinema. More sub-bass rumble, dialog lift near 3 kHz, harder sibilance cut around 7.5 kHz.
+Preamp: -3.0 dB
+Filter 1: ON LSC Fc 60 Hz Gain 3.0 dB Q 0.70
+Filter 2: ON PK Fc 150 Hz Gain -2.5 dB Q 1.00
+Filter 3: ON PK Fc 420 Hz Gain 1.5 dB Q 1.20
+Filter 4: ON PK Fc 1800 Hz Gain -1.5 dB Q 1.50
+Filter 5: ON PK Fc 3000 Hz Gain 3.5 dB Q 1.80
+Filter 6: ON PK Fc 7500 Hz Gain -5.0 dB Q 2.00
+Filter 7: ON PK Fc 11000 Hz Gain -4.0 dB Q 2.50
+Filter 8: ON HSC Fc 14000 Hz Gain 1.5 dB Q 0.70
