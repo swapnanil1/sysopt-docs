@@ -2,7 +2,7 @@
 
 Short, command-first guide. One file per step, in the order they must run. Explanations, tables and the "why" behind every choice live in [`arch/99-notes.md`](./arch/99-notes.md).
 
-**Start point:** you ran `archinstall` with: profile **Minimal**, bootloader **systemd-boot**, kernel `linux`, **NetworkManager**, a user in `wheel`, filesystem **ext4** (separate `/home`) or **btrfs** (archinstall's default `@`/`@home` layout). Rebooted, logged in on a TTY. No desktop, no GPU driver.
+**Start point:** you ran `archinstall` with: profile **Minimal**, bootloader **systemd-boot**, kernel `linux`, **NetworkManager**, a user in `wheel`, filesystem **ext4** (separate `/home`) or **btrfs** (archinstall's default `@`/`@home` layout). Rebooted, logged in on a TTY. No desktop, no GPU driver. If you turned on **Unified kernel images** in archinstall, do [13-secure-boot](./arch/13-secure-boot.md) parts A and B in place of step 7's entry file.
 
 **Conventions:** `SAFE` = sane; `FAST` = max speed, no safety net. `<root-uuid>`, `<user>` are placeholders. Every `pacman -S` uses `--needed`.
 
@@ -18,6 +18,6 @@ Short, command-first guide. One file per step, in the order they must run. Expla
 | 8 | [sysctl](./arch/08-sysctl.md) |
 | 9 | [Checks, Timeshift baseline, reboot](./arch/09-timeshift.md) |
 | 10 | [Applications & gaming](./arch/10-apps.md) — only after the snapshot |
-| + | [Extras](./arch/11-extras.md) (DNS-over-TLS, mic noise suppression, ADB) · [HDD gaming tweaks](./arch/12-hdd-gaming.md) · [Notes & reference](./arch/99-notes.md) |
+| + | [Extras](./arch/11-extras.md) (DNS-over-TLS, mic noise suppression, ADB) · [HDD gaming tweaks](./arch/12-hdd-gaming.md) · [Unified kernel image + Secure Boot](./arch/13-secure-boot.md) (archinstall's UKI option kept through the kernel swap; then your own keys, lockdown, TPM measured boot, Windows dual boot kept) · [Notes & reference](./arch/99-notes.md) |
 
 Flow: `1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → reboot & verify kernel → 9 snapshot → 10 apps`.
