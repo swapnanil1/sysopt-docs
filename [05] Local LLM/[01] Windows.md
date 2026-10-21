@@ -1,8 +1,8 @@
 # llama.cpp on an AMD GPU under Windows 11: build it yourself, run it right, know what to expect
 
-Laid out like the other guides: one file per step in [`windows/`](./windows/), scripts in [`windows/scripts/`](./windows/scripts/), and the OS-independent files in [`common/`](./common/). The same machine under CachyOS is covered by the [Linux guide](./[02]%20Linux.md). Written against llama.cpp `b11514`, ROCm 10.1.0 (TheRock), AMD Adrenalin for ROCm 10.1, Windows 11 Pro 26H2, October 2026.
+Laid out like the other guides: one file per step in [`windows/`](./windows/), scripts in [`windows/scripts/`](./windows/scripts/), and the OS-independent files in [`common/`](./common/). The CachyOS / Arch workflow is covered by the [Linux guide](./[02]%20Linux.md). Written against llama.cpp `b11514`, ROCm 10.1.0 (TheRock), AMD Adrenalin for ROCm 10.1, Windows 11 Pro 26H2, October 2026.
 
-The reference machine is an RX 9070 16 GB (RDNA 4, `gfx1201`), a Ryzen 5 3600 and 16 GB of RAM, on the minimal Windows build from the [Windows guide](../[01]%20OS/[04]%20Windows.md). Every number in these files was measured on it. Other RDNA 3 or 4 cards follow the same steps with one target name changed; the memory rules are written for 16 GB and loosen with more.
+Recommended baseline for the supplied 27B examples: an RX 9070-class AMD GPU with at least 16 GB VRAM, a Ryzen 5 3600-class CPU or better, and at least 16 GB system RAM. These are guide assumptions, not hard minimums for llama.cpp; smaller models can run on less hardware. Check backend support and adjust the GPU target, context, and thread count for your system. Use the [Windows setup guide](../[01]%20OS/[04]%20Windows.md) if needed. Benchmark figures describe the stated test configuration; remeasure on your hardware.
 
 What you get is a `llama-server.exe` compiled for exactly one GPU, a launch script that is tuned by measurement rather than folklore, a five-minute procedure for tuning any new model, and an honest comparison against hosted frontier models.
 

@@ -25,7 +25,7 @@ What on a CachyOS box affects llama.cpp throughput, ordered by expected effect, 
 Decode is bound by VRAM bandwidth, prompt processing by compute. Both respond to GPU clocks and both throttle on memory-junction temperature. In LACT (`lact gui`, daemon from arch/04):
 
 1. **Power limit** to the card's maximum. The RX 9070 ships below its board limit on some vendors' defaults; a higher limit keeps clocks up during sustained prompt processing.
-2. **Fan curve** that keeps the memory junction under ~90 °C. On Windows the same card sat at 88 to 90 °C under sustained load, right at the point where GDDR6 begins to throttle. A curve reaching 70 to 80 % fan by 85 °C junction costs noise and nothing else.
+2. **Fan curve** that keeps the memory junction under ~90 °C. On Windows the same GPU class sat at 88 to 90 °C under sustained load, right at the point where GDDR6 begins to throttle. A curve reaching 70 to 80 % fan by 85 °C junction costs noise and nothing else.
 3. **Performance level**: leave on `auto`. Forcing `high` holds boost clocks while idle, which heats the card between requests for no throughput gain; the driver already ramps within a few milliseconds of a kernel launch.
 
 LACT applies these at boot via `lactd`. Confirm under load:
@@ -41,7 +41,7 @@ cat /sys/class/drm/card*/device/pp_dpm_mclk                    # memory clock, '
 sudo dmesg | grep -i 'BAR.*resiz'        # amdgpu reports a resized BAR 0 of 16384M when it is on
 ```
 
-If absent, enable *Resizable BAR* / *Above 4G Decoding* in the B550 firmware.
+If absent, enable *Resizable BAR* / *Above 4G Decoding* in your motherboard firmware; names and availability vary by board.
 
 ---
 

@@ -2,11 +2,11 @@
 
 ## What this file is
 
-Shared by the Windows and Linux guides; the numbers were measured on Windows and the ROCm backend on Linux runs the same kernels. The measured speed of the reference machine set against hosted models, an honest placement of what a 27B local model can and cannot do for coding work, the remaining levers in order of impact, and the model classes and tools worth watching. Numbers for this machine are measured (October 2026). Numbers for hosted services are rough public ranges that change monthly; read them as orders of magnitude.
+Shared by the Windows and Linux guides; the numbers were measured on Windows and the ROCm backend on Linux runs the same kernels. The measured speed of the benchmark configuration set against hosted models, an honest placement of what a 27B local model can and cannot do for coding work, the remaining levers in order of impact, and the model classes and tools worth watching. Numbers for the example configuration are measured (October 2026). Numbers for hosted services are rough public ranges that change monthly; read them as orders of magnitude.
 
 ---
 
-## 1. What the reference machine does
+## 1. What the benchmark configuration does
 
 27B hybrid-attention model at IQ3_S (12 GB with the draft head), 49k context, q8_0 KV, draft-head speculation, single user:
 
@@ -26,7 +26,7 @@ Shared by the Windows and Linux guides; the numbers were measured on Windows and
 
 ### Speed
 
-| | This machine | Frontier API (typical) | Fast-inference hosts running open models |
+| | The example configuration | Frontier API (typical) | Fast-inference hosts running open models |
 |---|---|---|---|
 | Decode | 49 tok/s | ~40–120 tok/s, varies with load | 500–2 000+ tok/s |
 | Prefill of a 10k prompt | ~10 s | ~1–3 s, near zero with prompt caching | under 1 s |
@@ -75,7 +75,7 @@ Not worth the time, all tested or verified irrelevant on this GPU: more CPU thre
 
 Names change fast; the classes don't.
 
-| Class | Why | On this machine |
+| Class | Why | On the example configuration |
 |---|---|---|
 | Hybrid-attention 20–30B dense (Qwen3.5 27B, GLM Flash class) | small KV cache, so 65k fits; best quality per GB of VRAM today | the current choice |
 | MoE with ≤ 4B active parameters and a file ≤ 10 GB | 3× decode at 14B-class quality | would take over day-to-day editing |
@@ -85,7 +85,7 @@ Names change fast; the classes don't.
 
 Avoid: files over 13 GB (nothing else fits beside them), IQ2 quants of 70B models (slow and worse than a good 14B), and GGUF conversions under two weeks old with open issues on the llama.cpp tracker.
 
-Whether the current model and file are the right pick for this card, what the Swift 1.5 post-train changes, and what the draft head costs in context window, are worked through in [02-model-choice-and-speculation.md](./02-model-choice-and-speculation.md).
+Whether the current model and file are the right pick for a GPU in the recommended class, what the Swift 1.5 post-train changes, and what the draft head costs in context window, are worked through in [02-model-choice-and-speculation.md](./02-model-choice-and-speculation.md).
 
 ---
 
@@ -95,7 +95,8 @@ Whether the current model and file are the right pick for this card, what the Sw
 |---|---|---|
 | llama-server's built-in web UI (`http://127.0.0.1:8080`) | chat, zero setup | |
 | Cline (VS Code) | agent with file and terminal tools | provider "OpenAI compatible", base URL `http://127.0.0.1:8080/v1` |
-| Zed | fast editor with a native llama.cpp provider | set `auto_discover` to false and give a model id, not a file path |
+| Zed | fast editor with a native llama.cpp provider | [Swift model setup and settings](./03-zed-setup.md) |
+| Code OSS / VS Code built-in agent | file edits and terminal tools in Chat | [Custom Endpoint setup for Swift](./04-code-oss-setup.md); requires a build with that provider |
 | llama-swap | several models behind one port, swapped on demand | useful with two or three models; still one at a time |
 | Continue, Aider, OpenCode | other agents; Aider is strong for tight edit loops | all speak the OpenAI API |
 | LM Studio | GUI with its own ROCm / Vulkan build | fine for trying models; updates slower than a local build |
@@ -105,4 +106,4 @@ Whether the current model and file are the right pick for this card, what the Sw
 
 ## 6. In one paragraph
 
-The GPU is no longer the bottleneck; the model is. This machine runs a 27B model faster than it can be read, with more context than most editors fill, offline and for free. It is a capable junior pair that needs review, not a senior that works unsupervised. Future effort belongs in prompt-cache reuse and model choice, not in kernels or flags. The build and launch recipes in steps 1 and 2 are solved; rerun them rather than re-deriving them.
+The GPU is no longer the bottleneck; the model is. The example configuration runs a 27B model faster than it can be read, with more context than most editors fill, offline and for free. It is a capable junior pair that needs review, not a senior that works unsupervised. Future effort belongs in prompt-cache reuse and model choice, not in kernels or flags. The build and launch recipes in steps 1 and 2 are solved; rerun them rather than re-deriving them.

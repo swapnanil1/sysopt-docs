@@ -95,7 +95,7 @@ Reference model: a 27B hybrid-attention model at IQ3_S, 11 GB without the draft 
 
 ---
 
-## 3. Flags that are the same for every model on this machine
+## 3. Flags that are the same for every model on the example configuration
 
 `-ngl 99 -np 1 -n 16384 -b 1024 -ub 512 -t 6 -fa on -lm none --no-context-shift --timeout 600 --threads-http 2 --cache-ram 0`
 
@@ -119,7 +119,7 @@ They share one VRAM budget, so decide them together.
    CUDA0 compute buffer size = ... MiB
    ```
 
-2. Add them. Above about 15 600 MiB, or if Task Manager → GPU → *Shared GPU memory* sits above ~0.9 GB while idle, the model is spilling to system RAM. With the draft head the reference machine idles at 15 573 MB dedicated and 870 MB shared; at 65k the shared figure jumped to 1 081 MB, and that jump is the sign. Halve `-c`, or drop the KV cache from q8_0 to q4_0, in that order of preference.
+2. Add them. Above about 15 600 MiB, or if Task Manager → GPU → *Shared GPU memory* sits above ~0.9 GB while idle, the model is spilling to system RAM. With the draft head the benchmark configuration idles at 15 573 MB dedicated and 870 MB shared; at 65k the shared figure jumped to 1 081 MB, and that jump is the sign. Halve `-c`, or drop the KV cache from q8_0 to q4_0, in that order of preference.
 3. Send one long prompt and confirm prefill is still in the hundreds of tokens per second.
 
 Rules of thumb:

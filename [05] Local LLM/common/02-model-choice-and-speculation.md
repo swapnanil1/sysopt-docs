@@ -2,17 +2,19 @@
 
 ## What this file is
 
-Shared by the Windows and Linux guides. The [reality check](./01-reality-check.md) said the model is now the bottleneck. This file answers the follow-up: is the model on the reference machine the right one, is the *file* the right one, and what the one remaining large speedup costs. It is written for someone new to running models locally, so the terms are explained before they are used.
+Shared by the Windows and Linux guides. The [reality check](./01-reality-check.md) said the model is now the bottleneck. This file answers the follow-up: is the model on the benchmark configuration the right one, is the *file* the right one, and what the one remaining large speedup costs. It is written for someone new to running models locally, so the terms are explained before they are used.
 
-Reference setup: RX 9070 16 GB, 16 GB of RAM, Qwen3.8-27B in its Swift 1.5 post-train, as a GSQ-RCO IQ3_S GGUF with the draft head (12 GB), used for agentic coding through Cline and Zed. October 2026.
+Recommended baseline for the supplied 27B examples: an RX 9070-class AMD GPU with at least 16 GB VRAM, a Ryzen 5 3600-class CPU or better, and at least 16 GB system RAM. These are guide assumptions, not hard minimums for llama.cpp; smaller models can run on less hardware. Check backend support and adjust the GPU target, context, and thread count for your system. Model example: Qwen3.8-27B in its Swift 1.5 post-train, GSQ-RCO IQ3_S with the MTP head. Benchmark figures below refer to the stated Windows configuration unless otherwise noted; Linux context limits are documented in step 3.
+
+For first-time editor configuration, see [Zed with the local Swift model](./03-zed-setup.md) or [Code OSS's built-in agent with llama.cpp](./04-code-oss-setup.md).
 
 ---
 
 ## 1. Three words that decide everything
 
-**Context.** The model sees a fixed window of text at once, measured in tokens (roughly three quarters of a word each). Everything an agent sends, every file it reads, every tool result and every reply must fit in the window. When it fills, the oldest text drops out and the model forgets it. The reference machine runs a 49k-token window with the draft head, about 37 000 words, or 65k without it.
+**Context.** The model sees a fixed window of text at once, measured in tokens (roughly three quarters of a word each). Everything an agent sends, every file it reads, every tool result and every reply must fit in the window. When it fills, the oldest text drops out and the model forgets it. The benchmark configuration runs a 49k-token window with the draft head, about 37 000 words, or 65k without it.
 
-**Decode speed.** How fast the model writes its answer, in tokens per second. The reference machine writes about 49 tokens per second on new text with the draft head and 32 without it, both faster than a person reads.
+**Decode speed.** How fast the model writes its answer, in tokens per second. The benchmark configuration writes about 49 tokens per second on new text with the draft head and 32 without it, both faster than a person reads.
 
 **Quantization.** A 27B model is 27 billion numbers. At full precision that is 54 GB and does not fit any consumer card. A quantized file stores each number in 3 to 4 bits instead of 16, at a small cost in accuracy. The method used to decide *how* to round matters almost as much as how many bits are kept.
 
@@ -31,13 +33,13 @@ Yes. The candidates that fit a 16 GB card were compared on three axes: coding qu
 | Muse Glimmer 30B, dense | 16.8 GB at Q4_K_M official, ~14 GB in community IQ3_XXS | 2 KV heads and sliding windows make context nearly free, but it lost 24/30 to Qwen3.8-27B's 30/30 in a controlled agent test at half the speed, and only Q4 files are official |
 | Gemma 4 26B-A4B and 31B | 17 to 18 GB at Q4 | do not fit |
 
-Qwen3.8 has no model between 27B and 180B, so there is no "slightly smaller Qwen3.8" to fall back to. The 27B is the top of what this card can hold, and its small KV cache is what makes long context possible on it.
+Qwen3.8 has no model between 27B and 180B, so there is no "slightly smaller Qwen3.8" to fall back to. The 27B is the top of what a GPU in the recommended class can hold, and its small KV cache is what makes long context possible on it.
 
 ---
 
 ## 3. Is the file the right one?
 
-Three things about the specific GGUF on the reference machine.
+Three things about the specific GGUF on the benchmark configuration.
 
 ### 3.1 The compression is the good kind
 
@@ -87,11 +89,11 @@ Decode is slow because writing each token means reading all 11 GB of weights fro
 1. A small helper guesses the next few tokens in one go.
 2. The big model checks all of them in a single pass, which costs about the same as writing one token.
 3. Every guess that matches is kept. The first wrong one is discarded and the big model continues from there.
-4. The head's guesses were accepted 76 to 80 % of the time on code on the reference machine, so three tokens come out for the price of two.
+4. The head's guesses were accepted 76 to 80 % of the time on code on the benchmark configuration, so three tokens come out for the price of two.
 
 The output does not change. The big model still decides every token; the helper only proposes. A rejected guess costs one wasted check, nothing more.
 
-`--spec-type ngram-mod` is a version of this without a helper model. It looks back in the conversation for text that repeats, which is why rewriting a file ran at 176 tokens per second on the reference machine while fresh text stayed at 32. The MTP head can guess new text too, which is what lifts the fresh-text number. The server takes one speculation type per launch, so the two are not combined.
+`--spec-type ngram-mod` is a version of this without a helper model. It looks back in the conversation for text that repeats, which is why rewriting a file ran at 176 tokens per second on the benchmark configuration while fresh text stayed at 32. The MTP head can guess new text too, which is what lifts the fresh-text number. The server takes one speculation type per launch, so the two are not combined.
 
 This is not two independent models. The helper never answers; it only exists to make the main model faster. Running two full models at once on 16 GB is not possible; tools such as llama-swap load one at a time on demand.
 
@@ -99,7 +101,7 @@ This is not two independent models. The helper never answers; it only exists to 
 
 ## 5. What it costs: memory, and therefore context
 
-The head lives in GPU memory next to the main model: 0.35 GB of weights plus its own cache and working buffers. Measured on the reference machine at 49k context, idle after one request: 15 573 MB dedicated and 870 MB shared, against 14 955 MB and 660 MB for the plain file at 65k. The head costs about 0.8 GB in total. At 65k with the head, shared memory rose to 1 081 MB, which is the start of the spill into system RAM. That is why the launchers run the mtp file at 49k; 40k freed almost nothing and is not worth the window.
+The head lives in GPU memory next to the main model: 0.35 GB of weights plus its own cache and working buffers. Measured on the benchmark configuration at 49k context, idle after one request: 15 573 MB dedicated and 870 MB shared, against 14 955 MB and 660 MB for the plain file at 65k. The head costs about 0.8 GB in total. At 65k with the head, shared memory rose to 1 081 MB, which is the start of the spill into system RAM. That is why the launchers run the mtp file at 49k; 40k freed almost nothing and is not worth the window.
 
 Whether the trade is worth it depends on how the model is used:
 
@@ -122,7 +124,7 @@ Whether the trade is worth it depends on how the model is used:
 | Prompt processing | 809 tok/s at 28k depth, unchanged | unchanged | unchanged |
 | Where it stands | what both launchers ship | the fallback for sessions that need the full 65k | no reason to try first now that the mtp twins exist |
 
-The measurements behind A, all on the reference machine with the Swift file, one 700-token code answer each, then one 28 402-token prompt:
+The measurements behind A, all on the benchmark configuration with the Swift file, one 700-token code answer each, then one 28 402-token prompt:
 
 | Context | `--spec-draft-n-max` | Decode | Drafts accepted | Dedicated | Shared |
 |---|---|---|---|---|---|

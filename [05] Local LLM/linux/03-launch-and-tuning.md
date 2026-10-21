@@ -4,7 +4,7 @@
 
 The launch flags, split into what is a property of the card (and therefore identical to the Windows guide, which measured them) and what is Linux-specific or must be re-measured. Then the launcher script, how to start it from Sway, how to stop it, and the optional systemd user unit.
 
-The flag measurements in the Windows guide were made on this exact GPU with llama.cpp's own kernels. The ROCm backend on Linux runs the same kernels, so micro-batch size, KV cache precision and the speculation flags carry over as they are. What does not carry over: anything that depends on the OS memory manager (there is no host commit on Linux), the Vulkan backend (different kernels; re-measure), and absolute numbers (re-measure, expected to be within a few percent on ROCm).
+The flag measurements in the Windows guide use the example GPU target with llama.cpp's own kernels. The ROCm backend on Linux runs the same kernels, so micro-batch size, KV cache precision and the speculation flags carry over as they are. What does not carry over: anything that depends on the OS memory manager (there is no host commit on Linux), the Vulkan backend (different kernels; re-measure), and absolute numbers (re-measure, expected to be within a few percent on ROCm).
 
 ---
 
@@ -19,8 +19,9 @@ DEVICE=ROCm0                       # ROCm0 or Vulkan0; `llama-server --list-devi
 
 "$BIN/llama-server" \
   -m "$MODEL" \
+  --alias swift-qwen \                                     # stable model id for Zed and other API clients
   --device "$DEVICE" \
-  -ngl 99 -c 49152 -np 1 -n 16384 -b 1024 -ub 512 -t 6 \     # CARD, measured on Windows, carries over; -c is MODEL (VRAM); -n is a reply cap, not memory
+  -ngl 99 -c 65536 -np 1 -n 16384 -b 1024 -ub 512 -t 6 \     # CARD, measured on Windows, carries over; -c is MODEL (VRAM), measured below; -n is a reply cap, not memory
   -fa on -ctk q8_0 -ctv q8_0 --jinja \                         # q8_0 costs nothing (measured); MODEL (VRAM)
   --no-reasoning-preserve --no-context-shift \                 # MODEL (thinking) / stability
   --timeout 600 --threads-http 2 --port 8080 \
@@ -32,7 +33,16 @@ DEVICE=ROCm0                       # ROCm0 or Vulkan0; `llama-server --list-devi
 
 The speculation line and the context size go together: the `-mtp` file carries the model's draft head and `draft-mtp` uses it, at about 0.8 GB of VRAM. Measured on Windows with the same kernels: 48 to 62 tok/s on fresh code, 40 tok/s with 28k tokens in context, 49k at q8_0 on the edge of the card and 32k once rocBLAS's own kernels were in use. A file without the head takes `--spec-type ngram-mod`.
 
-**Do not inherit the Windows context ceiling.** On Windows the card also carries WDDM's own reservation and a larger runtime overhead; on Linux the same 16 GB holds more. The quality of a local model on a 16 GB card is bought with that headroom: a longer context so an agent forgets less of the repository, and a q8_0 cache that never has to drop to q4_0, which is where tool-call JSON starts to break at depth. So the Linux launcher starts at `-c 49152` and the first thing to measure is `-c 65536` with q8_0 and the draft head, the configuration Windows could not run. Read `mem_info_vram_used` after one long request (section 4); if it stays under about 15 300 MiB, keep 65k. The model's accuracy on a given prompt is the same on both systems; what differs is how much of the conversation it can still see. Which file is which, the Swift 1.5 post-train, and the sampling and reasoning-effort defaults are in [common/02](../common/02-model-choice-and-speculation.md) sections 3 and 6.
+**Do not inherit the Windows context ceiling.** On Windows the card also carries WDDM's own reservation and a larger runtime overhead; on Linux the same 16 GB holds more. The quality of a local model on a 16 GB card is bought with that headroom: a longer context so an agent forgets less of the repository, and a q8_0 cache that never has to drop to q4_0, which is where tool-call JSON starts to break at depth. The model's accuracy on a given prompt is the same on both systems; what differs is how much of the conversation it can still see.
+
+Example measurements on a 16 GB AMD GPU using Vulkan0 with desktop GPU memory in use, the Swift mtp file at q8_0 with the draft head:
+
+| Context | After load | Idle after a 28.8k-token prompt | Prompt processing at that depth | Decode |
+|---|---|---|---|---|
+| 49152 | 14 585 MiB after a short request | not measured | | 59 tok/s, 66 % drafts accepted |
+| 65536 | 15 143 MiB | 15 303 MiB, GTT 381 MiB | 737 tok/s | 59 tok/s |
+
+The 64K example leaves little VRAM headroom. The launcher ships 65536; reduce it to 49152 or lower if other GPU clients need memory, and remeasure before choosing a limit. Which file is which, the Swift 1.5 post-train, and the sampling and reasoning-effort defaults are in [common/02](../common/02-model-choice-and-speculation.md) sections 3 and 6.
 
 Differences from the Windows launcher, each deliberate:
 
@@ -88,7 +98,7 @@ Arguments: model, device, prompt sizes, context depths, micro-batch sizes. Read 
 
 VRAM: `cat /sys/class/drm/card*/device/mem_info_vram_used` while the server is idle after one request, divided by 1024² for MiB. Must stay under about 15 300 MiB on a 16 GB card; above that the kernel's GTT fallback silently moves buffers to system RAM over PCIe and speed collapses, the same failure as Windows' shared-memory spill. `--no-context-shift` makes an out-of-memory at load time a clean error rather than a slow server.
 
-The draft head: send one prompt that asks for a few hundred tokens of new code and read `draft_n_accepted` against `draft_n` in the response timings, plus the decode tok/s. On Windows the same file accepted 76 % and decoded at 48 to 50 tok/s; expect the same on ROCm. Sweep `--spec-draft-n-max` 2 to 4, then try `-c 65536` and re-read `mem_info_vram_used`. The VRAM check above is what decides between 49152 and 65536.
+The draft head: send one prompt that asks for a few hundred tokens of new code and read `draft_n_accepted` against `draft_n` in the response timings, plus the decode tok/s. On Windows the same file accepted 76 % and decoded at 48 to 50 tok/s; on Vulkan0 on the benchmark configuration the first run gave 66 % and 59 tok/s at `--spec-draft-n-max 3`. Sweep 2 to 4 if you want to confirm it. The context ceiling is measured in section 1; re-check it with the same VRAM read whenever the desktop beside the server changes.
 
 The meta-prompt in [common/02](../common/02-model-choice-and-speculation.md) and the Windows guide's launch file apply unchanged; only the fixed-flags block changes to the Linux launcher above.
 

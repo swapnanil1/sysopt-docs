@@ -4,13 +4,13 @@
 
 Everything from a bare Windows install to a verified, optimized `llama-server.exe` for a single GPU target, copied into `C:\llm\bin`. Sections 1 and 2 are the install order. Section 4 is the build. Sections 5 to 7 are the checks and the traps; do not skip them.
 
-Reference machine:
+Recommended baseline and example build target (adapt to your hardware):
 
 | Part | Value |
 |---|---|
-| GPU | AMD Radeon RX 9070 16 GB, RDNA 4, target `gfx1201` |
-| CPU | Ryzen 5 3600 (Zen 2: AVX2, FMA, F16C, no AVX-512) |
-| RAM | 16 GB DDR4 |
+| GPU | RX 9070-class AMD graphics or better with at least 16 GB VRAM; `gfx1201` is the RX 9070 example target |
+| CPU | Ryzen 5 3600-class or better; select compiler features for your CPU |
+| RAM | At least 16 GB |
 | OS | Windows 11 Pro, minimal build, Scoop for packages (winget works the same) |
 | Driver | AMD Software: Adrenalin Edition for ROCm 10.1 (26.10.41.05) |
 | ROCm | TheRock 10.1.0 tarball, extracted to `C:\llm\rocm` |
@@ -25,7 +25,7 @@ The official release zip (`llama-bNNNNN-bin-win-rocm-10.x-x64.zip`) works and is
 2. **The newest commit.** New model architectures and speed work land in llama.cpp weekly. The release zip lags by hours to days; a local build can track master.
 3. **Control over compile-time options.** Things like `GGML_CUDA_FA_ALL_QUANTS` or `GGML_HIP_GRAPHS` can be flipped and tested. None of them changed anything on the reference GPU, but that is only known because it was tried.
 
-It does **not** give raw speed over the official build. The official build is compiled correctly. Measured on the reference machine, same 27B model, same flags:
+It does **not** give raw speed over the official build. The official build is compiled correctly. Measured on the benchmark configuration, same 27B model, same flags:
 
 | Build | Prompt processing (pp512) | Decode (tg) |
 |---|---|---|
@@ -59,7 +59,7 @@ ROCm for Windows ships from AMD's TheRock project as one tarball per GPU family.
 | Ryzen AI Max (Strix Halo) | gfx1151 | gfx1151 |
 | RX 6800 / 6900 | gfx1030 | gfx103X |
 
-For the reference machine: `therock-dist-windows-gfx120X-all-10.1.0.tar.gz` (about 2.2 GB) from the TheRock GitHub releases. Extract it; Windows has `tar` built in:
+For the benchmark configuration: `therock-dist-windows-gfx120X-all-10.1.0.tar.gz` (about 2.2 GB) from the TheRock GitHub releases. Extract it; Windows has `tar` built in:
 
 ```powershell
 New-Item -ItemType Directory -Force C:\llm\rocm, C:\llm\models, C:\llm\logs, C:\llm\bin, C:\llm\scripts | Out-Null

@@ -65,7 +65,7 @@ Notes on the lines:
 - `-j 4`, not `nproc`. The HIP template files need 3 to 5 GB per compiler job. On 16 GB with zram, 4 jobs fit; 6 fail with the compiler killed by the OOM reaper. If a build dies, re-run the script with `JOBS=3`; Ninja resumes where it stopped.
 - The Vulkan backend compiles its shaders during the build with `glslc` from `shaderc`. That part is single-threaded and takes a few minutes; it is not stuck.
 
-Expect 25 to 40 minutes on the Ryzen 5 3600, mostly in the HIP backend.
+Allow roughly 25 to 40 minutes on a Ryzen 5 3600-class CPU; build time varies with parallelism, storage, and compiler version, with much of it spent in the HIP backend.
 
 **Check:**
 
@@ -115,7 +115,7 @@ BIN=$HOME/llm/src/build/bin ~/llm/scripts/bench.sh ~/llm/models/Swift-1.5-Qwen3.
 ~/llm/scripts/bench.sh ~/llm/models/Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf ROCm0        # the package, for reference
 ```
 
-What to expect on the reference card, to be replaced by measurements:
+Example expectations for the recommended GPU class; replace these with your own measurements:
 
 | | ROCm backend | Vulkan backend |
 |---|---|---|

@@ -3,7 +3,10 @@
 # One copy per model: duplicate, rename, change MODEL= and the per-model flags (03-launch-and-tuning.md).
 # CHANGE: MODEL, DEVICE, and the per-model flags (-c, -ctk/-ctv, --no-reasoning-preserve, --spec-type). The rest is machine-wide.
 # The -mtp file carries the model's own draft head; --spec-type draft-mtp uses it. A file without the
-# head needs --spec-type ngram-mod instead, and then -c 65536 fits.
+# head needs --spec-type ngram-mod instead.
+# -c 65536 with the head and q8_0 KV measured on Vulkan0 (16 GB AMD GPU example): 15 143 MiB after load,
+# 15 303 MiB idle after a 28.8k-token prompt, 737 tok/s prompt processing at that depth, 59 tok/s decode. That is
+# an example near the VRAM limit, not a guaranteed capacity: close GPU-heavy apps or reduce -c.
 # The sampling line is the model card's setting; a client that sends its own values overrides it.
 set -euo pipefail
 
@@ -27,8 +30,9 @@ mkdir -p "$ROOT/logs"
 export ROCBLAS_USE_HIPBLASLT=0
 exec "$BIN/llama-server" \
   -m "$MODEL" \
+  --alias swift-qwen \
   --device "$DEVICE" \
-  -ngl 99 -c 49152 -np 1 -n 16384 -b 1024 -ub 512 -t 6 \
+  -ngl 99 -c 65536 -np 1 -n 16384 -b 1024 -ub 512 -t 6 \
   -fa on -ctk q8_0 -ctv q8_0 --jinja \
   --no-reasoning-preserve --no-context-shift \
   --timeout 600 --threads-http 2 --port "$PORT" \

@@ -2,11 +2,11 @@
 
 ## What this step is
 
-The shortest path from a working CachyOS desktop to a local model answering on `http://127.0.0.1:8080`. It uses the distribution's `llama-cpp` package, which ships both the Vulkan and the ROCm backend, so nothing is compiled and no ROCm SDK is installed. Step 2 is the from-source build for people who want the newest commit or a GPU-specific binary; most users never need it.
+The shortest path from a working CachyOS desktop to a local model answering on `http://127.0.0.1:8080`. It uses the distribution's `llama-cpp` package plus the GPU backend packages that go with it (`ggml-vulkan`, and optionally `ggml-hip` for ROCm), so nothing is compiled and no ROCm SDK is installed. Step 2 is the from-source build for people who want the newest commit or a GPU-specific binary; most users never need it.
 
-Reference machine: RX 9070 16 GB (`gfx1201`), Ryzen 5 3600, 16 GB RAM, CachyOS with the [Arch guide](../../[01]%20OS/[01]%20ArchAIO.md) applied (CachyOS repos, `linux-cachyos`, `cachyos-settings` with zram, Sway). The Arch guide's step 4 already installed `vulkan-radeon`, which is the only GPU dependency this step has.
+Recommended baseline for the supplied 27B examples: an RX 9070-class AMD GPU with at least 16 GB VRAM, a Ryzen 5 3600-class CPU or better, and at least 16 GB system RAM. These are guide assumptions, not hard minimums for llama.cpp; smaller models can run on less hardware. Check backend support and adjust the GPU target, context, and thread count for your system. This step assumes CachyOS / Arch with the [Arch guide](../../[01]%20OS/[01]%20ArchAIO.md) applied as needed; Sway is optional. The Arch guide's step 4 already installed `vulkan-radeon`, which is the only GPU dependency this step has.
 
-**Not measured yet.** Unlike the Windows files, the numbers in the Linux files are expectations carried over from the Windows measurements on the same card plus community reports, until this machine is booted into CachyOS and `bench.sh` is run. Lines that need that measurement say so.
+**Performance figures.** Step 3 labels recorded Linux Vulkan results separately from unmeasured ROCm settings. Run `bench.sh` on your hardware before relying on a context size or throughput figure.
 
 ---
 
@@ -30,19 +30,44 @@ No `bin/` and no `rocm/`: the package puts `llama-server` in `/usr/bin` and the 
 mkdir -p ~/llm/{models,logs,scripts,src}
 ```
 
+**Home on a hard disk?** Put the folder on the SSD and leave a symlink at `~/llm`, so every path in this guide and in the scripts still works. The model file is memory-mapped: the first load reads all 12 GB, and so does every reload after the page cache has dropped it, which on a hard disk is a minute and a half each time against a few seconds on NVMe. The games subvolume from the Arch guide's fstab step is the natural place, since it is already excluded from Timeshift snapshots and owned by your user:
+
+```bash
+mkdir -p /mnt/games/llm/{models,logs,scripts,src}
+ln -s /mnt/games/llm ~/llm
+```
+
 ---
 
 ## 2. Install
 
+Since ggml 0.26 the GPU backends are separate packages that llama.cpp loads at run time. `llama-cpp` on its own is CPU-only and `--list-devices` prints nothing. Install the Vulkan backend with it; it is small and needs only the RADV driver the Arch guide already installed:
+
 ```bash
-sudo pacman -S --needed llama-cpp            # extra; replaces the older llama-cpp-vulkan / llama-cpp-rocm split
+sudo pacman -S --needed llama-cpp ggml-vulkan
 llama-server --version
 llama-server --list-devices
 ```
 
-**Check:** `--list-devices` lists the card at least once, as `Vulkan0`. If the package was built with the ROCm backend as well it also appears as `ROCm0`, and pacman will have pulled `hipblas` / `rocblas` from extra. Either is enough to continue; which one to run is decided in step 3.
+**Check:** `--list-devices` lists your GPU and its memory. Example output for an RX 9070 (device name and free memory will differ):
 
-If the device list is empty, Vulkan is not reachable: `vulkaninfo --summary` (package `vulkan-tools`) must show the RX 9070 under `GPU0` with the RADV driver. The Arch guide's step 4 installs exactly that; `amdvlk` must not be installed alongside it.
+```
+WARNING: radv is not a conformant Vulkan implementation, testing use only.
+Available devices:
+  Vulkan0: AMD Radeon RX 9070 (RADV GFX1201) (16304 MiB, 15698 MiB free)
+```
+
+The warning is Mesa's standard line for a GPU generation it has not yet put through the official conformance suite. It is the same driver that runs your games; ignore it.
+
+The ROCm backend is one more package, but it pulls the ROCm runtime and rocBLAS with it, about 2.6 GB:
+
+```bash
+sudo pacman -S --needed ggml-hip             # adds ROCm0 to --list-devices
+```
+
+Install it when you want to compare the two backends in step 3; step 2's source build pulls the same runtime anyway. With both installed, `--device` in the launcher picks one, and nothing else changes.
+
+If the device list is empty, Vulkan is not reachable: `vulkaninfo --summary` (package `vulkan-tools`) must show your AMD GPU with the RADV driver. The Arch guide's step 4 installs exactly that; `amdvlk` must not be installed alongside it.
 
 ---
 
@@ -65,14 +90,14 @@ The plain Qwen3.8-27B twin of the same quant, for maths-heavy work, needs no tok
 curl -L -O 'https://huggingface.co/ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF/resolve/main/Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf'
 ```
 
-The package's `llama-server` can also download directly with `-hf <repo>:<quant>`; it caches under `~/.cache/llama.cpp`. The explicit file in `~/llm/models` is easier to reason about and to back up.
+Both files are also sets in `scripts/get-models.sh` (`text-swift`, `text-qwen`), which skips what is already on disk. The package's `llama-server` can also download directly with `-hf <repo>:<quant>`; it caches under `~/.cache/llama.cpp`. The explicit file in `~/llm/models` is easier to reason about and to back up.
 
 ---
 
 ## 4. First run
 
 ```bash
-llama-server -m ~/llm/models/Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf -ngl 99 -c 16384 -fa on --port 8080
+llama-server -m ~/llm/models/Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf --alias swift-qwen -ngl 99 -c 16384 -fa on --jinja --port 8080
 ```
 
 **Check:** the log ends with `listening on http://127.0.0.1:8080`, and in another terminal:
@@ -94,6 +119,10 @@ nvtop                                # or: watch -n1 cat /sys/class/drm/card*/de
 Expect about 12 GB of VRAM used for this model at 16k context and almost nothing added to system RAM beyond the file in the page cache. There is no host-memory mirror of VRAM on Linux; the 12 GB of committed memory and the pagefile growth seen on Windows do not exist here, and zram alone is sufficient.
 
 Ctrl+C stops it.
+
+To use this server in Zed, follow [Zed with the local Swift model](../common/03-zed-setup.md). It includes settings for this 16K first run and the tuned launcher below.
+
+For Code OSS's built-in Chat agent, follow [the Custom Endpoint setup](../common/04-code-oss-setup.md).
 
 ---
 
