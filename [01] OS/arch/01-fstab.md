@@ -36,6 +36,28 @@ UUID=<btrfs>  /home  btrfs  defaults,noatime,lazytime,compress=zstd:1,commit=120
 
 `subvol=@` never `subvolid=` · `@` and `@home` option strings identical · no `nodatacow`/`autodefrag` · cmdline needs `rootflags=subvol=@` (step 7). archinstall's extra subvolumes (`@log`, `@pkg`, …) keep their generated lines.
 
+### Games on the same btrfs drive: a `@games` subvolume
+
+A Steam library inside `@` or `@home` ends up in every Timeshift snapshot. A sibling subvolume does not: snapshots never descend into other subvolumes. Create it once from the top level, mount it with the same options as `@`, and give it to your user, or Steam's drive picker will not list it:
+
+```bash
+sudo mount -o subvolid=5 /dev/<btrfs-partition> /mnt
+sudo btrfs subvolume create /mnt/@games
+sudo umount /mnt
+sudo mkdir -p /mnt/games
+```
+
+```
+UUID=<btrfs>  /mnt/games  btrfs  defaults,noatime,compress=zstd:3,subvol=@games   0 0
+```
+
+```bash
+sudo mount /mnt/games
+sudo chown "$USER:$USER" /mnt/games     # the subvolume's top directory is root's until you do this; Steam only lists mounts you can write to
+```
+
+Steam → Settings → Storage → Add Drive then shows `games`; it creates `SteamLibrary` inside. The same trick works for anything else you want out of the snapshots (a `@scratch` for caches and build directories, for example).
+
 ## Extra drives (one entry per disk)
 
 ```bash

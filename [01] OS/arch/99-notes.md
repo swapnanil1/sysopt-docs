@@ -1,6 +1,6 @@
 # Notes & reference
 
-The "why" behind the step files, verified August 2026 against a live pacman DB (Arch + CachyOS repos), kernel docs and the Arch Wiki. Reference machine: Ryzen 5 3600, RX 9070, B550M, systemd-boot, ext4 on a SATA HDD + games HDD, zram.
+The "why" behind the step files, verified August 2026 against a live pacman DB (Arch + CachyOS repos), kernel docs and the Arch Wiki. Examples cover AMD desktops, systemd-boot, ext4 or btrfs storage, and zram. Select the filesystem and hardware branches that match your system.
 
 ## 1 fstab
 
@@ -38,7 +38,7 @@ Virtual deps that make pacman prompt (or pick the wrong first provider with `--n
 
 - **PipeWire realtime**: out of the box PipeWire asks RTKit and falls back to no RT (`ps -eLo rtprio,policy,comm | grep data-loop` → `TS`). SAFE = `rtkit` (per-thread grant + runaway watchdog). FAST = `audio` group, because `cachyos-settings` ships `limits.d/20-audio.conf` (`@audio rtprio 99, nice -11`) — Arch Wiki warns the audio group breaks fast user switching. `realtime-privileges` is a third mechanism; pick one.
 - **GPU**: `mesa` includes VA-API (`libva-mesa-driver` merged in; `mesa-vdpau` gone); `vulkan-radeon` is not pulled by compositors (they only need the loader); `vulkan-icd-loader`, `lib32-vulkan-icd-loader`, `vulkan-mesa-implicit-layers` are deps of it. Install `lib32-vulkan-radeon` before `steam` or pacman prompts with `lib32-nvidia-utils` first. `amdvlk` removed. `xf86-video-amdgpu` is X11 DDX only.
-- **LACT**: socket is `wheel`-owned (no polkit rule); ≥0.7.5 + ppd ≥0.30 resolve the `amdgpu_dpm` conflict automatically. RDNA3/4 need OverDrive even for fan curves: `ppfeaturemask = default | 0x4000` (`0xfff7ffff` on this card). `0xffffffff` enables unstable bits (Arch Wiki: flicker / broken resume) for no gain. `coolercontrol` is in `[cachyos]` (repo package conflicts with the AUR `-bin`).
+- **LACT**: socket is `wheel`-owned (no polkit rule); ≥0.7.5 + ppd ≥0.30 resolve the `amdgpu_dpm` conflict automatically. RDNA3/4 need OverDrive even for fan curves: `ppfeaturemask = default | 0x4000` (`0xfff7ffff` when the default is `0xfff7bfff`). `0xffffffff` differs only in bit 19 (`PP_GFX_DCS_MASK`, graphics duty-cycle scaling). The RDNA4 SMU code (`smu_v14_0_2_ppt.c`) builds its allowed-feature list without consulting that bit, so on a 9070 both values are identical; the RDNA2 code (`sienna_cichlid_ppt.c`) does gate DCS on it, which is where the flicker and broken-resume reports come from. Keep `0xfff7ffff` so the same line is safe on every card. `coolercontrol` is in `[cachyos]` (repo package conflicts with the AUR `-bin`).
 - **NVIDIA (not covered, for reference)**: `nvidia`/`nvidia-dkms` no longer exist → `nvidia-open`/`nvidia-open-dkms`; prebuilt `linux-cachyos-<flavour>-nvidia-open` needs no DKMS; `[cachyos]`'s `nvidia-open-dkms` doesn't depend on `nvidia-utils` — list it; `nvidia_drm.modeset=1` default since 560.
 - **Storage**: `exfatprogs` not `exfat-utils`; kernel `ntfs3` not `ntfs-3g`; udisks2 mounts NTFS with `windows_names` (breaks Proton on NTFS → `/etc/udisks2/mount_options.conf`: `[defaults]` `ntfs:ntfs_defaults=uid=$UID,gid=$GID`); `7zip` replaced `p7zip`; `gstreamer-vaapi` → `gst-plugin-va`; `opencl-rusticl-mesa` → `opencl-mesa`. `cachyos-settings` `69-hdparm.rules` runs `hdparm -B 254 -S 0` on rotational ATA disks but `hdparm` is not a dependency → silent no-op until installed. SAFE override: `/etc/udev/rules.d/69-hdparm.rules` with `-B 127 -S 120`.
 - **Fonts**: `noto-fonts` + `ttf-hack` via plasma-integration (KDE); `adwaita-fonts` via GTK; `ttf-liberation` = Arial/Times metrics, fixes Steam "missing text"; `ttf-jetbrains-mono-nerd` is 228 MiB vs `ttf-jetbrains-mono` + `ttf-nerd-fonts-symbols-mono` ≈ 10 MiB; `noto-fonts-cjk` 299 MiB.
@@ -159,7 +159,7 @@ pacman -Qtdq; pacman -Qqm                                                       
 command -v hdparm man less >/dev/null || echo "missing tools that rules/docs expect"
 ```
 
-Findings on the reference machine: `ahci.mobile_lpm_policy=max_performance` rejected; `vm.swappiness=30` in sysctl.d overridden to 150; dead `vm.dirty_bytes = 0` lines; `/home` and `/mnt/Games` with `passno 0` and no `errors=remount-ro`; `xf86-video-amdgpu`, `xf86-video-ati`, `xorg-xhost`, `plymouth` unused; a user `portals.conf` routing the file chooser to `wlr`; PipeWire without RT; AUR `coolercontrol-bin` duplicating `[cachyos]/coolercontrol`; `PROTON_USE_NTSYNC=1` / `FSR4_UPGRADE=1` in launch options.
+Common audit targets: rejected kernel parameters, sysctl overrides, missing filesystem checks, unused X11 packages, portal overrides, missing PipeWire realtime scheduling, duplicate package sources, and obsolete game launch variables. Use the commands above to inspect your installation before making changes.
 
 ## Things older guides get wrong (summary)
 
