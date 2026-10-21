@@ -22,7 +22,7 @@ windows/
   ExtL1-high-confidence-extended/   IEM-ExtL1-....txt   (fixed 10-band layout)
   ExtL2-medium-confidence-extended/ IEM-ExtL2-....txt   (fixed 10-band layout)
 linux/
-  same five folders with .json
+  same five folders with .json, plus IEM-<tier>-Music-Crossfeed.json in each
 EQ.py                               edit the table, re-run, both folders regenerate
 ```
 
@@ -79,6 +79,39 @@ Rejected during review and deliberately absent from every tier:
 | Game-Arena | Multi-level and hero shooters: Overwatch, Marvel Rivals, The Finals, Arc Raiders, Apex, Fortnite. Same bass and mids as Tactical, no 5 kHz lift, wider and smoother 6 to 12 kHz. |
 | Movies | Film and story games. More sub-bass rumble, dialog lift near 3 kHz, harder sibilance cut around 7.5 kHz. |
 | Bass | EDM and hip-hop. Big sub-bass shelf with mid-bass kept clean, mild presence lift, same treble fixes. |
+| Music-Crossfeed | Linux only. The Music preset of the same tier with the crossfeed plugin after the equalizer, Chu Moy values (700 Hz, 6 dB). For recordings with hard left-right panning. See below. |
+
+### Why a crossfeed variant, and why only for music
+
+On an IEM, an instrument panned fully to one side reaches one ear and not
+the other. Speakers never do that: both ears hear both channels, the far
+one a little later and with less treble. Crossfeed recreates that by
+feeding a low-passed, delayed copy of each channel into the other. It is
+the one improvement for IEMs that no equalizer filter can make, which is
+why it gets its own preset instead of a band in the table.
+
+It is a music setting. The left-right level and timing differences it
+softens are exactly the cues the game profiles rely on, so it is never
+combined with them. Movies are mixed for speakers too and would also
+qualify; add `"Movies"` to `CROSSFEED_PROFILES` in `EQ.py` if you want
+that variant.
+
+Chu Moy (700 Hz, 6 dB) is the middle of the three classic settings and the
+one to start with. Jan Meier (650 Hz, 9.5 dB) is stronger and narrows the
+stage noticeably; the default (700 Hz, 4.5 dB) is barely audible. The
+plugin compensates its own level, so the preamp is the same as the Music
+preset it is built from.
+
+Equalizer APO has no crossfeed, so these presets exist only in `linux/`.
+
+Other Easy Effects plugins were tried and rejected for this set: a
+de-esser at 8 kHz (the static 8 kHz cut already is the correction, and a
+de-esser makes treble level depend on the music), a bass enhancer (adds
+harmonics to a driver that already has too much sub-bass and whose weak
+point is distortion), and a 16 kHz low-pass meant to block jack noise
+(noise from the motherboard enters after the DAC, where no digital filter
+can reach it; mute unused capture paths in alsamixer or use a USB dongle
+instead).
 
 ### Why two gaming profiles
 
@@ -128,10 +161,23 @@ reloads on save.
 
 ## Install on Linux (Easy Effects)
 
+Easy Effects does not ship an equalizer of its own. It loads the one from the
+LSP plugin suite, and on Arch that package is only an optional dependency.
+Without it the equalizer tab says "cannot be used because Linux Studio
+Plugins is not installed". Install it once, then quit and restart Easy
+Effects including its background service:
+
+```bash
+sudo pacman -S --needed lsp-plugins-lv2
+```
+
+The Flatpak build bundles the plugins and needs nothing extra.
+
 1. Copy the `.json` files you want into `~/.config/easyeffects/output/`.
    Flatpak install: `~/.var/app/com.github.wwmm.easyeffects/config/easyeffects/output/`.
 2. Open Easy Effects, Presets menu, the names appear in the Output list. Click one to load it.
 3. Switch presets from the same menu to compare.
+4. The `-Crossfeed` presets load two plugins, equalizer then crossfeed. Loading any other preset removes the crossfeed again, so the game profiles stay clean.
 
 The JSON uses the plugin key `equalizer#0`, which is the Easy Effects 7.x
 format. On Easy Effects 6.x rename that key and the entry in `plugins_order`

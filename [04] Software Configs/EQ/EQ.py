@@ -4,6 +4,7 @@ EQ preset generator for a single dynamic driver IEM.
 Edit the PROFILES table, run the script, and it rewrites:
   windows/<level>/*.txt   Equalizer APO config files (Peace can import these)
   linux/<level>/*.json    Easy Effects output presets (~/.config/easyeffects/output/)
+                          plus a *-Crossfeed.json variant of the Music profile (Linux only)
 
 Both outputs are generated from the same filter list, and both use the
 APO filter math (Easy Effects band mode "APO (DR)"), so a preset sounds the
@@ -348,6 +349,16 @@ PROFILES = {
     },
 }
 
+# Linux-only extra: a crossfeed variant of the Music profile in every tier.
+# Crossfeed (bs2b) bleeds a low-passed, delayed copy of each channel into the
+# other, the way speakers reach both ears. It fixes hard left-right panning
+# that sits in one ear on an IEM, which no EQ filter can touch. Chu Moy
+# values: gentler than Jan Meier (650 Hz, 9.5 dB). Never on the game
+# profiles: the left-right separation it softens is the positional cue.
+# Equalizer APO has no crossfeed, so these presets exist only in linux/.
+CROSSFEED = {"fcut": 700.0, "feed": 6.0}
+CROSSFEED_PROFILES = ("Music",)
+
 PROFILE_NOTES = {
     "Music": "Neutral target. Fixes the 3 kHz dip, tames 8 kHz and 11 kHz, trims sub-bass toward Harman.",
     "Game-Tactical": "Flat-map shooters (CS2, Valorant, Siege, PUBG, DbD). Less sub-bass and low-mid mud for footsteps, presence lift at 3-5 kHz, lighter 8 kHz cut so transient snap survives.",
@@ -458,7 +469,7 @@ def ee_band(ftype, fc, gain, q):
     }
 
 
-def write_easyeffects(path, filters, preamp):
+def write_easyeffects(path, filters, preamp, crossfeed=None):
     bands = {f"band{i}": ee_band(*flt) for i, flt in enumerate(filters)}
     eq = {
         "balance": 0.0,
@@ -473,13 +484,21 @@ def write_easyeffects(path, filters, preamp):
         "right": json.loads(json.dumps(bands)),
         "split-channels": False,
     }
-    preset = {
-        "output": {
-            "blocklist": [],
-            "equalizer#0": eq,
-            "plugins_order": ["equalizer#0"],
-        }
+    output = {
+        "blocklist": [],
+        "equalizer#0": eq,
+        "plugins_order": ["equalizer#0"],
     }
+    if crossfeed:
+        output["crossfeed#0"] = {
+            "bypass": False,
+            "fcut": float(crossfeed["fcut"]),
+            "feed": float(crossfeed["feed"]),
+            "input-gain": 0.0,
+            "output-gain": 0.0,
+        }
+        output["plugins_order"].append("crossfeed#0")
+    preset = {"output": output}
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         json.dump(preset, fh, indent=4)
         fh.write("\n")
@@ -498,6 +517,11 @@ def main():
             preamp = preamp_for(filters)
             write_apo(os.path.join(win_dir, name + ".txt"), name, level, profile, filters, preamp)
             write_easyeffects(os.path.join(lin_dir, name + ".json"), filters, preamp)
+            if profile in CROSSFEED_PROFILES:
+                write_easyeffects(
+                    os.path.join(lin_dir, name + "-Crossfeed.json"),
+                    filters, preamp, crossfeed=CROSSFEED,
+                )
             resp = combined_response(filters)
             peak_f, peak_g = max(resp, key=lambda p: p[1])
             summary.append((name, len(filters), preamp, peak_f, peak_g))

@@ -1,2 +1,4 @@
 # shell scripts run on Linux or in Git Bash and break with CRLF
 *.sh text eol=lf
+# Equalizer APO presets are generated with CRLF; store LF, check out CRLF so regeneration leaves the tree clean
+**/EQ/windows/**/*.txt text eol=crlf
