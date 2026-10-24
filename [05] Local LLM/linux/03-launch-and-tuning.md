@@ -24,7 +24,7 @@ DEVICE=ROCm0                       # ROCm0 or Vulkan0; `llama-server --list-devi
   -ngl 99 -c 65536 -np 1 -n 16384 -b 1024 -ub 512 -t 6 \     # CARD, measured on Windows, carries over; -c is MODEL (VRAM), measured below; -n is a reply cap, not memory
   -fa on -ctk q8_0 -ctv q8_0 --jinja \                         # q8_0 costs nothing (measured); MODEL (VRAM)
   --no-reasoning-preserve --no-context-shift \                 # MODEL (thinking) / stability
-  --timeout 600 --threads-http 2 --port 8080 \
+  --timeout 600 --threads-http 2 --host 0.0.0.0 --port 18080 \
   --cache-ram 0 \                                              # prompt cache off: its state save crashes this model (Windows step 2, section 7)
   --spec-type draft-mtp --spec-draft-n-max 3 \                 # the file's own draft head; ngram-mod for a file without one
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0 --presence-penalty 0 --repeat-penalty 1.0 \   # the model card's sampling
@@ -66,6 +66,51 @@ for_window [title="llama-server"] move to scratchpad
 
 Second model: copy `start-llm.sh` to `start-<name>.sh`, change `MODEL=` and the per-model flags, add a keybinding. The port check in the script refuses to start a second server while one is listening.
 
+### Use the PC's model from a laptop
+
+Run Code on the laptop and point its model connection at the PC. The PC handles model inference using its GPU/RAM; Code's file edits, terminal commands, and MCP tools execute on the laptop, where the project is open. Project context is sent to the PC as part of the model requests. Opening the server's browser chat alone does not give it access to the laptop's files.
+
+With [the launcher script](scripts/start-llm.sh) installed as `~/llm/start-llm.sh`, run it on the PC:
+
+```bash
+~/llm/start-llm.sh
+```
+
+The launcher listens on all IPv4 interfaces at port 18080 by default, with no API key configured. On the PC, use `http://127.0.0.1:18080`. For localhost-only access, launch with `~/llm/start-llm.sh --local`. The binding uses llama.cpp's documented [host flag](https://github.com/ggml-org/llama.cpp/tree/master/tools/server).
+
+In another PC terminal, find its LAN address:
+
+```bash
+ip -br -4 address show scope global
+```
+
+Choose the address on your Ethernet/Wi-Fi interface, not a Docker bridge. For example, if the PC is `192.168.1.50`, the laptop can open `http://192.168.1.50:18080` for browser chat. `0.0.0.0` is a listening address, not the address to enter on the laptop.
+
+On the laptop, follow [Code's model setup](../common/04-code-oss-setup.md#2-add-the-local-model) with these values:
+
+| Field | Laptop value (replace the example IP) |
+|---|---|
+| API type | Chat Completions |
+| Model ID | `swift-qwen` |
+| Request URL | `http://192.168.1.50:18080/v1/chat/completions` |
+| API key | Leave empty, or use `local` if the client requires a value |
+| Context / output | Match the PC server; the supplied launcher uses 65536 / 8192 in Code |
+
+`local` is only a client placeholder; the server does not validate it. Clients asking for an OpenAI **base URL** instead of a complete request URL use `http://192.168.1.50:18080/v1`.
+
+From the laptop, check connectivity:
+
+```bash
+curl -fsS http://192.168.1.50:18080/health
+curl -fsS http://192.168.1.50:18080/v1/models
+```
+
+Expect `ok` from health and `swift-qwen` in the model list. Then open a project on the laptop, select Agent and this model, and run section 3's file-read test in the Code guide.
+
+This default is for a trusted home LAN: any device that can reach port 18080 can use the model, and HTTP does not encrypt prompts or responses. Do not forward this unauthenticated port through the router. If the PC's firewall blocks access, allow inbound TCP 18080 from the laptop's LAN IP using your existing firewall. A guest Wi-Fi network or client isolation can also prevent the devices from connecting. A router DHCP reservation keeps the PC's address stable.
+
+The launcher uses `-np 1`: PC and laptop requests share one inference slot and may wait for each other. Both clients use the same loaded model. For web search, the laptop's MCP adapter can use SearXNG on the PC at `http://<PC-LAN-IP>:8888`; see [the search setup](../common/04-code-oss-setup.md#4-optional-add-free-local-web-search).
+
 ---
 
 ## 3. Optional: systemd user unit
@@ -106,4 +151,4 @@ The meta-prompt in [common/02](../common/02-model-choice-and-speculation.md) and
 
 ## 5. Stopping
 
-`~/llm/close-llm.sh`, `$mod+F10`, Ctrl+C in the window, or closing the window. The script sends SIGINT, waits up to five seconds, sends SIGKILL only if the process is still there, then waits for the port to clear and reports anything else holding 8080 without killing it.
+`~/llm/close-llm.sh`, `$mod+F10`, Ctrl+C in the window, or closing the window. The script sends SIGINT, waits up to five seconds, sends SIGKILL only if the process is still there, then waits for the port to clear and reports anything else holding 18080 without killing it.

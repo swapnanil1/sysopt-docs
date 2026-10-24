@@ -138,7 +138,7 @@ cp scripts/llm.sh ~/llm/ && chmod +x ~/llm/llm.sh
 
 Option 1 shows the text model, its device, context, memory need and whether it is running, then the curl commands to talk to it, then offers to start or stop it. Option 2 shows the four image files with sizes, the memory need, the wrapper commands and the raw command, then offers to generate one image with a prompt, size and steps typed in. Option 3 is VRAM, running state and what is on disk. It reads the model names from the two scripts, so a changed `MODEL=` line shows up without editing the menu. Nothing starts until the question is answered with `y`.
 
-The two tracks do not run at the same time on 16 GB. The image wrapper refuses to start while the text server holds port 8080, and the menu says which one is up.
+The two tracks do not run at the same time on 16 GB. The image wrapper refuses to start while the text server holds port 18080, and the menu says which one is up.
 
 ---
 

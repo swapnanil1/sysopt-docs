@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Stops llama-server however it was started (terminal, keybinding, systemd user unit).
 # SIGINT first, SIGKILL only if it is still there after five seconds, then waits for the port to clear.
-PORT=8080
+PORT=18080
 
 if ! pgrep -x llama-server >/dev/null; then
     echo "llama-server is not running."

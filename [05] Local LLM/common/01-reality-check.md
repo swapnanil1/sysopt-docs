@@ -93,14 +93,16 @@ Whether the current model and file are the right pick for a GPU in the recommend
 
 | Tool | What it adds | Notes |
 |---|---|---|
-| llama-server's built-in web UI (`http://127.0.0.1:8080`) | chat, zero setup | |
-| Cline (VS Code) | agent with file and terminal tools | provider "OpenAI compatible", base URL `http://127.0.0.1:8080/v1` |
+| llama-server's built-in web UI (`http://127.0.0.1:18080`) | chat, zero setup | |
+| Cline (VS Code) | agent with file and terminal tools | provider "OpenAI compatible", base URL `http://127.0.0.1:18080/v1` |
 | Zed | fast editor with a native llama.cpp provider | [Swift model setup and settings](./03-zed-setup.md) |
 | Code OSS / VS Code built-in agent | file edits and terminal tools in Chat | [Custom Endpoint setup for Swift](./04-code-oss-setup.md); requires a build with that provider |
 | llama-swap | several models behind one port, swapped on demand | useful with two or three models; still one at a time |
 | Continue, Aider, OpenCode | other agents; Aider is strong for tight edit loops | all speak the OpenAI API |
 | LM Studio | GUI with its own ROCm / Vulkan build | fine for trying models; updates slower than a local build |
 | llama.cpp Vulkan backend | needs no ROCm; the official zip just works | 10 to 30 % slower than this HIP build on RDNA 4; the fallback if a driver update breaks ROCm |
+
+The URLs above use the Linux launcher’s port 18080; the Windows launcher uses 8080.
 
 ---
 

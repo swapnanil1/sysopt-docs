@@ -41,7 +41,7 @@ STEPS=${4:-$DEF_STEPS}
 SEED=${5:--1}
 W=${SIZE%x*}; H=${SIZE#*x}
 
-if ss -ltn 'sport = :8080' | grep -q LISTEN; then
+if ss -ltn 'sport = :18080' | grep -q LISTEN; then
     echo "llama-server is running and holds most of the VRAM. Run ~/llm/close-llm.sh first." >&2
     exit 1
 fi

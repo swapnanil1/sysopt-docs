@@ -10,7 +10,7 @@ TEXT_SH="$ROOT/start-llm.sh"
 CLOSE_SH="$ROOT/close-llm.sh"
 IMAGE_SH="$ROOT/gen-image.sh"
 SD_BIN="$ROOT/src/stable-diffusion.cpp/build/bin/sd-cli"
-PORT=8080
+PORT=18080
 
 # ---------------------------------------------------------------- helpers
 bold()  { printf '\033[1m%s\033[0m\n' "$*"; }
@@ -39,6 +39,7 @@ show_text() {
     printf '%-14s %s\n' "context" "${TEXT_CTX:-?} tokens, q8_0 KV cache, draft head on"
     printf '%-14s %s\n' "needs"   "VRAM depends on model and context; close GPU-heavy apps and the image model first"
     printf '%-14s %s\n' "serves"  "http://127.0.0.1:$PORT  (web UI in a browser, OpenAI-style API for Cline, Zed, curl)"
+    printf '%-14s %s\n' "LAN default" "http://<PC-LAN-IP>:$PORT  (no API key; trusted home network)"
     printf '%-14s %s\n' "state"   "$(text_running && echo running || echo stopped), VRAM in use now: $(vram_mib) MiB"
     printf '\n'; bold "Commands to paste in another terminal once it says 'listening':"; line
     cat <<EOF

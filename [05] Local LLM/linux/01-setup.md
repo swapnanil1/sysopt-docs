@@ -2,7 +2,7 @@
 
 ## What this step is
 
-The shortest path from a working CachyOS desktop to a local model answering on `http://127.0.0.1:8080`. It uses the distribution's `llama-cpp` package plus the GPU backend packages that go with it (`ggml-vulkan`, and optionally `ggml-hip` for ROCm), so nothing is compiled and no ROCm SDK is installed. Step 2 is the from-source build for people who want the newest commit or a GPU-specific binary; most users never need it.
+The shortest path from a working CachyOS desktop to a local model answering on `http://127.0.0.1:18080`. It uses the distribution's `llama-cpp` package plus the GPU backend packages that go with it (`ggml-vulkan`, and optionally `ggml-hip` for ROCm), so nothing is compiled and no ROCm SDK is installed. Step 2 is the from-source build for people who want the newest commit or a GPU-specific binary; most users never need it.
 
 Recommended baseline for the supplied 27B examples: an RX 9070-class AMD GPU with at least 16 GB VRAM, a Ryzen 5 3600-class CPU or better, and at least 16 GB system RAM. These are guide assumptions, not hard minimums for llama.cpp; smaller models can run on less hardware. Check backend support and adjust the GPU target, context, and thread count for your system. This step assumes CachyOS / Arch with the [Arch guide](../../[01]%20OS/[01]%20ArchAIO.md) applied as needed; Sway is optional. The Arch guide's step 4 already installed `vulkan-radeon`, which is the only GPU dependency this step has.
 
@@ -97,14 +97,16 @@ Both files are also sets in `scripts/get-models.sh` (`text-swift`, `text-qwen`),
 ## 4. First run
 
 ```bash
-llama-server -m ~/llm/models/Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf --alias swift-qwen -ngl 99 -c 16384 -fa on --jinja --port 8080
+llama-server -m ~/llm/models/Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf --alias swift-qwen -ngl 99 -c 16384 -fa on --jinja --host 0.0.0.0 --port 18080
 ```
 
-**Check:** the log ends with `listening on http://127.0.0.1:8080`, and in another terminal:
+This listens on all IPv4 interfaces without an API key, for a trusted home LAN. Other devices use `http://<PC-LAN-IP>:18080`; do not forward port 18080 through the router. For localhost only, replace `--host 0.0.0.0` with `--host 127.0.0.1`.
+
+**Check:** the log reports `listening on http://0.0.0.0:18080`, and in another terminal on the PC:
 
 ```bash
-curl -s http://127.0.0.1:8080/health
-curl -s http://127.0.0.1:8080/v1/chat/completions -H 'Content-Type: application/json' \
+curl -s http://127.0.0.1:18080/health
+curl -s http://127.0.0.1:18080/v1/chat/completions -H 'Content-Type: application/json' \
   -d '{"messages":[{"role":"user","content":"Say OK."}],"max_tokens":4}' | grep -o '"content":"[^"]*"'
 ```
 
@@ -133,9 +135,9 @@ cp scripts/start-llm.sh scripts/close-llm.sh ~/llm/ && chmod +x ~/llm/*.sh
 cp scripts/bench.sh scripts/build-rocm.sh ~/llm/scripts/ && chmod +x ~/llm/scripts/*.sh
 ```
 
-Edit the `MODEL=` line in `~/llm/start-llm.sh`. Step 3 explains every flag in it, the Sway keybinding, and the optional systemd user unit.
+Edit the `MODEL=` line in `~/llm/start-llm.sh`. It enables LAN access by default; use `~/llm/start-llm.sh --local` for localhost only. Step 3 explains every flag in it, the Sway keybinding, and the optional systemd user unit.
 
-**Check:** `~/llm/start-llm.sh` in a terminal ends with `listening on`, `~/llm/close-llm.sh` in another stops it and prints `port 8080 is free`.
+**Check:** `~/llm/start-llm.sh` in a terminal ends with `listening on`, `~/llm/close-llm.sh` in another stops it and prints `port 18080 is free`.
 
 ---
 

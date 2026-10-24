@@ -101,7 +101,7 @@ To check at any moment:
 ```bash
 llama-server --version                               # the package
 ~/llm/src/build/bin/llama-server --version           # the build: your checkout's tag and commit
-curl -s 127.0.0.1:8080/props | grep -o '"build_info":"[^"]*"'   # what the running server was built from
+curl -s 127.0.0.1:18080/props | grep -o '"build_info":"[^"]*"'   # what the running server was built from
 readlink /proc/$(pgrep -x llama-server)/exe          # the file the running process was started from
 ```
 
