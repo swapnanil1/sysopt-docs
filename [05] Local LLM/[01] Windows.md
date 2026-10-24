@@ -1,4 +1,8 @@
-# llama.cpp on an AMD GPU under Windows 11: build it yourself, run it right, know what to expect
+# Windows model server: build and tuning
+
+[Start here](README.md) · [Network access](common/05-network-access.md) · [Client setup](README.md#setup-order)
+
+**Run these steps only when Windows hosts the model.** A Windows client connecting to a Linux server needs only its editor and, for search tools, Node.js/npm. The supplied Windows launchers serve localhost on port 8080; the Linux guide provides the LAN server configuration.
 
 Laid out like the other guides: one file per step in [`windows/`](./windows/), scripts in [`windows/scripts/`](./windows/scripts/), and the OS-independent files in [`common/`](./common/). The CachyOS / Arch workflow is covered by the [Linux guide](./[02]%20Linux.md). Written against llama.cpp `b11514`, ROCm 10.1.0 (TheRock), AMD Adrenalin for ROCm 10.1, Windows 11 Pro 26H2, October 2026.
 

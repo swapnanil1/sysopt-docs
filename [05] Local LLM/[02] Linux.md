@@ -1,4 +1,8 @@
-# llama.cpp on an AMD GPU under CachyOS / Arch: a model in ten minutes, then the build, then the tuning
+# Linux model server: CachyOS / Arch
+
+[Start here](README.md) · [Network access](common/05-network-access.md) · [Search server](common/06-search-server.md)
+
+**Run these steps on the server.** Clients connect through their editors and do not need the packages, model files, or GPU setup below.
 
 Laid out like the other guides: one file per step in [`linux/`](./linux/), scripts in [`linux/scripts/`](./linux/scripts/), and the OS-independent files in [`common/`](./common/). Step 5 adds images on the same GPU class, with the same kind of runtime and a menu that starts either. Written against llama.cpp `b11514`, ROCm 7.2 from Arch `extra`, CachyOS with `linux-cachyos`, Sway, October 2026.
 
@@ -31,7 +35,7 @@ The packaged binaries live in `/usr/bin`, the ROCm runtime in `/opt/rocm`. No en
 - **CHANGE** marks the values that are yours: GPU target, model file, device, context size.
 - Step 1 is enough to use a model. Steps 2 and 4 are optional; step 3 is where the speed is.
 - Every step ends with a check. If yours doesn't match, stop and fix it before going on.
-- **Network default:** the text server listens on all IPv4 interfaces at port 18080, without an API key. This applies to the first-run command, `start-llm.sh`, the text menu, the Sway shortcut, and the systemd user unit. Use `http://127.0.0.1:18080` on the PC or `http://<PC-LAN-IP>:18080` from a laptop. This assumes a trusted home LAN; do not forward the port through your router. For localhost only, run `start-llm.sh --local`. See [laptop setup](./linux/03-launch-and-tuning.md#use-the-pcs-model-from-a-laptop).
+- **Network default:** all IPv4 interfaces, port 18080, no API key. Use a trusted home LAN without router port forwarding, or launch with `--local`. Configure access using the [network guide](common/05-network-access.md).
 
 ## Steps
 
@@ -44,21 +48,11 @@ The packaged binaries live in `/usr/bin`, the ROCm runtime in `/opt/rocm`. No en
 | 5 | [05-image-generation.md](./linux/05-image-generation.md) | Images: build stable-diffusion.cpp on Vulkan, the four Qwen-Image 2.1 files, first image, editing, the menu | 20 min + 14 GB download |
 | + | [common/01-reality-check.md](./common/01-reality-check.md) · [common/02-model-choice-and-speculation.md](./common/02-model-choice-and-speculation.md) | Measured speed vs hosted models; which model and which file, and the speculation trade-off | reading |
 | + | [common/03-zed-setup.md](./common/03-zed-setup.md) | Connect Zed to the Swift text server, configure context, check chat and file tools | 5 min |
-| + | [common/04-code-oss-setup.md](./common/04-code-oss-setup.md) | Connect Code OSS's built-in agent to llama.cpp; add SearXNG search and page-reading tools | 5 min + search setup |
+| + | [common/04-code-oss-setup.md](./common/04-code-oss-setup.md) | Connect Code OSS's built-in agent to llama.cpp; add SearXNG search and page-reading tools | 5 min after server setup |
 
-## Use the model and search from a laptop
+## Connect clients and add search
 
-Run the model launcher and the [SearXNG container](./common/04-code-oss-setup.md#4-optional-add-free-local-web-search) on the PC. Run your editor and its MCP adapter on the laptop, with the project open there. The PC handles inference and search queries; the laptop performs file edits, terminal commands, and page fetching through its tools.
-
-Find the PC's Ethernet/Wi-Fi IPv4 address with `ip -br -4 address show scope global`, then use it in these settings:
-
-| Laptop setting | Address |
-|---|---|
-| Code OSS model request URL | `http://<PC-LAN-IP>:18080/v1/chat/completions` |
-| Zed `api_url` | `http://<PC-LAN-IP>:18080` |
-| Code's search MCP `SEARXNG_URL` | `http://<PC-LAN-IP>:8888` |
-
-The model ID is `swift-qwen`. Neither service requires an API key; use `local` only if the editor requires a placeholder. Each laptop using the search MCP adapter needs Node.js 22+ and npm. Verify the model with [the LAN checks](./linux/03-launch-and-tuning.md#use-the-pcs-model-from-a-laptop) and search with [an actual search and page read](./common/04-code-oss-setup.md#d-check-that-swift-searches-and-reads-a-page). Both ports must be reachable from the laptop on the trusted LAN.
+After the model runs, complete [network access](common/05-network-access.md). Set up [SearXNG](common/06-search-server.md) on the server if clients need web search, then follow the [Code OSS client](common/04-code-oss-setup.md) or [Zed client](common/03-zed-setup.md) guide on each client device.
 
 ## What is in `linux/scripts/`
 

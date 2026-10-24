@@ -66,50 +66,11 @@ for_window [title="llama-server"] move to scratchpad
 
 Second model: copy `start-llm.sh` to `start-<name>.sh`, change `MODEL=` and the per-model flags, add a keybinding. The port check in the script refuses to start a second server while one is listening.
 
-### Use the PC's model from a laptop
+### Connect clients
 
-Run Code on the laptop and point its model connection at the PC. The PC handles model inference using its GPU/RAM; Code's file edits, terminal commands, and MCP tools execute on the laptop, where the project is open. Project context is sent to the PC as part of the model requests. Opening the server's browser chat alone does not give it access to the laptop's files.
+The launcher serves the model on all IPv4 interfaces at port **18080**, without an API key. Use `~/llm/start-llm.sh --local` for localhost only. Follow [network access](../common/05-network-access.md) for server addressing, firewall rules, and client checks, then configure [Code OSS](../common/04-code-oss-setup.md) or [Zed](../common/03-zed-setup.md) on each client.
 
-With [the launcher script](scripts/start-llm.sh) installed as `~/llm/start-llm.sh`, run it on the PC:
-
-```bash
-~/llm/start-llm.sh
-```
-
-The launcher listens on all IPv4 interfaces at port 18080 by default, with no API key configured. On the PC, use `http://127.0.0.1:18080`. For localhost-only access, launch with `~/llm/start-llm.sh --local`. The binding uses llama.cpp's documented [host flag](https://github.com/ggml-org/llama.cpp/tree/master/tools/server).
-
-In another PC terminal, find its LAN address:
-
-```bash
-ip -br -4 address show scope global
-```
-
-Choose the address on your Ethernet/Wi-Fi interface, not a Docker bridge. For example, if the PC is `192.168.1.50`, the laptop can open `http://192.168.1.50:18080` for browser chat. `0.0.0.0` is a listening address, not the address to enter on the laptop.
-
-On the laptop, follow [Code's model setup](../common/04-code-oss-setup.md#2-add-the-local-model) with these values:
-
-| Field | Laptop value (replace the example IP) |
-|---|---|
-| API type | Chat Completions |
-| Model ID | `swift-qwen` |
-| Request URL | `http://192.168.1.50:18080/v1/chat/completions` |
-| API key | Leave empty, or use `local` if the client requires a value |
-| Context / output | Match the PC server; the supplied launcher uses 65536 / 8192 in Code |
-
-`local` is only a client placeholder; the server does not validate it. Clients asking for an OpenAI **base URL** instead of a complete request URL use `http://192.168.1.50:18080/v1`.
-
-From the laptop, check connectivity:
-
-```bash
-curl -fsS http://192.168.1.50:18080/health
-curl -fsS http://192.168.1.50:18080/v1/models
-```
-
-Expect `ok` from health and `swift-qwen` in the model list. Then open a project on the laptop, select Agent and this model, and run section 3's file-read test in the Code guide.
-
-This default is for a trusted home LAN: any device that can reach port 18080 can use the model, and HTTP does not encrypt prompts or responses. Do not forward this unauthenticated port through the router. If the PC's firewall blocks access, allow inbound TCP 18080 from the laptop's LAN IP using your existing firewall. A guest Wi-Fi network or client isolation can also prevent the devices from connecting. A router DHCP reservation keeps the PC's address stable.
-
-The launcher uses `-np 1`: PC and laptop requests share one inference slot and may wait for each other. Both clients use the same loaded model. For web search, the laptop's MCP adapter can use SearXNG on the PC at `http://<PC-LAN-IP>:8888`; see [the search setup](../common/04-code-oss-setup.md#4-optional-add-free-local-web-search).
+The `-np 1` setting provides one inference slot shared by all clients. Requests may wait for each other; connecting another client does not load another model copy. Add the optional [SearXNG service](../common/06-search-server.md) separately for web search.
 
 ---
 
