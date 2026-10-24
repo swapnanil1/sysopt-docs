@@ -1,4 +1,8 @@
-# HDD gaming tweaks (mechanical drives only)
+# 12 — Optional HDD gaming tweaks (mechanical drives only)
+
+Use the setup section only for mechanical drives, after steps 6 and 9. On an SSD-only system, skip to [step 13 — checks and baseline snapshot](./13-timeshift.md).
+
+## Setup: per-drive I/O rules
 
 `cachyos-settings` already gives every rotational disk `bfq`. This overrides it per disk. Names from `lsblk -d -o NAME,ROTA,MODEL` (they can shift if you add disks — re-check after hardware changes).
 
@@ -27,6 +31,10 @@ cat /sys/block/sd[ab]/queue/scheduler /sys/block/sd[ab]/queue/read_ahead_kb
 
 Left out on purpose (already the defaults): `nr_requests=128`, mq-deadline `front_merges=1`, `read_expire=500`.
 
+## Maintenance: after installing games
+
+This section is for later use, after applications and games are installed in step 14. For the initial setup, continue to [step 13](./13-timeshift.md).
+
 Defragment the games disk after big Steam installs (parallel chunk downloads scatter `.pak` files; ext4 only, never on SSD):
 
 ```bash
@@ -41,4 +49,4 @@ echo 'w /sys/kernel/mm/transparent_hugepage/enabled - - - - madvise' | sudo tee 
 sudo systemd-tmpfiles --create
 ```
 
-fstab and sysctl for HDDs are in [01-fstab](./01-fstab.md) (FAST lines) and [08-sysctl](./08-sysctl.md) (`99-vm-hdd.conf`). `commit=300`, `vm.swappiness=30` and shader caches on `/tmp`: not worth it — [notes §12](./99-notes.md#12-hdd-gaming).
+fstab and sysctl for HDDs are in [01-fstab](./01-fstab.md) (FAST lines) and [09-sysctl](./09-sysctl.md) (`99-vm-hdd.conf`). `commit=300`, `vm.swappiness=30` and shader caches on `/tmp`: not worth it — [notes §12](./99-notes.md#12-hdd-gaming).

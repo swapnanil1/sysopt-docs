@@ -1,4 +1,6 @@
-# 10 — Applications & gaming (after the snapshot)
+# 14 — Applications & gaming (after the snapshot)
+
+Start after verifying the [step 13 baseline snapshot](./13-timeshift.md). Pick the applications you need; the lists below are choices, not a requirement to install every package. AUR commands use `paru` from step 5, and `game-performance` comes from step 6.
 
 ```bash
 # Steam / Proton
@@ -59,4 +61,4 @@ PROTON_NO_NTSYNC=1 %command%               # opt-OUT; NTSync is default-on
 PROTON_LOG=1 / DXVK_HUD=fps,frametimes,compiler / MESA_VK_WSI_PRESENT_MODE=immediate
 ```
 
-Dead — delete from your launch options: `PROTON_USE_NTSYNC=1`, `PROTON_NO_ESYNC`, `DXVK_ASYNC=1`, `mesa_glthread=true`, `RADV_PERFTEST=…`, `PROTON_USE_EAC_LINUX`, `FSR4_UPGRADE=1`. Lutris/Heroic: wrapper command `game-performance`, Wine version `proton-cachyos-slr`. [notes §10](./99-notes.md#10-apps--gaming).
+Dead — delete from your launch options: `PROTON_USE_NTSYNC=1`, `PROTON_NO_ESYNC`, `DXVK_ASYNC=1`, `mesa_glthread=true`, `RADV_PERFTEST=…`, `PROTON_USE_EAC_LINUX`, `FSR4_UPGRADE=1`. Lutris/Heroic: wrapper command `game-performance`, Wine version `proton-cachyos-slr`. [notes §14](./99-notes.md#14-apps--gaming).

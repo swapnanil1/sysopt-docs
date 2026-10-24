@@ -30,9 +30,6 @@ sudo pacman -S --needed ufw
 sudo ufw default deny incoming && sudo ufw default allow outgoing && sudo ufw enable
 # sudo ufw allow ssh
 
-# resolv.conf → systemd-resolved stub (NetworkManager hands DNS to resolved once cachyos-settings is in)
-sudo ln -sf ../run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
-
 # flatpak (optional; Flathub remote is added by the package)
 sudo pacman -S --needed flatpak
 ```
@@ -44,3 +41,11 @@ printf 'amdgpu.ppfeaturemask=0x%x\n' "$(( $(cat /sys/module/amdgpu/parameters/pp
 ```
 
 Don't enable: `cronie`, `acpid`, `avahi-daemon`. Groups: `wheel` only (plus `audio` if you took the FAST audio path). Don't install: `xf86-video-amdgpu`, `ntfs-3g`, `exfat-utils`, `p7zip`, `amdvlk`, `realtime-privileges`, `reflector`. [notes §4](./99-notes.md#4-essentials--hardware).
+
+Reboot into the desktop after installing its drivers and services:
+
+```bash
+sudo reboot
+```
+
+Log in, complete your chosen desktop guide's **after first login** section if it has one, then continue to [step 5 — shell and CLI tools](./05-shell-cli.md).

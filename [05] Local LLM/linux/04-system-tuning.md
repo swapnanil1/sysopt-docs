@@ -16,7 +16,7 @@ What on a CachyOS box affects llama.cpp throughput, ordered by expected effect, 
 | `iommu=pt` on the SAFE command line | arch/07 | correct: identity-mapped IOMMU is what you want for PCIe DMA from the GPU; `amd_iommu=off` (MAX) is equally fine |
 | `vulkan-radeon` (RADV), no `amdvlk` | arch/04 | the Vulkan backend needs exactly this |
 | LACT with `amdgpu.ppfeaturemask` for OverDrive | arch/04, arch/07 | the tool for section 2 below |
-| `power-profiles-daemon` pinned to performance (MAX) or `game-performance` wrapper (SAFE) | arch/08 | CPU side; small effect, see section 3 |
+| `power-profiles-daemon` pinned to performance (MAX) or `game-performance` wrapper (SAFE) | arch/09 | CPU side; small effect, see section 3 |
 
 ---
 
@@ -49,7 +49,7 @@ If absent, enable *Resizable BAR* / *Above 4G Decoding* in your motherboard firm
 
 With every layer on the GPU the CPU does tokenization, sampling, the HTTP server and the thread that feeds the GPU. The one thing that shows up is latency to the GPU queue, which is why the launcher uses `-t 6` (the physical cores) and not 12: SMT siblings add contention, not throughput, for this workload.
 
-- `powerprofilesctl set performance` while serving, if arch/08's MAX option is not in use. The SAFE alternative is `game-performance ~/llm/start-llm.sh` from the keybinding, which does the same for the server's lifetime.
+- `powerprofilesctl set performance` while serving, if arch/09's MAX option is not in use. The SAFE alternative is `game-performance ~/llm/start-llm.sh` from the keybinding, which does the same for the server's lifetime.
 - `GGML_NATIVE=ON` in the step 2 build already tunes the CPU-side kernels for Zen 2.
 
 ---
@@ -57,7 +57,7 @@ With every layer on the GPU the CPU does tokenization, sampling, the HTTP server
 ## 4. Memory
 
 - **Transparent huge pages**: the kernel default on CachyOS is `madvise`; llama.cpp asks for huge pages on its own allocations where it helps. Do not set `always` on the command line; the Arch guide already lists it as a no-op for games and it can cost latency here.
-- **`vm.max_map_count`**: Arch's `1048576` is plenty; never lower it (arch/08).
+- **`vm.max_map_count`**: Arch's `1048576` is plenty; never lower it (arch/09).
 - **Page cache**: the memory-mapped model file occupies up to 11 GB of cache. This is evictable and correct; do not "free" it with `drop_caches`, the next load would re-read the file from disk.
 - **GTT size** (`amdgpu.gttsize`): irrelevant while the model fits in VRAM, which the step 3 VRAM check guarantees. It only matters for a model that is deliberately split between VRAM and RAM, which this guide does not do.
 

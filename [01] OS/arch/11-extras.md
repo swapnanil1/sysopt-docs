@@ -1,4 +1,6 @@
-# Extras
+# 11 — Optional extras
+
+Choose only the sections you need. DNS-over-TLS requires the resolver set up in step 6; microphone filtering requires the desktop's PipeWire services. Skip to [step 12](./12-hdd-gaming.md) if none apply.
 
 ## DNS-over-TLS (systemd-resolved)
 

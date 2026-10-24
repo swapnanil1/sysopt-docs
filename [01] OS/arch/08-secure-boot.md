@@ -1,8 +1,10 @@
-# 13 — One-file kernel, then Secure Boot with your own keys
+# 8 — One-file kernel, then Secure Boot with your own keys
 
 What this step gets you: the firmware refuses to start anything on this disk that you did not sign, and the running kernel refuses to let root undo that. Windows on the same disk keeps booting. Your files, logins and apps are untouched by any of it.
 
-Three parts. **A** is one checkbox in archinstall. **B** swaps the stock kernel for `linux-cachyos` without losing what A set up; it replaces step 7 of the guide. **C** turns Secure Boot on with your own keys and can be done any time later, or never.
+**UKI path from step 7:** complete part B to install and verify the kernel, then optionally part C for Secure Boot. Continue to [step 9 — sysctl](./09-sysctl.md) afterwards. If you completed the classic-entry path in step 7 and want to keep it, skip this page.
+
+Three parts. **A** describes the UKI option already selected during installation; it is reference, not a request to reinstall. **B** swaps the stock kernel for `linux-cachyos` while retaining the UKI boot method. **C** turns Secure Boot on with your own keys and can be done now or later, or skipped.
 
 One warning before you start. Your kernel will be signed by your key, not by Arch or Microsoft. Software that checks for a distribution's signature, some anti-cheat for example, will not treat it as "Secure Boot on". Part C protects your machine from tampering; it does not pass that kind of check.
 
@@ -38,7 +40,7 @@ ls /boot/EFI/Linux/                        # arch-linux.efi
 ls /boot/loader/entries/                   # empty: systemd-boot finds the .efi files on its own
 ```
 
-Then step 1 (fstab) and step 2 (CachyOS repos) as usual. Skip step 7 and do part B instead.
+For the post-install sequence, complete steps 1–6, read step 7's command-line section, then do part B below instead of creating a classic boot entry.
 
 ---
 
@@ -124,7 +126,7 @@ sudo ls /boot/EFI/Linux/                     # only arch-linux-cachyos.efi
 
 **Installed the classic way already** (an entry file from step 7)? Write the preset lines from B1 by hand, run `mkinitcpio -P`, delete the entry file, set `default` in `loader.conf`, reboot once with Secure Boot still off to confirm it starts.
 
-### B5. Changing the kernel command line later
+### B5. Maintenance: changing the kernel command line later
 
 With a UKI the command line is inside the `.efi` file. There is no entry file to edit, and `editor no` keeps the menu from offering one. The only source is `/etc/kernel/cmdline`, and mkinitcpio reads it every time it builds the image, including on kernel updates. So the procedure is always the same three steps, before or after part C:
 
@@ -233,7 +235,7 @@ sysctl kernel.kexec_load_disabled # 1
 
 This touches nothing else. The TPM, every app that uses it, and crash-free reboots through the firmware all work as before. It only matters if you wanted kdump or a kexec fast reboot, which this guide does not use.
 
-### C6. Updates, and what signs them
+### C6. Maintenance: updates, and what signs them
 
 You do nothing on updates. The sbctl package installs two hooks:
 

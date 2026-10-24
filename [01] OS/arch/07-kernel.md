@@ -1,5 +1,7 @@
 # 7 — `linux-cachyos` on systemd-boot + kernel command line
 
+**Choose the boot path before running commands.** Classic systemd-boot entry files: follow this page, reboot and verify, then skip step 8 and continue to [step 9 — sysctl](./09-sysctl.md). If archinstall enabled **Unified kernel images**, read [Command line](#command-line) here, then follow [step 8](./08-secure-boot.md) to install and boot the new kernel. Do not create classic entry files for the UKI path.
+
 Install first, boot it, **then** remove `linux` — never the other way round.
 
 ```bash

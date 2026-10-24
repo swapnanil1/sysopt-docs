@@ -84,4 +84,4 @@ sudo systemctl daemon-reload && sudo mount -a
 sudo systemctl enable fstrim.timer   # TRIM weekly (we never use discard)
 ```
 
-No swap line: zram comes with step 6. I/O schedulers come with step 6 too.
+Zram comes with step 6 and needs no `/etc/fstab` swap line. If you created an `@swap` Btrfs subvolume during installation, keep its `/swap` mount entry; [optional SSD swap](./10-ssd-swap.md) explains how to create a 16 GiB swapfile inside it and add a separate swap entry after step 6. I/O schedulers come with step 6 too.

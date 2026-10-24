@@ -1,4 +1,6 @@
-# 8 — sysctl
+# 9 — sysctl
+
+Start after rebooting into and verifying the kernel from step 7 or 8. The CachyOS-specific settings below assume that kernel is running.
 
 Already set — don't duplicate: `vm.max_map_count=1048576` (Arch; **never set 262144, it lowers it**), cachyos-settings' `70-cachyos-settings.conf`, `vm.swappiness=150` (zram udev rule — sysctl.d cannot override it), `kernel.split_lock_mitigate=0`, `vm.compaction_proactiveness=0`. `kernel.sched_*` knobs no longer exist. Use `dirty_*_bytes` **or** `dirty_*_ratio`, never both.
 
@@ -67,4 +69,4 @@ EOF
 sudo systemctl enable --now ppd-performance.service
 ```
 
-Knob reference: [notes §8](./99-notes.md#8-sysctl).
+Knob reference: [notes §9](./99-notes.md#9-sysctl).
