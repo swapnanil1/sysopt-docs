@@ -26,13 +26,13 @@ On the real machine:
 
 ## After the install
 
-1. Read `C:\post-install-logs\perf.log`, `privacy.log`, `interface.log`. Red text means a line failed; everything else succeeded.
+1. Read `C:\post-install-logs\perf.log`, `privacy.log`, `interface.log`. Review errors and warnings, including the Defender blocked/failed count. An apparently successful registry write does not prove that the running engine applied it.
 2. Install the chipset driver and the GPU driver from the vendor's site (AMD, Intel or NVIDIA). Windows Update will not touch them (section 26).
 3. Install a browser. There is no Edge.
 4. Install a launcher. Windows search is off in this build, so typing in Start finds nothing. The build expects [Open-Shell](https://github.com/Open-Shell/Open-Shell-Menu) as the Start menu. In its installer keep only *Open-Shell Menu*. Everything or pinned apps work too. Skip this if you deleted the search-off lines in step 4.
 5. Install a text editor if you left Notepad out in step 1 (Notepad++ is one download), and winget if you left App Installer out (see step 1 section 3).
-6. Run **Windows Update** once. Expect only Defender definitions and maybe a small servicing stack update, because the ISO already contains the latest cumulative update.
-7. Open **Windows Security** and confirm everything is green. Core isolation → Memory integrity shows **Off** with a yellow warning if you kept section 18's *Disable core isolation*, and **On** if you chose to keep it. Also expected: a yellow "Automatic sample submission is off" warning (dismiss it) and App & browser control → Smart App Control showing **Off**.
+6. Run **Windows Update** once. Install applicable updates, then verify the Defender state again; updates may restore disabled settings.
+7. Install your chosen **third-party antivirus** and verify in its own interface that real-time protection and updates are active. This setup does not install a replacement antivirus automatically. Open **Windows Security**. Defender antivirus being unavailable/off is expected with this PE script; do not expect everything to be green. In an elevated PowerShell, check `Get-CimInstance Win32_Service -Filter "Name='WinDefend'" | Select-Object Name,State,StartMode` for `Stopped` and `Disabled`. Core isolation → Memory integrity shows **Off** with a yellow warning if you kept section 18's *Disable core isolation*, and **On** if you chose to keep it. App & browser control → Smart App Control also shows **Off**. The privacy log records policy readbacks, service/driver states and any blocked changes. The Security tray icon is intentionally removed from startup; its absence is not proof that antivirus is off. Reboot before checking loaded-driver changes.
 8. If you change your mind about memory integrity, flip it in Windows Security → Device security → Core isolation and reboot. Section 18 says what it costs.
 9. There is no recovery partition. For Safe Mode tap F8 right after the firmware logo (the perf script turns the old boot menu on). For anything worse, reinstall from the USB stick.
 10. Optional: add the firewall allowlist from [07-firewall.md](07-firewall.md).

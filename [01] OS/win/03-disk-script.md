@@ -14,7 +14,7 @@ The section has three radio buttons at the top level: *Run the Windows PE stage 
 
 **The moment you select it, everything else in this section greys out**: the edition and product key box, the six checkboxes, the image picker, the target-disk criteria, the partition layout, the system partition size, the Windows RE choice, the diskpart box and the paging-file choice. That is expected. Those controls only exist to *generate* a script, and we are supplying the whole script ourselves. Every one of those options is now a line in `pe.cmd`, and the rest of this section maps each greyed-out control to that line so you know what the script is doing and where to change it.
 
-**Why the custom script instead of the generated one:** the generator's own script always creates a 16 MB MSR partition and, unless you remove RE, a recovery partition, and it falls back to legacy MBR if the PC booted in BIOS mode. The only way to get our two-partition layout (EFI + Windows) **and** keep the automatic target-disk detection is to take the generated script and edit it. That is what `pe.cmd` is: the generator's output with the MSR, recovery, MBR, `$OEM$` and Defender blocks removed.
+**Why the custom script instead of the generated one:** the generator's own script always creates a 16 MB MSR partition and, unless you remove RE, a recovery partition, and it falls back to legacy MBR if the PC booted in BIOS mode. The only way to get our two-partition layout (EFI + Windows) **and** keep the automatic target-disk detection is to take the generated script and edit it. That is what `pe.cmd` is: the generator's output with the MSR, recovery, MBR and `$OEM$` blocks removed. Defender disabling is enabled in the offline Windows image.
 
 ## 3.1 What pe.cmd does, in order
 
@@ -27,7 +27,7 @@ The section has three radio buttons at the top level: *Run the Windows PE stage 
 7. Applies the image named `Windows 11 Pro` with `/CheckIntegrity /Verify`.
 8. `bcdboot` writes the boot loader to the EFI partition and sets it first in the firmware boot order.
 9. Copies the answer file to `W:\Windows\Panther\unattend.xml` so the later passes can read it.
-10. Disables 8.3 names on the new volume and in the registry hive of the new install.
+10. Disables 8.3 names on the new volume and in the registry hive of the new install, then disables Defender services/drivers in the offline SYSTEM hive.
 11. Sets the device region (United States, GeoID 244, in the repo's copy) in the offline registry.
 12. Reboots.
 
@@ -46,11 +46,13 @@ set "IMG_PARAM=/Name:"Windows %OS_VERSION% Pro""
 | Checkbox | In pe.cmd | Why |
 |---|---|---|
 | Disable 8.3 file names | **Present.** The block starting `call :print "Disabling 8.3 file names"`: two `fsutil.exe 8dot3name` commands plus a registry write into the new install's SYSTEM hive. | NTFS otherwise generates a second `PROGRA~1`-style name for every file. Creating files in large folders is measurably faster without it, and nothing modern needs short names. Delete the six lines to keep 8.3 names. |
-| Disable Windows Defender | **Absent.** The generated version has a `call :print "Disabling Windows Defender"` block that sets six Defender services to Start=4 in the offline hive. It was removed. | Defender is the only antivirus in this build. Turning it off saves some CPU during file copies and leaves you with no protection at all. Not worth it. |
+| Disable Windows Defender | **Enabled.** Loads the installed image's SYSTEM hive and sets `Start=4` for `Sense`, `WdBoot`, `WdFilter`, `WdNisDrv`, `WdNisSvc` and `WinDefend`, then unloads it. Registry failures halt installation. | Users are expected to install and use a third-party antivirus after installation. This setup does not install one automatically. |
 | Pause before disk is partitioned and formatted | **Absent.** To add it, insert a line containing just `pause` directly above `diskpart.exe /s X:\%LAYOUT%.txt`. | We want zero clicks. Add it for your very first test run if you are nervous: the screen above the pause shows which disk number it is about to wipe. |
 | Pause before Windows Setup reboots | **Absent.** To add it, insert `pause` directly above `wpeutil.exe reboot`. | Same. Lets you read the whole PE log before it scrolls away. |
 | Apply Windows image in compact mode | **Absent.** It would be a `/Compact` switch on the `dism.exe /Apply-Image` line. | Compact mode compresses every system file on disk. Saves about 2 GB, but every read of a system file pays a decompression cost on the CPU forever. On any SSD of 256 GB or more that trade is backwards. |
 | Skip integrity check when applying image | **Not skipped.** The `dism.exe /Apply-Image` line keeps `/CheckIntegrity /Verify`. | The check adds about a minute and catches a corrupt USB or ISO before you spend an hour on a broken install. Delete those two switches to skip it. |
+
+**Defender scope:** this follows the service list used by the [generator implementation](https://github.com/cschneegans/unattend-generator/blob/master/modifier/Disk.cs). It changes only the newly applied Windows image on `W:`, not the running PE registry. Windows Security files remain installed. Verify the result after installation and major updates; servicing may restore settings. To keep Defender on a future clean install, remove the block from its `call :print` through `reg.exe UNLOAD HKLM\DefenderOffline`, then regenerate the answer file. This does not restore an already installed system.
 
 **Windows image to install.** Same `IMG_PARAM` line as above. The generator's "by index" and "interactive" options have no equivalent in our script; by name is the safe choice because a single-edition ISO has exactly one name.
 

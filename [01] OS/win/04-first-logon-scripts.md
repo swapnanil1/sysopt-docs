@@ -56,7 +56,7 @@ Note: this script sets telemetry to 1 and the privacy script then sets it to 0. 
 
 ## FirstLogon script 2: `scripts/02-privacy.ps1`
 
-Values from the AtlasOS privacy playbook, filtered to documented policies and Settings-app toggles. No services or drivers. The one Defender setting is automatic sample submission.
+Privacy policies are followed by an explicit Defender-disable block. Users are expected to install and use a third-party antivirus; this script does not install one. Running this script standalone also attempts those Defender changes. The offline PE step remains the initial service-disable mechanism; first-logon changes are best-effort where Windows permits them.
 
 | Block | Why |
 |---|---|
@@ -77,8 +77,13 @@ Values from the AtlasOS privacy playbook, filtered to documented policies and Se
 | App permission defaults: location, app diagnostics, account info, generative AI = Deny; no lock-screen camera | The Settings → Privacy toggles, set to off. |
 | Windows AI: Recall off, Click To Do off, Copilot app removal policy, Notepad and Paint AI off | Recall only exists on Copilot+ hardware; these are the documented off switches so it stays off if the hardware ever changes. Copilot's removal is a real policy on Pro. |
 | Office telemetry off | Harmless if Office is never installed. |
-| Defender never sends file samples | The default uploads "safe" samples of unknown files to Microsoft without asking. Real-time and cloud protection stay on. Windows Security shows a yellow "Automatic sample submission is off" warning once, dismiss it. |
+| Defender protection policies | Requests real-time, behavior, on-access and downloaded-file scanning off; MAPS/cloud reporting and sample submission off. Reads back registry values. If the engine is running, also requests corresponding PowerShell preferences, including script scanning off, and reports the effective protection state. |
+| Defender service/task startup | Reasserts disabled startup for the six PE service/driver names, attempts to stop running Defender services, and disables tasks only under `\Microsoft\Windows\Windows Defender\`. Loaded kernel drivers may remain until reboot. |
+| Windows Security tray autostart | Removes the `SecurityHealth` Run entry for the machine/current user and stops `SecurityHealthSystray`. Security Center, firewall, UAC, Windows Update and the Windows Security app remain available. |
+| Defender verification | Blocked writes, preference mismatches and service/task errors produce warnings in `privacy.log`; service/driver states are printed. A registry value alone does not establish that protection is off. |
 | Optional, commented: block Microsoft accounts entirely | Also blocks signing in to the Store and Xbox app. Off by default. |
+
+Defender settings are **not guaranteed permanent**. [Tamper protection](https://learn.microsoft.com/en-us/defender-endpoint/tamper-protection-overview) can ignore even apparently successful changes, and servicing can restore components. We omit obsolete `DisableAntiSpyware`/`DisableAntivirus` master switches, registry tamper-protection hacks, file/ACL removal and recurring enforcement jobs. This script adds no startup watchdog. Check after reboot and major updates; rerun only when you intend to apply the whole privacy script again.
 
 ## FirstLogon script 3: `scripts/03-interface.ps1`
 

@@ -1,8 +1,8 @@
 #Requires -RunAsAdministrator
 # Privacy settings for Windows 11 25H2/26H2 (Pro). Companion to 01-perf.ps1.
 # Values taken from the AtlasOS playbook (rewrite branch, 2026-09), kept to documented
-# policies and Settings-app toggles. No services or drivers. The one Defender setting is
-# automatic sample submission, near the end.
+# policies and Settings-app toggles, with an explicit Defender-disable block
+# requested for this gaming installation. Review that block before standalone use.
 # Run as the user you will use daily (HKCU values apply to that account). Reboot after.
 
 # Unattended-friendly: the window closes as soon as the script ends, so everything
@@ -155,13 +155,149 @@ Set-Policy 'HKCU:\Software\Policies\Microsoft\office\16.0\common' 'sendcustomerd
 Set-Policy 'HKCU:\Software\Policies\Microsoft\office\16.0\common' 'qmenable' 0
 Set-Policy 'HKCU:\Software\Policies\Microsoft\office\common\clienttelemetry' 'sendtelemetry' 3
 
-# --- Defender ------------------------------------------------------------
+# --- Defender: first-logon follow-up to the offline PE settings -----------
+# These are requests, not a tamper-protection bypass. Registry readback does
+# not prove the running engine honored a policy. Updates can restore settings.
+# Deprecated DisableAntiSpyware/DisableAntivirus and TamperProtection hacks
+# are deliberately omitted. Scope is Defender plus its tray startup entry.
+$script:defenderFailures = 0
+function Invoke-DefenderChange {
+    param([string]$Label, [scriptblock]$Action)
+    try {
+        & $Action
+        Write-Host "Defender configuration: $Label"
+    } catch {
+        $script:defenderFailures++
+        Write-Warning "Defender configuration blocked/failed ($Label): $($_.Exception.Message)"
+    }
+}
 
-# Never send file samples to Microsoft (default 1 = send "safe" samples without asking).
-# Real-time and cloud protection stay as they are. Windows Security shows a yellow
-# "Automatic sample submission is off" warning once, dismiss it.
-# Undo: Set-MpPreference -SubmitSamplesConsent 1
-Set-MpPreference -SubmitSamplesConsent 2
+$defenderRoot = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender'
+$defenderPolicies = [ordered]@{
+    'Real-Time Protection' = [ordered]@{
+        DisableRealtimeMonitoring = 1
+        DisableBehaviorMonitoring = 1
+        DisableOnAccessProtection = 1
+        DisableIOAVProtection = 1
+        DisableScanOnRealtimeEnable = 1
+    }
+    'Spynet' = [ordered]@{
+        SpynetReporting = 0
+        SubmitSamplesConsent = 2
+        DisableBlockAtFirstSeen = 1
+    }
+}
+foreach ($group in $defenderPolicies.Keys) {
+    foreach ($name in $defenderPolicies[$group].Keys) {
+        $path = "$defenderRoot\$group"
+        $value = $defenderPolicies[$group][$name]
+        Invoke-DefenderChange "policy $group/$name requested as $value" {
+            if (-not (Test-Path $path)) {
+                $null = New-Item -Path $path -Force -ErrorAction Stop
+            }
+            $null = New-ItemProperty -Path $path -Name $name -Value $value -PropertyType DWord -Force -ErrorAction Stop
+            if ((Get-ItemPropertyValue -Path $path -Name $name -ErrorAction Stop) -ne $value) {
+                throw 'Registry value did not retain the requested value.'
+            }
+        }
+    }
+}
+
+# If an existing/running engine is present, ask it to change settings too.
+# Fresh installs normally skip this because pe.cmd already disabled its service.
+if ((Get-Service -Name WinDefend -ErrorAction SilentlyContinue).Status -eq 'Running') {
+    $preferences = [ordered]@{
+        DisableRealtimeMonitoring = $true
+        DisableBehaviorMonitoring = $true
+        DisableIOAVProtection = $true
+        DisableScriptScanning = $true
+        DisableBlockAtFirstSeen = $true
+        MAPSReporting = 0
+        SubmitSamplesConsent = 2
+    }
+    foreach ($name in $preferences.Keys) {
+        Invoke-DefenderChange "engine preference $name" {
+            $arguments = @{ ErrorAction = 'Stop' }
+            $arguments[$name] = $preferences[$name]
+            Set-MpPreference @arguments
+            $actual = (Get-MpPreference -ErrorAction Stop).$name
+            if ($null -eq $actual -or [int]$actual -ne [int]$preferences[$name]) {
+                throw 'Engine preference was not applied; check tamper protection or managed policy.'
+            }
+        }
+    }
+    Invoke-DefenderChange 'report effective engine state' {
+        $status = Get-MpComputerStatus -ErrorAction Stop
+        $status | Select-Object AMServiceEnabled, AntivirusEnabled, RealTimeProtectionEnabled, BehaviorMonitorEnabled, IoavProtectionEnabled, IsTamperProtected | Format-List
+        if ($status.RealTimeProtectionEnabled) {
+            throw 'Real-time protection is still enabled.'
+        }
+    }
+} else {
+    Write-Host 'Defender engine is not running; engine preference calls skipped.'
+}
+
+# Reassert only the six services/drivers handled in pe.cmd, if installed.
+# Loaded kernel drivers are not forcibly unloaded; startup changes need a reboot.
+foreach ($name in 'Sense', 'WdBoot', 'WdFilter', 'WdNisDrv', 'WdNisSvc', 'WinDefend') {
+    $path = "HKLM:\SYSTEM\CurrentControlSet\Services\$name"
+    if (Test-Path $path) {
+        Invoke-DefenderChange "$name startup disabled" {
+            $null = New-ItemProperty -Path $path -Name Start -Value 4 -PropertyType DWord -Force -ErrorAction Stop
+            if ((Get-ItemPropertyValue -Path $path -Name Start -ErrorAction Stop) -ne 4) {
+                throw 'Service startup setting did not remain disabled.'
+            }
+        }
+    }
+}
+foreach ($name in 'Sense', 'WdNisSvc', 'WinDefend') {
+    $service = Get-Service -Name $name -ErrorAction SilentlyContinue
+    if ($service -and $service.Status -ne 'Stopped') {
+        Invoke-DefenderChange "stop $name" {
+            Stop-Service -Name $name -ErrorAction Stop
+        }
+    }
+}
+
+Invoke-DefenderChange 'disable Defender scheduled tasks' {
+    # Enumerate first: no Defender task folder is a valid state on a stripped image.
+    $tasks = @(Get-ScheduledTask -ErrorAction Stop | Where-Object { $_.TaskPath -eq '\Microsoft\Windows\Windows Defender\' })
+    foreach ($task in $tasks) {
+        Invoke-DefenderChange "task $($task.TaskName)" {
+            $null = Disable-ScheduledTask -InputObject $task -ErrorAction Stop
+            Stop-ScheduledTask -InputObject $task -ErrorAction Stop
+            if ((Get-ScheduledTask -TaskPath $task.TaskPath -TaskName $task.TaskName -ErrorAction Stop).State -ne 'Disabled') {
+                throw 'Scheduled task did not remain disabled.'
+            }
+        }
+    }
+}
+
+# Hide the logon tray process without disabling Security Center, firewall,
+# UAC, Windows Update, or services used to report other security features.
+foreach ($path in 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run', 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run') {
+    Invoke-DefenderChange 'remove SecurityHealth tray autorun if present' {
+        if (Test-Path $path) {
+            $entry = Get-ItemProperty -Path $path -ErrorAction Stop
+            if ($entry.PSObject.Properties['SecurityHealth']) {
+                Remove-ItemProperty -Path $path -Name SecurityHealth -ErrorAction Stop
+            }
+        }
+    }
+}
+Get-Process -Name SecurityHealthSystray -ErrorAction SilentlyContinue | ForEach-Object {
+    $trayProcess = $_
+    Invoke-DefenderChange 'stop Windows Security tray process' {
+        Stop-Process -Id $trayProcess.Id -ErrorAction Stop
+    }
+}
+Invoke-DefenderChange 'report service state' {
+    Get-CimInstance Win32_Service -Filter "Name='WinDefend' OR Name='WdNisSvc' OR Name='Sense'" -ErrorAction Stop |
+        Select-Object Name, State, StartMode | Format-Table -AutoSize
+    Get-CimInstance Win32_SystemDriver -Filter "Name='WdBoot' OR Name='WdFilter' OR Name='WdNisDrv'" -ErrorAction Stop |
+        Select-Object Name, State, StartMode | Format-Table -AutoSize
+}
+Write-Host "Defender configuration finished with $script:defenderFailures blocked/failed operations. Reboot and verify; future updates can restore settings."
 
 # --- Optional - off by default -------------------------------------------
 

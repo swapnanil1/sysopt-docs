@@ -129,6 +129,16 @@ reg.exe LOAD HKLM\mount W:\Windows\System32\config\SYSTEM
 reg.exe ADD HKLM\mount\ControlSet001\Control\FileSystem /v NtfsDisable8dot3NameCreation /t REG_DWORD /d 1 /f
 reg.exe UNLOAD HKLM\mount
 
+call :print "Disabling Windows Defender in the offline installation"
+reg.exe LOAD HKLM\DefenderOffline W:\Windows\System32\config\SYSTEM || call :fail "Could not load offline SYSTEM hive for Defender configuration."
+reg.exe ADD HKLM\DefenderOffline\ControlSet001\Services\Sense /v Start /t REG_DWORD /d 4 /f || call :fail "Could not disable Sense."
+reg.exe ADD HKLM\DefenderOffline\ControlSet001\Services\WdBoot /v Start /t REG_DWORD /d 4 /f || call :fail "Could not disable WdBoot."
+reg.exe ADD HKLM\DefenderOffline\ControlSet001\Services\WdFilter /v Start /t REG_DWORD /d 4 /f || call :fail "Could not disable WdFilter."
+reg.exe ADD HKLM\DefenderOffline\ControlSet001\Services\WdNisDrv /v Start /t REG_DWORD /d 4 /f || call :fail "Could not disable WdNisDrv."
+reg.exe ADD HKLM\DefenderOffline\ControlSet001\Services\WdNisSvc /v Start /t REG_DWORD /d 4 /f || call :fail "Could not disable WdNisSvc."
+reg.exe ADD HKLM\DefenderOffline\ControlSet001\Services\WinDefend /v Start /t REG_DWORD /d 4 /f || call :fail "Could not disable WinDefend."
+reg.exe UNLOAD HKLM\DefenderOffline || call :fail "Could not unload offline SYSTEM hive after Defender configuration."
+
 call :print "Setting device setup region to United States (GeoID 244)"
 reg.exe LOAD HKLM\mount W:\Windows\System32\config\SOFTWARE
 reg.exe ADD "HKLM\mount\Microsoft\Windows\CurrentVersion\Control Panel\DeviceRegion" /v DeviceRegion /t REG_DWORD /d 244 /f

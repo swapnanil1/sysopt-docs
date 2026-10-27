@@ -4,7 +4,7 @@
 
 Download Windows 11 straight from Microsoft's update servers and turn it into an ISO that contains only the Pro edition, the latest cumulative update, and none of the Store apps you never asked for. [Step 2](02-answer-file.md) builds the `autounattend.xml` answer file that installs that ISO with zero clicks.
 
-Nothing in this guide patches a system file, removes Defender, or breaks Windows Update. Everything is done with Microsoft's own tools (DISM) or documented settings, so the result is a normal, fully supported Windows install that just has less junk in it.
+The ISO retains Microsoft's system files, Defender binaries and Windows Update components. The later custom PE script disables Defender services/drivers before first boot. Users are expected to install and use a third-party antivirus after installation; this setup does not install one automatically. Compatibility with all future updates is not guaranteed.
 
 ---
 

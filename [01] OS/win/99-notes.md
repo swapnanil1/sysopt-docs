@@ -97,7 +97,7 @@ Defender definitions stall while this lasts, because Defender asks Windows Updat
 | Multiplane overlay off | That's a fix for flicker on some GPUs, not a default. |
 | Removing the CoreAI package | Needs an undocumented registry trick and comes back with updates. |
 
-The guide also doesn't remove Defender, patch system files, turn off Windows Update or strip components after install. That keeps cumulative updates working (step 1, section 0).
+Defender binaries remain installed, but the PE script disables its services/drivers before first boot. The privacy script follows up at first logon with protection policies, service/task startup settings, tray autorun removal and verification logging. Users are expected to install and use a third-party antivirus; none is installed automatically. Windows Update remains enabled. Verify the Defender state after major updates; compatibility and persistence are not guaranteed. The Defender definition-update notes below apply only if Defender is enabled.
 
 ## Firewall notes
 
