@@ -23,7 +23,7 @@ The section has three radio buttons at the top level: *Run the Windows PE stage 
 3. Loads any drivers from a `$WinPEDriver$` folder on the USB, if present (not needed on this hardware).
 4. Writes a small VBScript that lists all disks and accepts only those inside your size range (for example 400 to 600 GiB for a 512 GB drive), on a SCSI or IDE interface (that is how NVMe and SATA report), and of type fixed disk. Exactly one match, or it halts.
 5. Checks the firmware type. **If not UEFI, it stops with an error** rather than falling back to MBR.
-6. Runs diskpart: clean, convert GPT, 300 MB EFI (FAT32, "System"), rest NTFS ("Windows").
+6. Runs diskpart: clean, convert GPT, 300 MB EFI (FAT32, "System"), 200 GiB + 250 MiB NTFS ("Windows"), with the remaining space unallocated for Fedora.
 7. Applies the image named `Windows 11 Pro` with `/CheckIntegrity /Verify`.
 8. `bcdboot` writes the boot loader to the EFI partition and sets it first in the firmware boot order.
 9. Copies the answer file to `W:\Windows\Panther\unattend.xml` so the later passes can read it.
@@ -87,10 +87,12 @@ CONVERT GPT
 CREATE PARTITION EFI SIZE=300
 FORMAT QUICK FS=FAT32 LABEL="System"
 ASSIGN LETTER=S
-CREATE PARTITION PRIMARY
+CREATE PARTITION PRIMARY SIZE=205050
 FORMAT QUICK FS=NTFS LABEL="Windows"
 ASSIGN LETTER=W
 ```
+
+**Windows size:** `SIZE=205050` reserves 200 GiB plus a 250 MiB buffer. The rest stays unallocated for Fedora. This buffer targets a displayed capacity around 200 GB in Explorer; the exact displayed rounding can vary. The `CLEAN` command still wipes the entire target disk, so this is an initial-install script, not a Windows-only reinstall procedure once Fedora is installed.
 
 **Why no MSR:** the Microsoft Reserved partition is a hidden 16 MB area Windows keeps for converting basic disks to dynamic disks and for some legacy BitLocker metadata. This build prevents device encryption (section 14) and nobody uses dynamic disks any more, so it would sit empty forever. Windows boots, updates and upgrades fine without it. If a disk tool ever complains, `diskpart` can add one in seconds. Drive letters S: and W: exist only inside PE; the installed Windows is always C:.
 

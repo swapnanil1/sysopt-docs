@@ -95,7 +95,7 @@ call :print "The computer is booted in %FIRMWARE% mode, hence the target disk mu
     echo:CREATE PARTITION EFI SIZE=300
     echo:FORMAT QUICK FS=FAT32 LABEL="System"
     echo:ASSIGN LETTER=S
-    echo:CREATE PARTITION PRIMARY
+    echo:CREATE PARTITION PRIMARY SIZE=205050
     echo:FORMAT QUICK FS=NTFS LABEL="Windows"
     echo:ASSIGN LETTER=W
 )
