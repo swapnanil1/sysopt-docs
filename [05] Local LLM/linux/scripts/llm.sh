@@ -31,6 +31,8 @@ text_running() { ss -ltn "sport = :$PORT" 2>/dev/null | grep -q LISTEN; }
 TEXT_MODEL=$(var_from "$TEXT_SH" MODEL)
 TEXT_DEVICE=$(var_from "$TEXT_SH" DEVICE)
 TEXT_CTX=$(flag_from "$TEXT_SH" -c)
+TEXT_BIN="$ROOT/src/build/bin"
+[[ -x "$TEXT_BIN/llama-server" ]] || TEXT_BIN=/usr/bin
 
 show_text() {
     clear; bold "TEXT: llama-server"; line
@@ -38,8 +40,8 @@ show_text() {
     printf '%-14s %s\n' "device"  "$TEXT_DEVICE"
     printf '%-14s %s\n' "context" "${TEXT_CTX:-?} tokens, q8_0 KV cache, draft head on"
     printf '%-14s %s\n' "needs"   "VRAM depends on model and context; close GPU-heavy apps and the image model first"
-    printf '%-14s %s\n' "serves"  "http://127.0.0.1:$PORT  (web UI in a browser, OpenAI-style API for Cline, Zed, curl)"
-    printf '%-14s %s\n' "LAN default" "http://<PC-LAN-IP>:$PORT  (no API key; trusted home network)"
+    printf '%-14s %s\n' "serves"  "http://<PC-LAN-IP>:$PORT  (web UI and OpenAI-style API for Code, Zed, curl)"
+    printf '%-14s %s\n' "binding" "0.0.0.0:$PORT  (no API key; trusted home network)"
     printf '%-14s %s\n' "state"   "$(text_running && echo running || echo stopped), VRAM in use now: $(vram_mib) MiB"
     printf '\n'; bold "Commands to paste in another terminal once it says 'listening':"; line
     cat <<EOF
@@ -78,6 +80,7 @@ EOF
 # ---------------------------------------------------------------- image
 IMG_PRESET=${PRESET:-qwen}
 preset_var() {  # the value of $2 inside the "$1)" case block of gen-image.sh
+    [ -f "$IMAGE_SH" ] || return 0
     awk -v p="$1)" -v k="$2" '$1==p{f=1;next} f&&/;;/{f=0} f&&$0~"^ *"k"="{sub("^ *"k"=","");sub(/ *#.*/,"");gsub(/"/,"");print;exit}' "$IMAGE_SH" \
       | sed "s#\$IMG#$ROOT/models/image#"
 }
@@ -144,7 +147,7 @@ show_status() {
     clear; bold "STATUS"; line
     printf '%-14s %s\n' "text server" "$(text_running && echo "running on :$PORT" || echo stopped)"
     printf '%-14s %s MiB\n' "VRAM used" "$(vram_mib)"
-    printf '%-14s %s\n' "GPU" "$(grep -m1 -oE 'RX [0-9]+[A-Z ]*' /sys/class/drm/card*/device/product_name 2>/dev/null || llama-server --list-devices 2>/dev/null | grep -m1 -oE 'AMD Radeon [^(]*')"
+    printf '%-14s %s\n' "GPU" "$(grep -m1 -oE 'RX [0-9]+[A-Z ]*' /sys/class/drm/card*/device/product_name 2>/dev/null || "$TEXT_BIN/llama-server" --list-devices 2>/dev/null | grep -m1 -oE 'AMD Radeon [^(]*')"
     printf '%-14s %s\n' "text models" "$(ls "$ROOT/models"/*.gguf 2>/dev/null | xargs -n1 basename | tr '\n' ' ')"
     printf '%-14s %s\n' "image models" "$(ls "$ROOT/models/image" 2>/dev/null | tr '\n' ' ')"
     printf '%-14s %s\n' "images made" "$(ls "$ROOT/images" 2>/dev/null | wc -l) in $ROOT/images"

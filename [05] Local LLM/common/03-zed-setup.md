@@ -6,9 +6,9 @@
 
 ## 1. Have the server connection ready
 
-Complete [network access](05-network-access.md) and record the server address, model ID, and context size. The example uses a Linux server at **192.168.1.50:18080** with model ID **swift-qwen**. Replace the IP with your server's address; use `127.0.0.1` if Zed runs on the server machine.
+Complete [network access](05-network-access.md) and record the server address, model ID, and context size. The example uses a Linux server at **192.168.1.50:18080** with model ID **swift-qwen**. Replace the IP with your server's address; use the LAN address even when testing the same hosted service from another device.
 
-The Linux quick start has a 16384 context; its tuned launcher has 65536. The supplied Windows server launcher uses localhost port 8080 and a 32768 context; read its model ID from `/v1/models`. These values depend on the server, not on the OS running Zed.
+The Linux quick start and tuned launcher use a 65536 context with a 16384 reply cap. The supplied Windows server launcher binds all IPv4 interfaces on port 8080 and retains a separate 32768 context; read its model ID from `/v1/models`. These values depend on the server, not on the OS running Zed.
 
 ## 2. Configure Zed
 
@@ -24,7 +24,7 @@ In Zed's command palette, open `zed: open settings file`. On Linux this is norma
         {
           "name": "swift-qwen",
           "display_name": "Swift 1.5 Qwen 27B (local)",
-          "max_tokens": 16384,
+          "max_tokens": 65536,
           "supports_tools": true,
           "supports_images": false
         }
@@ -36,7 +36,7 @@ In Zed's command palette, open `zed: open settings file`. On Linux this is norma
 
 Use the server root URL for this native provider, without `/v1`. No API key is needed for the unauthenticated server configuration in this guide. These provider fields follow [Zed's local-model documentation](https://zed.dev/docs/ai/use-a-local-model).
 
-Match `max_tokens` to the server's `-c`: **16384** for the quick start, **65536** for the repository's tuned launcher, or **49152** if you reduced its context. This setting describes context capacity; it does not allocate more server memory. The launcher's `-n 16384` is a separate reply cap.
+Match `max_tokens` to the server's `-c`: **65536** for the Linux baseline. The Windows launcher retains its separately measured **32768** context. This setting describes context capacity; it does not allocate more server memory. The launcher's `-n 16384` is a separate reply cap.
 
 ## 3. Try chat, then file tools
 

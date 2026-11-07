@@ -10,28 +10,33 @@
 # The sampling line is the model card's setting; a client that sends its own values overrides it.
 set -euo pipefail
 
-# Listen on all IPv4 interfaces; --local restricts access to localhost.
+# Serve the model on the LAN. Clients use the server's actual IPv4 address.
 LISTEN_HOST=0.0.0.0
-if (( $# > 1 )); then
-    echo "Usage: $0 [--local]" >&2
-    exit 2
-fi
-case "${1:-}" in
-    "") ;;
-    --local) LISTEN_HOST=127.0.0.1 ;;
-    -h|--help)
-        echo "Usage: $0 [--local]"
-        echo "Default: all IPv4 interfaces, no API key. --local: localhost only."
+case "$#:${1:-}" in
+    0:) ;;
+    1:-h|1:--help)
+        echo "Usage: $0"
+        echo "Listens on all IPv4 interfaces, port 18080, no API key."
         exit 0 ;;
-    *) echo "Unknown option: $1. Usage: $0 [--local]" >&2; exit 2 ;;
+    *) echo "Usage: $0 (no arguments; LAN binding is configured in the script)" >&2; exit 2 ;;
 esac
 
 ROOT="$HOME/llm"
-BIN=/usr/bin                                   # or "$ROOT/src/build/bin" after a source build (02-build-rocm.md)
+if [[ -x "$ROOT/src/build/bin/llama-server" ]]; then
+    DEFAULT_BIN="$ROOT/src/build/bin"
+else
+    DEFAULT_BIN=/usr/bin
+fi
+BIN=${BIN:-$DEFAULT_BIN}                        # BIN=/usr/bin ./start-llm.sh forces the package
 MODEL="$ROOT/models/Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf"
 DEVICE=ROCm0                                   # ROCm0 or Vulkan0; see: "$BIN/llama-server" --list-devices
 PORT=18080
 
+if [[ ! -x "$BIN/llama-server" || ! -f "$MODEL" ]]; then
+    echo "Missing executable ($BIN/llama-server) or model ($MODEL). Check the build and MODEL path." >&2
+    exit 1
+fi
+echo "Binary: $BIN/llama-server"
 if ss -ltn "sport = :$PORT" | grep -q LISTEN; then
     echo "Something is already listening on port $PORT:"
     ss -ltnp "sport = :$PORT"
@@ -40,11 +45,7 @@ if ss -ltn "sport = :$PORT" | grep -q LISTEN; then
 fi
 
 mkdir -p "$ROOT/logs"
-if [[ "$LISTEN_HOST" == 0.0.0.0 ]]; then
-    echo "LAN access: http://<PC-LAN-IP>:$PORT (no API key; trusted networks only)"
-else
-    echo "Local access: http://127.0.0.1:$PORT"
-fi
+echo "LAN access: http://<PC-LAN-IP>:$PORT (no API key; trusted networks only)"
 # Qwen3.5/3.8 files carry 96 small BF16 tensors that go through rocBLAS. On the Windows SDK rocBLAS forwards
 # them to hipBLASLt, which crashes on gfx1201; 0 makes rocBLAS use its own kernels. Not confirmed needed on
 # Linux ROCm 7.2, harmless if not. Ignored by the Vulkan backend.
@@ -54,7 +55,7 @@ exec "$BIN/llama-server" \
   -m "$MODEL" \
   --alias swift-qwen \
   --device "$DEVICE" \
-  -ngl 99 -c 65536 -np 1 -n 16384 -b 1024 -ub 512 -t 6 \
+  -ngl 99 -c 65536 -np 1 -n 16384 -b 2048 -ub 512 -t 6 -tb 12 \
   -fa on -ctk q8_0 -ctv q8_0 --jinja \
   --no-reasoning-preserve --no-context-shift \
   --timeout 600 --threads-http 2 --port "$PORT" \

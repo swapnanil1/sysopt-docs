@@ -220,7 +220,7 @@ C:\llm\scripts\bench.ps1 -Model C:\llm\models\your-model.gguf
 
 Copy [`scripts/start-llm.cmd`](./scripts/start-llm.cmd) to `C:\llm\start-llm.cmd` and change its `-m` line to the model's file name. Step 2 covers the shortcut and the flags.
 
-**Check:** double-clicking `C:\llm\start-llm.cmd` opens a window that ends with `listening on http://127.0.0.1:8080`.
+**Check:** double-clicking `C:\llm\start-llm.cmd` opens a window that ends with `listening on http://0.0.0.0:8080`.
 
 ---
 
@@ -257,7 +257,7 @@ If you also download a release zip, extract it to its own folder and never copy 
 
 ### 7.3 Dead knobs
 
-`GGML_HIP_ROCWMMA_FATTN` no longer exists (flash attention on RDNA uses WMMA intrinsics directly). `HSA_OVERRIDE_GFX_VERSION` is a Linux variable with no effect on Windows. `ROCBLAS_USE_HIPBLASLT` does nothing for quantized models on RDNA 4 because llama.cpp routes every quantized matrix multiply through its own MMQ kernels and never calls rocBLAS. Setting them is harmless; expecting anything from them is not.
+`GGML_HIP_ROCWMMA_FATTN` no longer exists (flash attention on RDNA uses WMMA intrinsics directly). `HSA_OVERRIDE_GFX_VERSION` is a Linux variable with no effect on Windows. Quantized MMQ kernels do not make all rocBLAS paths disappear: this mixed-precision Swift file also contains BF16 tensors, and the Windows launcher retains `ROCBLAS_USE_HIPBLASLT=0` for the crash described in the tuning guide. Do not remove that workaround based only on the dominant weight quantization type.
 
 ### 7.4 `-lm none` replaced `--no-mmap`
 

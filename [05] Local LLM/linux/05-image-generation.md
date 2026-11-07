@@ -8,6 +8,12 @@ The image counterpart of steps 1 to 3: one C++ binary with a Vulkan backend, thr
 
 ---
 
+## Image generation is separate from Swift vision
+
+This runtime generates or edits images with its own generator, text encoder, VAE, and optional vision projector. It does not add screenshot understanding to the running Swift coding model or turn it into a vision model. The Qwen3-VL projector below belongs to the image pipeline, not the Swift 27B GGUF. The [Swift release](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF#usage) has no verified matching projector; keep Code's `vision` flag false for that setup.
+
+The menu's default image preset estimates roughly 15 GiB VRAM at 1024×1024 with the Q8 generator; measure the actual requirements on the target hardware. Stop Swift before loading it. `OFFLOAD=1` trades system RAM and speed for lower GPU memory use. A separate vision language model or OCR could supply text descriptions to Swift, but that is not installed by this image-generation guide.
+
 ## 1. Why this runtime and not ComfyUI
 
 ComfyUI is the usual image tool and it runs on a GPU in the recommended class, but on Arch it means PyTorch for ROCm, which pulls the whole ROCm SDK: 96 packages, 34 GB under `/usr`, on the root subvolume Timeshift snapshots. Every ROCm update rewrites most of it and every snapshot that straddles an update keeps the old copy. The alternative is a venv with AMD's wheels, which works but is a second Python stack to maintain.
@@ -19,7 +25,9 @@ stable-diffusion.cpp is to images what llama.cpp is to text: the same ggml libra
 ## 2. Build
 
 ```bash
-cp scripts/build-sdcpp.sh ~/llm/scripts/ && chmod +x ~/llm/scripts/build-sdcpp.sh
+LLM_DOCS="/path/to/sysopt-docs/[05] Local LLM"
+cp "$LLM_DOCS/linux/scripts/build-sdcpp.sh" "$HOME/llm/scripts/"
+chmod +x "$HOME/llm/scripts/build-sdcpp.sh"
 ~/llm/scripts/build-sdcpp.sh
 ```
 
@@ -58,7 +66,9 @@ Why these quants: the budget is weights plus about 2 GB of working buffers at 10
 Or, instead of the four curl lines, the set downloader, which skips files already on disk and names each file the way the wrapper expects:
 
 ```bash
-cp scripts/get-models.sh ~/llm/scripts/ && chmod +x ~/llm/scripts/get-models.sh
+LLM_DOCS="/path/to/sysopt-docs/[05] Local LLM"
+cp "$LLM_DOCS/linux/scripts/get-models.sh" "$HOME/llm/scripts/"
+chmod +x "$HOME/llm/scripts/get-models.sh"
 ~/llm/scripts/get-models.sh               # lists the sets and what is on disk
 ~/llm/scripts/get-models.sh image-qwen
 ```
@@ -88,7 +98,9 @@ Any other Qwen-Image 2.1 GGUF, including community fine-tunes and merges, is a d
 ## 4. First image
 
 ```bash
-cp scripts/gen-image.sh ~/llm/ && chmod +x ~/llm/gen-image.sh
+LLM_DOCS="/path/to/sysopt-docs/[05] Local LLM"
+cp "$LLM_DOCS/linux/scripts/gen-image.sh" "$HOME/llm/"
+chmod +x "$HOME/llm/gen-image.sh"
 ~/llm/close-llm.sh                      # the text server holds the VRAM; stop it first
 time ~/llm/gen-image.sh "a lovely cat holding a sign that says 'hello'" ~/llm/images/first.png 1024x1024 20 42
 ```
@@ -132,9 +144,13 @@ Several references: use the raw command with `-r a.png -r b.png`, in the order t
 `llm.sh` is one screen that knows both tracks:
 
 ```bash
-cp scripts/llm.sh ~/llm/ && chmod +x ~/llm/llm.sh
+LLM_DOCS="/path/to/sysopt-docs/[05] Local LLM"
+cp "$LLM_DOCS/linux/scripts/llm.sh" "$HOME/llm/"
+chmod +x "$HOME/llm/llm.sh"
 ~/llm/llm.sh
 ```
+
+Finding `llm.sh` in the repository does not mean it is installed in `~/llm`; the copy above is required. It also expects the image wrapper and image files from the earlier sections; the text installation alone does not install those.
 
 Option 1 shows the text model, its device, context, memory need and whether it is running, then the curl commands to talk to it, then offers to start or stop it. Option 2 shows the four image files with sizes, the memory need, the wrapper commands and the raw command, then offers to generate one image with a prompt, size and steps typed in. Option 3 is VRAM, running state and what is on disk. It reads the model names from the two scripts, so a changed `MODEL=` line shows up without editing the menu. Nothing starts until the question is answered with `y`.
 

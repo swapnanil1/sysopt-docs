@@ -4,11 +4,11 @@
 
 **Run on the server.** See [the overview](../README.md) for client setup.
 
-The shortest path from a working CachyOS desktop to a local model answering on `http://127.0.0.1:18080`. It uses the distribution's `llama-cpp` package plus the GPU backend packages that go with it (`ggml-vulkan`, and optionally `ggml-hip` for ROCm), so nothing is compiled and no ROCm SDK is installed. Step 2 is the from-source build for people who want the newest commit or a GPU-specific binary; most users never need it.
+The shortest path from a working CachyOS desktop to a LAN-hosted model answering on `http://SERVER-IP:18080`. It uses the distribution's `llama-cpp` package plus the GPU backend packages that go with it (`ggml-vulkan`, and optionally `ggml-hip` for ROCm), so nothing is compiled and no ROCm SDK is installed. For the tested ROCm source build, go directly to [step 2](02-build-rocm.md); a packaged install is not a prerequisite. Both routes use the 65,536-context / 16,384-output Linux baseline.
 
 Recommended baseline for the supplied 27B examples: an RX 9070-class AMD GPU with at least 16 GB VRAM, a Ryzen 5 3600-class CPU or better, and at least 16 GB system RAM. These are guide assumptions, not hard minimums for llama.cpp; smaller models can run on less hardware. Check backend support and adjust the GPU target, context, and thread count for your system. This step assumes CachyOS / Arch with the [Arch guide](../../[01]%20OS/[01]%20ArchAIO.md) applied as needed; Sway is optional. The Arch guide's step 4 already installed `vulkan-radeon`, which is the only GPU dependency this step has.
 
-**Performance figures.** Step 3 labels recorded Linux Vulkan results separately from unmeasured ROCm settings. Run `bench.sh` on your hardware before relying on a context size or throughput figure.
+**Performance figures.** Step 3 records actual Linux ROCm results separately from earlier Vulkan observations. Run `bench.sh` on your hardware before relying on a context size or throughput figure.
 
 ---
 
@@ -26,10 +26,10 @@ Same shape as the Windows guide, under the home directory:
   src/                only if you build from source (step 2); the build lands in src/build/
 ```
 
-No `bin/` and no `rocm/`: the package puts `llama-server` in `/usr/bin` and the ROCm runtime libraries, if the ROCm backend is used, in `/opt/rocm` via package dependencies. A source build puts its binaries in `src/build/bin/`; the launcher has one variable that selects which one runs.
+No `bin/` and no `rocm/`: the package puts `llama-server` in `/usr/bin` and the ROCm runtime libraries, if the ROCm backend is used, in `/opt/rocm` via package dependencies. A source build puts its binaries in `src/build/bin/`; the updated launcher prefers a source build when present, with a `BIN` override to select explicitly.
 
 ```bash
-mkdir -p ~/llm/{models,logs,scripts,src}
+mkdir -p ~/llm/{models,logs,scripts}
 ```
 
 **Home on a hard disk?** Put the folder on the SSD and leave a symlink at `~/llm`, so every path in this guide and in the scripts still works. The model file is memory-mapped: the first load reads all 12 GB, and so does every reload after the page cache has dropped it, which on a hard disk is a minute and a half each time against a few seconds on NVMe. The games subvolume from the Arch guide's fstab step is the natural place, since it is already excluded from Timeshift snapshots and owned by your user:
@@ -46,7 +46,7 @@ ln -s /mnt/games/llm ~/llm
 Since ggml 0.26 the GPU backends are separate packages that llama.cpp loads at run time. `llama-cpp` on its own is CPU-only and `--list-devices` prints nothing. Install the Vulkan backend with it; it is small and needs only the RADV driver the Arch guide already installed:
 
 ```bash
-sudo pacman -S --needed llama-cpp ggml-vulkan
+sudo pacman -Syu --needed llama-cpp ggml-vulkan
 llama-server --version
 llama-server --list-devices
 ```
@@ -64,7 +64,7 @@ The warning is Mesa's standard line for a GPU generation it has not yet put thro
 The ROCm backend is one more package, but it pulls the ROCm runtime and rocBLAS with it, about 2.6 GB:
 
 ```bash
-sudo pacman -S --needed ggml-hip             # adds ROCm0 to --list-devices
+sudo pacman -Syu --needed ggml-hip             # adds ROCm0 to --list-devices
 ```
 
 Install it when you want to compare the two backends in step 3; step 2's source build pulls the same runtime anyway. With both installed, `--device` in the launcher picks one, and nothing else changes.
@@ -80,6 +80,7 @@ The reference model is Qwen3.8-27B in its Swift 1.5 post-train, as the GSQ-RCO I
 The Swift repo is gated: open it in a browser once, signed in to Hugging Face, and accept the terms. Then download with a token from your account settings:
 
 ```bash
+# If you already downloaded the GGUF, copy it into ~/llm/models and skip this download.
 cd ~/llm/models
 curl -L -O -H "Authorization: Bearer $HF_TOKEN" \
   'https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF/resolve/main/Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf'   # CHANGE for another model
@@ -92,27 +93,27 @@ The plain Qwen3.8-27B twin of the same quant, for maths-heavy work, needs no tok
 curl -L -O 'https://huggingface.co/ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF/resolve/main/Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf'
 ```
 
-Both files are also sets in `scripts/get-models.sh` (`text-swift`, `text-qwen`), which skips what is already on disk. The package's `llama-server` can also download directly with `-hf <repo>:<quant>`; it caches under `~/.cache/llama.cpp`. The explicit file in `~/llm/models` is easier to reason about and to back up.
+Keep all parts of a split GGUF together and pass its first part to the server. Both files are also sets in `linux/scripts/get-models.sh` (`text-swift`, `text-qwen`), which skips what is already on disk. The package's `llama-server` can also download directly with `-hf <repo>:<quant>`; it caches under `~/.cache/llama.cpp`. The explicit file in `~/llm/models` is easier to reason about and to back up.
 
 ---
 
 ## 4. First run
 
 ```bash
-llama-server -m ~/llm/models/Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf --alias swift-qwen -ngl 99 -c 16384 -fa on --jinja --host 0.0.0.0 --port 18080
+llama-server -m ~/llm/models/Swift-1.5-Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf --alias swift-qwen --device Vulkan0 -ngl 99 -c 65536 -np 1 -n 16384 -b 2048 -ub 512 -t 6 -tb 12 -fa on -ctk q8_0 -ctv q8_0 --jinja --cache-ram 0 --spec-type draft-mtp --spec-draft-n-max 3 --host 0.0.0.0 --port 18080
 ```
 
-This listens on all IPv4 interfaces without an API key, for a trusted home LAN. Other devices use `http://<SERVER-IP>:18080`; do not forward port 18080 through the router. For localhost only, replace `--host 0.0.0.0` with `--host 127.0.0.1`.
+This listens on all IPv4 interfaces without an API key, for a trusted home LAN. Other devices use `http://<SERVER-IP>:18080`; do not forward port 18080 through the router. This example uses the packaged Vulkan backend. For ROCm use the launcher in step 3 after building or installing that backend. Keep 0.0.0.0 as the bind address; clients use the actual LAN IP.
 
 **Check:** the log reports `listening on http://0.0.0.0:18080`, and in another terminal on the server:
 
 ```bash
 curl -s http://127.0.0.1:18080/health
 curl -s http://127.0.0.1:18080/v1/chat/completions -H 'Content-Type: application/json' \
-  -d '{"messages":[{"role":"user","content":"Say OK."}],"max_tokens":4}' | grep -o '"content":"[^"]*"'
+  -d '{"model":"swift-qwen","messages":[{"role":"user","content":"Say OK briefly."}],"max_tokens":256}'
 ```
 
-`{"status":"ok"}` and a reply. The built-in web UI is at the same address in a browser.
+Expect `{"status":"ok"}` from health and a completion response with `choices`. This is a thinking model: an extremely short output budget may be consumed before the final answer. The built-in web UI is at `http://SERVER-IP:18080` from the LAN.
 
 While it runs, in a third terminal:
 
@@ -120,11 +121,11 @@ While it runs, in a third terminal:
 nvtop                                # or: watch -n1 cat /sys/class/drm/card*/device/mem_info_vram_used
 ```
 
-Expect about 12 GB of VRAM used for this model at 16k context and almost nothing added to system RAM beyond the file in the page cache. There is no host-memory mirror of VRAM on Linux; the 12 GB of committed memory and the pagefile growth seen on Windows do not exist here, and zram alone is sufficient.
+The 64K context and draft head use most of a 16 GB GPU. Inspect memory after loading and after a representative long request; startup alone does not validate the maximum workload. See step 3 for separate ROCm and Vulkan observations. Stop the server before building or benchmarking.
 
 Ctrl+C stops it.
 
-To use this server in Zed, follow [Zed with the local Swift model](../common/03-zed-setup.md). It includes settings for this 16K first run and the tuned launcher below.
+To use this server in Zed, follow [Zed with the local Swift model](../common/03-zed-setup.md). It includes the 64K context budget used here.
 
 For Code OSS's built-in Chat agent, follow [the Custom Endpoint setup](../common/04-code-oss-setup.md).
 
@@ -133,11 +134,13 @@ For Code OSS's built-in Chat agent, follow [the Custom Endpoint setup](../common
 ## 5. Put the launcher in place
 
 ```bash
-cp scripts/start-llm.sh scripts/close-llm.sh ~/llm/ && chmod +x ~/llm/*.sh
-cp scripts/bench.sh scripts/build-rocm.sh ~/llm/scripts/ && chmod +x ~/llm/scripts/*.sh
+LLM_DOCS="/path/to/sysopt-docs/[05] Local LLM"
+cp "$LLM_DOCS/linux/scripts/start-llm.sh" "$LLM_DOCS/linux/scripts/close-llm.sh" "$HOME/llm/"
+cp "$LLM_DOCS/linux/scripts/bench.sh" "$LLM_DOCS/linux/scripts/build-rocm.sh" "$HOME/llm/scripts/"
+chmod +x "$HOME/llm/start-llm.sh" "$HOME/llm/close-llm.sh" "$HOME/llm/scripts/bench.sh" "$HOME/llm/scripts/build-rocm.sh"
 ```
 
-Edit the `MODEL=` line in `~/llm/start-llm.sh`. It enables LAN access by default; use `~/llm/start-llm.sh --local` for localhost only. Step 3 explains every flag in it, the Sway keybinding, and the optional systemd user unit.
+Adjust `LLM_DOCS` to your clone path. Review installed custom scripts before replacing them. Check `MODEL=` and `DEVICE=` in `~/llm/start-llm.sh`; select `Vulkan0` if only the Vulkan backend is installed. The launcher prefers a source binary when present and otherwise uses `/usr/bin`, prints its choice, and always enables LAN access. Step 3 explains every flag in it, the Sway keybinding, and the optional systemd user unit.
 
 **Check:** `~/llm/start-llm.sh` in a terminal ends with `listening on`, `~/llm/close-llm.sh` in another stops it and prints `port 18080 is free`.
 

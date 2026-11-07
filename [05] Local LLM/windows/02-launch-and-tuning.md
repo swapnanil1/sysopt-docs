@@ -17,6 +17,8 @@ Hardware facts that drive every decision below:
 
 ## 1. Starting and stopping
 
+The supplied launchers bind `0.0.0.0:8080` and use alias `swift-qwen` for LAN clients. The Windows context remains 32768 with a 16384 output cap because its memory results differ from the Linux 65536 baseline. See the [network guide](../common/05-network-access.md) for client addresses and the Windows firewall rule.
+
 The launcher lives in `C:\llm` beside `bin\`, `models\`, `logs\` and `rocm\` (layout in the index). It is deliberately a plain batch file in a plain console window: no service, no watchdog, no restart logic.
 
 ```bat

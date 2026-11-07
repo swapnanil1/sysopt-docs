@@ -1,6 +1,6 @@
 # Local LLM: server and clients
 
-Run the model on a server with suitable GPU resources, then connect from an editor on any supported client device. Add SearXNG on the server for web search. One machine can be both server and client.
+Run the model across the trusted LAN on a server with suitable GPU resources, then connect from an editor on any supported client device. The Linux baseline is **65536 total context / 16384 maximum output tokens**, with MTP and q8 KV cache. Add SearXNG on the server for web search. One machine can be both server and client.
 
 ## What runs where
 
@@ -35,11 +35,11 @@ Project context is sent to the model server. Search queries reach online engines
 | 4. Add search, if wanted | Server | [SearXNG server](common/06-search-server.md) — Arch/CachyOS installation |
 | 5. Configure the editor and test tools | Each client | [Code OSS client + search MCP](common/04-code-oss-setup.md) or [Zed client](common/03-zed-setup.md) |
 
-The Linux server instructions cover LAN access. The supplied Windows launchers currently serve localhost only. A Windows **client** can connect to the Linux server without installing the Windows server toolchain.
+Both supplied model launchers bind all IPv4 interfaces: Linux on **18080**, Windows on **8080**. Windows retains its separate **32768** context memory setting; it is not a replacement for the Linux baseline. A Windows **client** can connect to the Linux server without installing the Windows server toolchain.
 
 ## Service addresses
 
-Replace `SERVER-IP` with the server's LAN address. When a service runs on the client machine itself, use `127.0.0.1` for that service.
+Replace `SERVER-IP` with the server's LAN address. `0.0.0.0` is a bind address, not a client destination. Loopback URLs in diagnostic commands refer to tests on the server itself and do not change its LAN binding.
 
 | Service / client field | Linux server address |
 |---|---|
@@ -56,5 +56,7 @@ The Linux launcher uses model ID `swift-qwen`. Use `local` only if an editor req
 - `linux/` and `windows/`: server installation, launchers, tuning, and optional image generation.
 - `common/`: model guidance, network access, client configuration, and the search service.
 - `linux/scripts/` and `windows/scripts/`: scripts to install on the server as directed by its guide.
+- [Swift custom agents](common/07-swift-agents.md) and `common/agents/`: optional user-level Ask, Plan, and Agent profiles that preserve the built-in originals.
+- [Linux measurement procedure](linux/03-launch-and-tuning.md#2-measure-throughput-without-mixing-workloads): reproducible tests and limits of the measurements.
 
 The server hardware requirements and benchmarks apply to the stated model/backend examples. Client hardware requirements come from the editor and the project being developed.

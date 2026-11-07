@@ -6,13 +6,15 @@ Shared by the Windows and Linux guides. The [reality check](./01-reality-check.m
 
 Recommended baseline for the supplied 27B examples: an RX 9070-class AMD GPU with at least 16 GB VRAM, a Ryzen 5 3600-class CPU or better, and at least 16 GB system RAM. These are guide assumptions, not hard minimums for llama.cpp; smaller models can run on less hardware. Check backend support and adjust the GPU target, context, and thread count for your system. Model example: Qwen3.8-27B in its Swift 1.5 post-train, GSQ-RCO IQ3_S with the MTP head. Benchmark figures below refer to the stated Windows configuration unless otherwise noted; Linux context limits are documented in step 3.
 
+**Current Linux baseline:** the example ROCm launcher uses the Swift IQ3_S-mtp file at **65536 total context / 16384 output**, q8 KV and MTP. Follow the [Linux measurement procedure](../linux/03-launch-and-tuning.md#2-measure-throughput-without-mixing-workloads) to establish throughput on your own hardware. Windows measurements below describe a different memory environment and do not set the Linux context ceiling.
+
 For first-time editor configuration, see [Zed with the local Swift model](./03-zed-setup.md) or [Code OSS's built-in agent with llama.cpp](./04-code-oss-setup.md).
 
 ---
 
 ## 1. Three words that decide everything
 
-**Context.** The model sees a fixed window of text at once, measured in tokens (roughly three quarters of a word each). Everything an agent sends, every file it reads, every tool result and every reply must fit in the window. When it fills, the oldest text drops out and the model forgets it. The benchmark configuration runs a 49k-token window with the draft head, about 37 000 words, or 65k without it.
+**Context.** The model sees a fixed window of text at once, measured in tokens (roughly three quarters of a word each). Everything an agent sends, every file it reads, every tool result and every reply must fit in the window. When it fills, the client must compact or shorten history, or the request may fail; the launchers disable server context shifting. The current Linux window is 65536 including the reply. Older Windows tests below used smaller windows with the draft head.
 
 **Decode speed.** How fast the model writes its answer, in tokens per second. The benchmark configuration writes about 49 tokens per second on new text with the draft head and 32 without it, both faster than a person reads.
 
@@ -43,13 +45,13 @@ Three things about the specific GGUF on the benchmark configuration.
 
 ### 3.1 The compression is the good kind
 
-The file uses GSQ-RCO, a quantization method from a research lab (ISTA-DASLab). It runs an optimization step that chooses roundings to keep the model's behaviour as close to the original as possible. Standard llama.cpp quants (the bartowski and unsloth files most people download) use an importance matrix instead. Both are good; the research method generally loses a little less accuracy at the same size. The maker's own table puts IQ3_S level with the unquantized model on AIME25 and LiveCodeBench and half a point under it on GPQA-Diamond, and IQ3_XXS one point lower on LiveCodeBench for 1.7 GB less. The difference between the two files is measurable in a benchmark and rarely visible in a conversation.
+The file uses GSQ-RCO, a quantization method from a research lab (ISTA-DASLab). It runs an optimization step that chooses roundings to keep the model's behaviour as close to the original as possible. Standard llama.cpp quants (the bartowski and unsloth files most people download) use an importance matrix instead. Both are good; the research method generally loses a little less accuracy at the same size. The current [Swift GSQ-RCO model card](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GSQ-RCO-GGUF) reports divergence measurements against Swift BF16 at 512-token context. They do not establish task-score parity, long-context quality, or a direct Swift-versus-base-Qwen ranking. Compare model-level evaluations separately from quantization measurements.
 
 ### 3.2 Take the twin with the speed helper
 
 Standard Qwen3.8-27B files carry an extra block, numbered 64 after the 64 real layers, called a multi-token-prediction (MTP) head. It is a small built-in model that guesses the next few tokens. llama.cpp uses it as a free speculator with `--spec-type draft-mtp`.
 
-The GSQ-RCO repos publish every quant twice: `...IQ3_S.gguf` (11.8 GB) without the head and `...IQ3_S-mtp.gguf` (12.1 GB) with it. The 64 real layers are quantized identically in both; the mtp file only appends the 15 tensors of the head, 0.35 GB. Loaded without the draft-mtp flag the two files behave the same, and the head is dead weight. Both launchers in these guides name an mtp file and set the flag. The plain file is the right one only when the head cannot be afforded, which on 16 GB means a context window above about 49k (section 5).
+The GSQ-RCO repos publish every quant twice: `...IQ3_S.gguf` (11.8 GB) without the head and `...IQ3_S-mtp.gguf` (12.1 GB) with it. The 64 real layers are quantized identically in both; the mtp file only appends the 15 tensors of the head, 0.35 GB. Loaded without the draft-mtp flag the two files behave the same, and the head is dead weight. Both launchers in these guides name an mtp file and set the flag. The plain file saves the head's weights/cache when that memory tradeoff is useful. The older Windows 49K result in section 5 is not a universal 16 GB ceiling; the Linux example allocates 64K with MTP, subject to hardware and workload checks.
 
 Check any GGUF in thirty seconds:
 
@@ -99,9 +101,9 @@ This is not two independent models. The helper never answers; it only exists to 
 
 ---
 
-## 5. What it costs: memory, and therefore context
+## 5. What it costs: historical Windows memory measurements
 
-The head lives in GPU memory next to the main model: 0.35 GB of weights plus its own cache and working buffers. Measured on the benchmark configuration at 49k context, idle after one request: 15 573 MB dedicated and 870 MB shared, against 14 955 MB and 660 MB for the plain file at 65k. The head costs about 0.8 GB in total. At 65k with the head, shared memory rose to 1 081 MB, which is the start of the spill into system RAM. That is why the launchers run the mtp file at 49k; 40k freed almost nothing and is not worth the window.
+The head lives in GPU memory next to the main model: 0.35 GB of weights plus its own cache and working buffers. Measured on the benchmark configuration at 49k context, idle after one request: 15 573 MB dedicated and 870 MB shared, against 14 955 MB and 660 MB for the plain file at 65k. The head costs about 0.8 GB in total. At 65k with the head, shared memory rose to 1 081 MB, which is the start of the spill into system RAM. These are earlier Windows observations, not the current Linux launch settings. The Windows launcher later moved to 32768 with the rocBLAS workaround; the Linux launcher remains 65536.
 
 Whether the trade is worth it depends on how the model is used:
 
@@ -110,7 +112,7 @@ Whether the trade is worth it depends on how the model is used:
 
 ---
 
-## 6. The three options
+## 6. The three options (historical Windows comparison)
 
 | | A: the mtp twin | B: the plain twin | C: a separate draft model |
 |---|---|---|---|
@@ -138,7 +140,7 @@ Deeper drafting bought 3 tok/s for 300 MB on a card that is already full, inside
 
 Two things changed after that table was measured, and both launchers now carry them:
 
-- **`ROCBLAS_USE_HIPBLASLT=0`.** The runs above went through hipBLASLt for the model's 96 BF16 tensors. On a later session hipBLASLt crashed on gfx1201 at the first draft step, reproducibly (access violation in `libhipblaslt.dll`). With the variable at 0 rocBLAS uses its own kernels, which need a few hundred MB of workspace at the first task: **49k at q8_0 then ran out of VRAM**, and 32k at q8_0 measured 14 938 MB dedicated. So the launchers ship 32k, or 49k with q4_0.
+- **`ROCBLAS_USE_HIPBLASLT=0`.** The runs above went through hipBLASLt for the model's 96 BF16 tensors. On a later session hipBLASLt crashed on gfx1201 at the first draft step, reproducibly (access violation in `libhipblaslt.dll`). With the variable at 0 rocBLAS uses its own kernels, which need a few hundred MB of workspace at the first task: **49k at q8_0 then ran out of VRAM**, and 32k at q8_0 measured 14 938 MB dedicated. The Windows launchers therefore retain 32K. The Linux baseline is 64K with q8 KV; it must be measured separately rather than inheriting this Windows limit.
 - **`--cache-ram 0`.** The server's prompt cache saves a slot's state to RAM before every new task, and on this model that save throws and kills the server on the second request. With it off, measured on the Swift file at 32k, q8_0, `--spec-draft-n-max 3`: 62 tok/s on fresh code (90 % accepted), 44 tok/s on prose (54 %), 64 tok/s on a code rewrite (97 %), five requests back to back. That is why the launchers moved from 2 to 3; at 32k the 300 MB is affordable.
 
 The same four steps give the answer on any other card:
@@ -150,6 +152,8 @@ The same four steps give the answer on any other card:
 
 ---
 
-## 7. In one paragraph
+## 7. Practical defaults and vision
 
-The right model for a 16 GB card doing agentic coding is Qwen3.8-27B, and the GSQ-RCO file is a slightly better compression of it than the standard downloads. The makers publish each quant with and without the model's built-in speed helper, and the version with it is the one to download: same weights, 0.35 GB more, and with `--spec-type draft-mtp` about one and a half times the writing speed on new text, 32 to 49 tokens per second here, for a smaller context window, 49k instead of 65k. The Swift 1.5 post-train of the same model thinks a quarter to a half less before answering and scores higher on coding, so it is the launcher default; the plain Qwen3.8 file with `ngram-mod` is the right answer for sessions that need the whole 65k, and the plain Qwen3.8 weights for maths-heavy work.
+For the Linux example, use the **Swift IQ3_S-mtp** file, `--spec-type draft-mtp --spec-draft-n-max 3`, **65536 total context**, **16384 maximum output**, and q8 KV. Measure the configuration on your own hardware rather than treating it as the fastest possible settings. Keep longer-context estimates out of client configs until verified. The Windows setup retains its smaller measured memory budget.
+
+The publisher has no verified Swift 27B vision projector for this GSQ-RCO release. A client `vision: true` flag cannot add it. `stable-diffusion.cpp` uses separate image-generation weights and does not give Swift screenshot understanding. OCR or a separate vision model could provide text to Swift, with their own setup and resource tradeoffs. Web search is different: Code's MCP tools supply text results without another GPU model.

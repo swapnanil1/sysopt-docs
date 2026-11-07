@@ -12,7 +12,7 @@ Run the installed launcher on the server:
 ~/llm/start-llm.sh
 ```
 
-It listens on all IPv4 interfaces at port **18080** without an API key. `~/llm/start-llm.sh --local` restricts it to localhost. In another server terminal:
+It listens on all IPv4 interfaces at port **18080** without an API key. In another server terminal:
 
 ```bash
 ss -ltn 'sport = :18080'
@@ -22,7 +22,13 @@ curl -fsS http://127.0.0.1:18080/v1/models
 
 Expect `0.0.0.0:18080`, health status `ok`, and model ID `swift-qwen`. A server bound only to `127.0.0.1` cannot accept remote clients. Wait for model loading to finish before testing inference.
 
-**Windows-hosted model:** the supplied Windows launchers use localhost port **8080** and a **32768** context. Check `http://127.0.0.1:8080/health` and `/v1/models` on that server; use the returned model ID in the editor. Those launchers do not configure LAN binding or Windows Firewall access. The documented LAN setup here uses the Linux server. This restriction does not apply to a Windows client connecting to that Linux server.
+**Windows-hosted model:** the supplied Windows launchers bind `0.0.0.0:8080`, use alias `swift-qwen`, and retain their separately measured **32768** context / **16384** output cap. Check `http://127.0.0.1:8080/health` on that server, and use `http://SERVER-IP:8080` from clients. In an elevated PowerShell, add a rule for the trusted private LAN if needed:
+
+```powershell
+New-NetFirewallRule -DisplayName "llama.cpp LAN 8080" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8080 -Profile Private -RemoteAddress LocalSubnet
+```
+
+Review existing rules first and ensure the trusted network has the Private profile. This host rule is not needed on a Windows client connecting to Linux. The Windows lower context is historical platform-specific memory tuning, not a different Linux recommendation.
 
 ## 2. Find the server address
 
@@ -45,7 +51,7 @@ Choose the address on the Ethernet/Wi-Fi interface, ignoring Docker bridges and 
 
 No API key is required for this setup. Use `local` if the client requires a placeholder. The model and search server can be separate machines; use the address of the machine hosting each service.
 
-## 3. Allow model access through UFW
+## 3. Allow Linux model access through UFW
 
 On a server using UFW:
 
@@ -85,7 +91,7 @@ curl.exe --connect-timeout 5 -fsS http://192.168.1.50:18080/health
 curl.exe --connect-timeout 5 -fsS http://192.168.1.50:18080/v1/models
 ```
 
-Expect `TcpTestSucceeded : True` on Windows, health status `ok`, and the model ID. For search, open `http://192.168.1.50:8888` in the client's browser and follow the [JSON search check](06-search-server.md#3-check-from-a-client).
+Expect `TcpTestSucceeded : True` on Windows, health status `ok`, and the model ID. For search, open `http://192.168.1.50:8888` in the client's browser and follow the [JSON search check](06-search-server.md#5-check-from-a-client).
 
 If a check fails, isolate the layer before changing the editor:
 
@@ -100,6 +106,6 @@ Paste plain URLs into configuration files, not Markdown links. After the connect
 
 ## 5. Shared server behavior
 
-The Linux launcher uses `-np 1`: all clients share one inference slot, so requests may wait for each other. Another client does not load another model copy. Match each client's context limit to the running server's `-c`; an editor cannot enlarge the server's allocation.
+The Linux launcher uses `-np 1`: all clients share one inference slot, so requests may wait for each other. Another client does not load another model copy. Match each client's context limit to the running server's `-c`; an editor cannot enlarge the server's allocation. The Linux baseline is **65536 total / 16384 output**, leaving **49152 input** when separate limits are required.
 
 Run the editor and open the project on the client to keep file edits and terminal execution there. This guide assumes ordinary local editor sessions, not Remote SSH or dev containers, which place tools in a different execution environment.
